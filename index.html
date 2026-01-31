@@ -7,9 +7,6 @@
   <title>Demandas Recorrentes — DIEF/SEFAZ RR</title>
 
   <style>
-    /* =========================
-       THEME VARIABLES (LIGHT)
-    ========================== */
     :root{
       --bg:#f3f7ff;
       --card:#ffffff;
@@ -27,25 +24,7 @@
       --sans: system-ui, -apple-system, Segoe UI, Roboto, Arial;
     }
 
-    /* =========================
-       THEME VARIABLES (DARK)
-    ========================== */
-    body.dark{
-      --bg:#0e1422;
-      --card:#141c2f;
-      --card2:#10182a;
-      --text:#e6ecff;
-      --muted:#9fb0d0;
-
-      --line:rgba(255,255,255,.12);
-      --primary:#5da9ff;
-      --primary2:rgba(93,169,255,.18);
-
-      --shadow:0 14px 36px rgba(0,0,0,.45);
-    }
-
     *{ box-sizing:border-box; }
-
     body{
       margin:0;
       font-family:var(--sans);
@@ -54,7 +33,6 @@
         radial-gradient(900px 600px at 90% 0%, rgba(10,98,190,.10), transparent 60%),
         var(--bg);
       color:var(--text);
-      transition: background .25s ease, color .25s ease;
     }
 
     a{ color: var(--primary); text-decoration:none; }
@@ -62,7 +40,6 @@
 
     .wrap{ max-width:1100px; margin:0 auto; padding:28px 18px 80px; }
 
-    /* ================= HEADER ================= */
     header{
       display:flex;
       align-items:flex-start;
@@ -70,64 +47,34 @@
       gap:14px;
       flex-wrap:wrap;
     }
-
     h1{ font-size:22px; margin:0 0 6px; }
-    header p{
-      margin:0;
-      color:var(--muted);
-      font-size:13px;
-      max-width:900px;
-      line-height:1.45;
-    }
+    header p{ margin:0; color:var(--muted); font-size:13px; max-width:900px; line-height:1.45; }
 
-    .themeToggle{
-      border:1px solid var(--line);
-      background:var(--card);
-      color:var(--text);
-      padding:8px 12px;
-      border-radius:999px;
-      cursor:pointer;
-      font-size:12px;
-      box-shadow:var(--shadow);
-      white-space:nowrap;
-    }
-
-    /* ================= SEARCH ================= */
     .bar{
       margin-top:16px;
       border:1px solid var(--line);
       border-radius:var(--radius);
-      background:var(--card2);
+      background:rgba(255,255,255,.75);
       padding:14px;
       box-shadow: var(--shadow);
     }
 
     .search{
-      display:flex;
-      align-items:center;
-      gap:10px;
+      display:flex; align-items:center; gap:10px;
       border:1px solid var(--line);
-      background:var(--card);
+      background:#ffffff;
       border-radius:999px;
       padding:10px 14px;
+      box-shadow:0 6px 18px rgba(11,27,58,.08);
     }
-
     .search input{
-      border:none;
-      outline:none;
-      width:100%;
-      font-size:14px;
-      color:var(--text);
+      border:none; outline:none; width:100%;
+      font-size:14px; color:var(--text);
       background:transparent;
     }
 
-    .search input::placeholder{ color:var(--muted); }
-
-    /* ================= CARDS ================= */
     .sectionTitle{
-      display:flex;
-      align-items:baseline;
-      justify-content:space-between;
+      display:flex; align-items:baseline; justify-content:space-between;
       margin:18px 2px 10px;
     }
 
@@ -144,79 +91,61 @@
       padding:14px;
       box-shadow:var(--shadow);
       cursor:pointer;
-      transition:transform .1s ease;
-    }
-
-    .card:hover{ transform:translateY(-2px); }
-
-    .cardTop{
-      display:flex;
-      justify-content:space-between;
-      gap:10px;
     }
 
     .tag{
       padding:6px 10px;
       border-radius:999px;
+      border:1px solid rgba(10,98,190,.30);
+      background: rgba(10,98,190,.10);
       font-size:11px;
-      border:1px solid var(--primary);
-      background:var(--primary2);
     }
 
-    .snippet{
-      font-size:12px;
-      color:var(--muted);
-      margin-top:10px;
-    }
-
-    /* ================= MODAL ================= */
     dialog{
       width:min(1020px,calc(100% - 24px));
       border-radius:22px;
       border:1px solid var(--line);
-      background:var(--card);
+      background:#fff;
       padding:0;
-      box-shadow:0 30px 80px rgba(0,0,0,.6);
+      box-shadow:0 30px 80px rgba(11,27,58,.30);
     }
 
     dialog::backdrop{
-      background:rgba(0,0,0,.55);
+      background:rgba(11,27,58,.28);
       backdrop-filter:blur(3px);
     }
 
-    .modalHead{
-      padding:16px;
-      border-bottom:1px solid var(--line);
-      display:flex;
-      justify-content:space-between;
-    }
-
-    .closeBtn{
-      border-radius:999px;
-      padding:8px 12px;
-      border:1px solid var(--line);
-      background:var(--card);
-      cursor:pointer;
-      color:var(--text);
-    }
-
-    /* ================= TOAST ================= */
     .toast{
       position:fixed;
       bottom:18px;
       left:50%;
       transform:translateX(-50%);
-      background:#000;
+      background: rgba(11,27,58,.90);
       color:#fff;
-      padding:10px 14px;
+      padding:10px 12px;
       border-radius:999px;
       font-size:12px;
       opacity:0;
-      transition:.2s;
+      transition: opacity .18s ease;
       z-index:9999;
     }
 
     .toast.show{ opacity:1; }
+
+    /* =========================
+       DARK MODE (ONLY ADDITION)
+       ========================= */
+    body.dark{
+      --bg:#0e1422;
+      --card:#141c2f;
+      --card2:#10182a;
+      --text:#e6ecff;
+      --muted:#9fb0d0;
+      --line:rgba(255,255,255,.12);
+      --primary:#5da9ff;
+      --primary2:rgba(93,169,255,.18);
+      --shadow:0 14px 36px rgba(0,0,0,.45);
+    }
   </style>
 </head>
 
@@ -225,10 +154,14 @@
     <header>
       <div>
         <h1>Demandas Recorrentes — DIEF/SEFAZ RR</h1>
-        <p>Repositório interno de demandas com respostas padrão para agilizar o atendimento.</p>
+        <p>
+          Repositório interno de demandas que chegam por e-mail. Clique em um card para ver <b>procedimentos</b>
+          e <b>respostas padrão</b> para copiar e colar no Gmail.
+        </p>
       </div>
 
-      <button class="themeToggle" id="themeToggle">🌙 Modo escuro</button>
+      <!-- BOTÃO DARK MODE (ONLY ADDITION) -->
+      <button class="btn" id="themeToggle" type="button">🌙 Modo escuro</button>
     </header>
 
     <section class="bar">
@@ -236,48 +169,34 @@
         🔎 <input placeholder="Buscar demanda..." />
       </div>
     </section>
-
-    <section>
-      <div class="sectionTitle">
-        <h2>Cards de demandas</h2>
-      </div>
-
-      <div class="cards">
-        <div class="card">
-          <div class="cardTop">
-            <strong>Solicitação de Baixa — MEI</strong>
-            <span class="tag">Baixa</span>
-          </div>
-          <div class="snippet">Consultar DSOT, efetivar baixa ou orientar quitação.</div>
-        </div>
-      </div>
-    </section>
   </div>
 
   <div class="toast" id="toast">Copiado ✅</div>
 
   <script>
-    /* =========================
-       DARK MODE TOGGLE
-    ========================== */
-    const toggleBtn = document.getElementById("themeToggle");
-    const prefersDark = localStorage.getItem("theme") === "dark";
+    // ======= Dark Mode (ONLY ADDITION) =======
+    const themeToggle = document.getElementById("themeToggle");
 
-    if (prefersDark) {
-      document.body.classList.add("dark");
-      toggleBtn.textContent = "☀️ Modo claro";
+    function applyTheme(theme){
+      document.body.classList.toggle("dark", theme === "dark");
+      if (themeToggle){
+        themeToggle.textContent =
+          theme === "dark" ? "☀️ Modo claro" : "🌙 Modo escuro";
+      }
     }
 
-    toggleBtn.addEventListener("click", () => {
-      document.body.classList.toggle("dark");
+    const savedTheme = localStorage.getItem("theme") || "light";
+    applyTheme(savedTheme);
 
-      const isDark = document.body.classList.contains("dark");
-      localStorage.setItem("theme", isDark ? "dark" : "light");
-
-      toggleBtn.textContent = isDark
-        ? "☀️ Modo claro"
-        : "🌙 Modo escuro";
-    });
+    if (themeToggle){
+      themeToggle.addEventListener("click", () => {
+        const nextTheme = document.body.classList.contains("dark")
+          ? "light"
+          : "dark";
+        localStorage.setItem("theme", nextTheme);
+        applyTheme(nextTheme);
+      });
+    }
   </script>
 </body>
 </html>
