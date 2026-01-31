@@ -21,7 +21,6 @@
       --shadow:0 10px 28px rgba(11,27,58,.12);
       --radius:18px;
 
-      --mono: ui-monospace, Menlo, Consolas, monospace;
       --sans: system-ui, -apple-system, Segoe UI, Roboto, Arial;
     }
 
@@ -260,7 +259,7 @@
       white-space:nowrap;
     }
     .btn.primary{
-      background:var(--primary2);
+      background:rgba(10,98,190,.14);
       border-color:rgba(10,98,190,.45);
     }
 
@@ -311,50 +310,18 @@
       transform:translateX(-50%) translateY(-2px);
     }
 
-    /* ===== Toggle CNPJ / IE + ações ===== */
-    .idHead{
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap:10px;
-      margin-bottom:10px;
-    }
-
-    .idToggle{
-      display:flex;
-      gap:6px;
-      padding:4px;
-      border:1px solid var(--line);
-      border-radius:999px;
-      background: rgba(255,255,255,.75);
-    }
-
-    .idBtn{
-      border:none;
-      background:transparent;
-      padding:6px 10px;
-      border-radius:999px;
-      font-size:12px;
-      cursor:pointer;
-      color:var(--muted);
-    }
-
-    .idBtn.active{
-      background: rgba(10,98,190,.14);
-      color: var(--text);
-      border:1px solid rgba(10,98,190,.35);
-    }
-
-    .idBox{
+    /* ===== Painel de Identificadores (CNPJ + IE) ===== */
+    .idRow{
       display:flex;
       align-items:center;
       gap:8px;
-      max-width:520px;
       flex-wrap:wrap;
+      margin-bottom:10px;
     }
+    .idRow:last-child{ margin-bottom:0; }
 
-    .idBox input{
-      width:220px;
+    .idRow input{
+      width:240px;
       padding:8px 10px;
       border-radius:10px;
       border:1px solid var(--line);
@@ -418,21 +385,20 @@
       </div>
 
       <div>
-        <!-- Painel Identificador -->
+        <!-- Painel CNPJ + IE -->
         <div class="panel" style="margin-bottom:16px;">
-          <div class="idHead">
-            <h4 id="id_label">CNPJ (colar aqui)</h4>
+          <h4>Identificadores (colar aqui)</h4>
 
-            <div class="idToggle" role="tablist" aria-label="Alternar identificador">
-              <button class="idBtn active" id="toggle_cnpj" type="button">CNPJ</button>
-              <button class="idBtn" id="toggle_ie" type="button">IE</button>
-            </div>
+          <div class="idRow">
+            <input id="cnpj_input" type="text" placeholder="CNPJ (00.000.000/0000-00)" />
+            <button class="btn" id="copy_cnpj" type="button">Copiar</button>
+            <button class="btn" id="clear_cnpj" type="button">Limpar</button>
           </div>
 
-          <div class="idBox">
-            <input id="id_input" type="text" placeholder="00.000.000/0000-00" />
-            <button class="btn" id="copy_id" type="button">Copiar</button>
-            <button class="btn" id="clear_all" type="button">Limpar</button>
+          <div class="idRow">
+            <input id="ie_input" type="text" placeholder="IE (Inscrição Estadual)" />
+            <button class="btn" id="copy_ie" type="button">Copiar</button>
+            <button class="btn" id="clear_ie" type="button">Limpar</button>
           </div>
         </div>
 
@@ -575,34 +541,16 @@
     const emailBox = document.getElementById("m_email");
     const copyEmailBtn = document.getElementById("copy_email");
 
-    // Identificador
-    const idLabel = document.getElementById("id_label");
-    const idInput = document.getElementById("id_input");
-    const copyIdBtn = document.getElementById("copy_id");
-    const clearAllBtn = document.getElementById("clear_all");
-    const toggleCnpj = document.getElementById("toggle_cnpj");
-    const toggleIe = document.getElementById("toggle_ie");
+    // Identificadores
+    const cnpjInput = document.getElementById("cnpj_input");
+    const ieInput = document.getElementById("ie_input");
+    const copyCnpjBtn = document.getElementById("copy_cnpj");
+    const clearCnpjBtn = document.getElementById("clear_cnpj");
+    const copyIeBtn = document.getElementById("copy_ie");
+    const clearIeBtn = document.getElementById("clear_ie");
 
     let current = null;
     let currentMode = "ok"; // ok | bad
-    let idMode = "cnpj"; // cnpj | ie
-
-    function setIdMode(mode){
-      idMode = mode;
-      toggleCnpj.classList.toggle("active", mode === "cnpj");
-      toggleIe.classList.toggle("active", mode === "ie");
-
-      if (mode === "cnpj"){
-        idLabel.textContent = "CNPJ (colar aqui)";
-        idInput.placeholder = "00.000.000/0000-00";
-      } else {
-        idLabel.textContent = "IE (colar aqui)";
-        idInput.placeholder = "Inscrição Estadual";
-      }
-    }
-
-    toggleCnpj.addEventListener("click", () => setIdMode("cnpj"));
-    toggleIe.addEventListener("click", () => setIdMode("ie"));
 
     function openModal(d){
       current = d;
@@ -647,9 +595,9 @@
 
       document.getElementById("m_links").innerHTML = d.linksHtml || "";
 
-      // reset identificador e campo
-      setIdMode("cnpj");
-      idInput.value = "";
+      // reset campos (sem mexer em checklist por botões)
+      cnpjInput.value = "";
+      ieInput.value = "";
 
       setEmailView();
       modal.showModal();
@@ -666,7 +614,8 @@
     function closeModal(){
       modal.close();
       current = null;
-      idInput.value = "";
+      cnpjInput.value = "";
+      ieInput.value = "";
     }
 
     mClose.addEventListener("click", closeModal);
@@ -694,27 +643,44 @@
       setEmailView();
     });
 
-    // ======= Copiar ID (CNPJ/IE) =======
-    copyIdBtn.addEventListener("click", async () => {
-      const value = (idInput.value || "").trim();
-      if (!value) return toast("Cole um valor primeiro");
+    // ======= Copiar / Limpar CNPJ =======
+    copyCnpjBtn.addEventListener("click", async () => {
+      const value = (cnpjInput.value || "").trim();
+      if (!value) return toast("Cole um CNPJ primeiro");
 
       try{
         await navigator.clipboard.writeText(value);
-        toast(`${idMode.toUpperCase()} copiado ✅`);
+        toast("CNPJ copiado ✅");
       } catch {
-        idInput.select();
+        cnpjInput.select();
         document.execCommand("copy");
-        toast(`${idMode.toUpperCase()} copiado ✅`);
+        toast("CNPJ copiado ✅");
       }
     });
 
-    // ======= Limpar (campo + checklist) =======
-    clearAllBtn.addEventListener("click", () => {
-      idInput.value = "";
-      });
+    clearCnpjBtn.addEventListener("click", () => {
+      cnpjInput.value = "";
+      toast("CNPJ limpo ✅");
+    });
 
-      toast("Limpo ✅");
+    // ======= Copiar / Limpar IE =======
+    copyIeBtn.addEventListener("click", async () => {
+      const value = (ieInput.value || "").trim();
+      if (!value) return toast("Cole uma IE primeiro");
+
+      try{
+        await navigator.clipboard.writeText(value);
+        toast("IE copiada ✅");
+      } catch {
+        ieInput.select();
+        document.execCommand("copy");
+        toast("IE copiada ✅");
+      }
+    });
+
+    clearIeBtn.addEventListener("click", () => {
+      ieInput.value = "";
+      toast("IE limpa ✅");
     });
 
     // ======= Copiar e-mail (HTML + texto) =======
