@@ -236,6 +236,22 @@
       padding:0;
     }
     .panel li{ margin:6px 0; }
+/* Checklist de procedimentos */
+.checklist-item{
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.checklist-item input[type="checkbox"]{
+  margin-top: 3px;
+  cursor: pointer;
+}
+
+.checklist-item.done span{
+  text-decoration: line-through;
+  color: rgba(60,86,122,.65);
+}
 
     .muted{ color:var(--muted); }
 
@@ -550,11 +566,25 @@ Secretaria de Estado da Fazenda de Roraima - SEFAZ/RR<br>
 
       const steps = document.getElementById("m_steps");
       steps.innerHTML = "";
-      (d.steps||[]).forEach(s => {
-        const li = document.createElement("li");
-        li.textContent = s;
-        steps.appendChild(li);
-      });
+     (d.steps || []).forEach(s => {
+  const li = document.createElement("li");
+  li.className = "checklist-item";
+
+  const checkbox = document.createElement("input");
+  checkbox.type = "checkbox";
+
+  const text = document.createElement("span");
+  text.textContent = s;
+
+  checkbox.addEventListener("change", () => {
+    li.classList.toggle("done", checkbox.checked);
+  });
+
+  li.appendChild(checkbox);
+  li.appendChild(text);
+  steps.appendChild(li);
+});
+
 
       const docs = document.getElementById("m_docs");
       docs.innerHTML = "";
