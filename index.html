@@ -403,6 +403,33 @@
       </div>
 <h4>CNPJ (colar aqui)</h4>
 
+<div class="cnpjBox">
+  <input
+    id="cnpj_input"
+    type="text"
+    placeholder="00.000.000/0000-00"
+  />
+  <button class="btn" id="copy_cnpj" type="button">
+    Copiar
+  </button>
+</div>
+
+/* ===== CNPJ compacto ===== */
+.cnpjBox{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  max-width:320px;   /* controla o tamanho total */
+}
+
+.cnpjBox input{
+  width:200px;       /* largura do campo */
+  padding:8px 10px;
+  border-radius:10px;
+  border:1px solid var(--line);
+  font-size:13px;
+}
+
 <div style="display:flex; gap:8px; margin-bottom:14px;">
   <input
     id="cnpj_input"
