@@ -5,746 +5,271 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <meta name="robots" content="noindex,nofollow" />
   <title>Diagnóstico de Ocorrências — DIEF/SEFAZ-RR</title>
+
   <style>
     :root{
-  /* Base institucional azul (mais claro) */
-  --bg:#f3f7ff;          /* fundo bem claro azulado */
-  --card:#ffffff;        /* cards brancos */
-  --card2:#f7faff;       /* variação suave */
-  --text:#0b1b3a;        /* texto azul-marinho */
-  --muted:#3c567a;       /* texto secundário */
-
-  --line:rgba(11,27,58,.14);
-  --chip:rgba(10,98,190,.08);
-
-  --ok:#16a34a;
-  --warn:#f59e0b;
-  --bad:#dc2626;
-  --info:#0a62be;
-
-  --shadow: 0 10px 28px rgba(11,27,58,.12);
-  --radius: 18px;
-
-  --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
-  --sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, "Helvetica Neue", "Noto Sans", "Liberation Sans", sans-serif;
-}
+      --bg:#f3f7ff;
+      --card:#ffffff;
+      --card2:#f7faff;
+      --text:#0b1b3a;
+      --muted:#3c567a;
+      --line:rgba(11,27,58,.14);
+      --chip:rgba(10,98,190,.08);
+      --ok:#16a34a;
+      --warn:#f59e0b;
+      --bad:#dc2626;
+      --info:#0a62be;
+      --shadow:0 10px 28px rgba(11,27,58,.12);
+      --radius:18px;
+      --mono: ui-monospace, Menlo, Consolas, monospace;
+      --sans: system-ui, -apple-system, Segoe UI, Roboto, Arial;
+    }
 
     *{ box-sizing:border-box; }
     body{
-      margin:0; font-family:var(--sans); background: radial-gradient(1200px 800px at 20% -20%, rgba(102,179,255,.18), transparent 60%),
-      radial-gradient(900px 700px at 90% 0%, rgba(255,92,122,.14), transparent 60%),
-      radial-gradient(900px 700px at 30% 110%, rgba(69,224,138,.10), transparent 60%),
-      var(--bg);
+      margin:0;
+      font-family:var(--sans);
+      background:
+        radial-gradient(1100px 700px at 15% -10%, rgba(10,98,190,.18), transparent 60%),
+        radial-gradient(900px 600px at 90% 0%, rgba(10,98,190,.10), transparent 60%),
+        var(--bg);
       color:var(--text);
     }
-    a{ color:inherit; }
-    .wrap{ max-width:1100px; margin:0 auto; padding:28px 18px 70px; }
-    header{ display:flex; gap:14px; align-items:flex-start; justify-content:space-between; flex-wrap:wrap; }
-    .title h1{ margin:0 0 6px; font-size:22px; letter-spacing:.2px; }
-    .title p{ margin:0; color:var(--muted); font-size:13px; max-width:820px; line-height:1.4; }
-    .pill{
-      display:inline-flex; align-items:center; gap:8px; padding:10px 12px; border:1px solid var(--line);
-      border-radius:999px; background:rgba(255,255,255,.04); color:var(--muted); font-size:12px;
-      box-shadow: 0 10px 30px rgba(0,0,0,.18);
-    }
-    .pill b{ color:var(--text); font-weight:600; }
-    .grid{ display:grid; gap:14px; }
-    .kpis{ grid-template-columns: repeat(5, minmax(0,1fr)); margin-top:18px; }
-    @media (max-width: 980px){ .kpis{ grid-template-columns: repeat(2, minmax(0,1fr)); } }
-    @media (max-width: 520px){ .kpis{ grid-template-columns: 1fr; } }
-    .kpi{
-      background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.03));
-      border:1px solid var(--line); border-radius:var(--radius); padding:14px 14px 12px;
-      box-shadow: var(--shadow);
-    }
-    .kpi .label{ color:var(--muted); font-size:12px; }
-    .kpi .value{ font-size:22px; font-weight:700; margin-top:6px; letter-spacing:.2px; }
-    .kpi .hint{ color:var(--muted); font-size:12px; margin-top:6px; }
-    .bar{
-      margin-top:16px; border:1px solid var(--line); border-radius:var(--radius); background:rgba(255,255,255,.03);
-      padding:14px; box-shadow: var(--shadow);
-    }
-    .barTop{ display:flex; gap:12px; align-items:center; justify-content:space-between; flex-wrap:wrap; }
+
+    .wrap{ max-width:1100px; margin:0 auto; padding:28px 18px 80px; }
+
+    h1{ font-size:22px; margin:0 0 6px; }
+    p{ margin:0; }
+
+    header p{ color:var(--muted); font-size:13px; max-width:900px; }
+
+    /* SEARCH */
     .search{
-      flex:1; min-width:260px; display:flex; gap:10px; align-items:center;
-      border:1px solid var(--line); background:rgba(0,0,0,.18); border-radius:999px; padding:10px 12px;
+      display:flex; align-items:center; gap:10px;
+      border:1px solid var(--line);
+      background:#fff;
+      border-radius:999px;
+      padding:10px 14px;
+      box-shadow:0 6px 18px rgba(11,27,58,.08);
     }
     .search input{
-      flex:1; border:0; outline:none; background:transparent; color:var(--text); font-size:14px;
+      border:none; outline:none; width:100%;
+      font-size:14px; color:var(--text);
     }
-    .search input::placeholder{ color:rgba(168,177,214,.75); }
-    .chips{ display:flex; gap:8px; flex-wrap:wrap; }
+    .search input::placeholder{ color:rgba(60,86,122,.7); }
+    .search:focus-within{
+      border-color:rgba(10,98,190,.45);
+      box-shadow:0 0 0 4px rgba(10,98,190,.12);
+    }
+
+    /* CHIPS */
+    .chips{ display:flex; gap:8px; flex-wrap:wrap; margin-top:10px; }
     .chip{
-  cursor:pointer; user-select:none;
-  border:1px solid var(--line);
-  background: rgba(255,255,255,.85);
-  padding:8px 10px;
-  border-radius:999px;
-  font-size:12px;
-  color: rgba(60,86,122,.95);
-  transition: transform .06s ease, background .12s ease;
-}
-
-    .chip:hover{ transform: translateY(-1px); }
-    .chip.active{ background:rgba(102,179,255,.18); color:var(--text); border-color:rgba(102,179,255,.35); }
-    .subnote{ margin-top:10px; color:var(--muted); font-size:12px; line-height:1.4; }
-    .list{ margin-top:18px; }
-    .sectionTitle{
-      display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap;
-      margin:18px 2px 10px;
-    }
-    .sectionTitle h2{ margin:0; font-size:15px; color:var(--text); letter-spacing:.2px; }
-    .sectionTitle .count{ color:var(--muted); font-size:12px; }
-    .cards{
-      display:grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap:14px;
-    }
-    @media (max-width: 980px){ .cards{ grid-template-columns: repeat(2, minmax(0, 1fr)); } }
-    @media (max-width: 640px){ .cards{ grid-template-columns: 1fr; } }
-    .card{
-      border:1px solid var(--line); border-radius:var(--radius);
-      background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.03));
-      box-shadow: var(--shadow);
-      padding:14px;
-      cursor:pointer;
-      transition: transform .08s ease, border-color .12s ease;
-      min-height: 150px;
-    }
-    .card:hover{ transform: translateY(-2px); border-color: rgba(255,255,255,.18); }
-    .card .top{ display:flex; align-items:flex-start; justify-content:space-between; gap:10px; }
-    .card h3{ margin:0; font-size:14px; line-height:1.25; }
-    .meta{ display:flex; gap:8px; flex-wrap:wrap; margin-top:10px; }
-    .badge{
-      display:inline-flex; align-items:center; gap:6px;
-      padding:6px 9px; border-radius:999px; font-size:11px;
-      border:1px solid var(--line); background:rgba(0,0,0,.18); color:var(--muted);
-    }
-    .badge b{ font-weight:600; color:var(--text); }
-    .badge.ok{ border-color: rgba(69,224,138,.35); background: rgba(69,224,138,.12); }
-    .badge.warn{ border-color: rgba(255,209,102,.35); background: rgba(255,209,102,.12); }
-    .badge.bad{ border-color: rgba(255,92,122,.35); background: rgba(255,92,122,.12); }
-    .badge.info{ border-color: rgba(102,179,255,.35); background: rgba(102,179,255,.12); }
-    .snippet{ margin-top:10px; color:var(--muted); font-size:12px; line-height:1.45; }
-    .footerRow{ margin-top:12px; display:flex; align-items:center; justify-content:space-between; gap:10px; color:var(--muted); font-size:12px; }
-    .btn{
-      border:1px solid var(--line); background:rgba(255,255,255,.05); color:var(--text);
-      padding:10px 12px; border-radius:12px; font-size:12px; cursor:pointer;
-      transition: transform .06s ease;
-    }
-    .btn:hover{ transform: translateY(-1px); }
-    .btn.primary{ border-color: rgba(102,179,255,.35); background: rgba(102,179,255,.14); }
-    .btn.danger{ border-color: rgba(255,92,122,.35); background: rgba(255,92,122,.12); }
-    .btn.mono{ font-family: var(--mono); font-size: 11px; }
-
-    /* Modal */
-   dialog{
-      width:min(960px, calc(100% - 24px));
+      padding:8px 12px; border-radius:999px;
       border:1px solid var(--line);
-      border-radius: 22px;
-      background: #ffffff;
-      color: var(--text);
-      box-shadow: 0 30px 80px rgba(11,27,58,.28);
+      background:#fff;
+      cursor:pointer;
+      font-size:12px;
+      color:var(--muted);
+    }
+    .chip.active{
+      background:rgba(10,98,190,.14);
+      border-color:rgba(10,98,190,.4);
+      color:var(--text);
+    }
+
+    /* CARDS */
+    .cards{
+      display:grid;
+      grid-template-columns:repeat(auto-fit,minmax(300px,1fr));
+      gap:16px;
+      margin-top:20px;
+    }
+    .card{
+      background:var(--card);
+      border:1px solid var(--line);
+      border-radius:var(--radius);
+      padding:14px;
+      box-shadow:var(--shadow);
+      cursor:pointer;
+    }
+    .card h3{ margin:0 0 6px; font-size:14px; }
+    .snippet{ font-size:12px; color:var(--muted); margin-top:6px; }
+
+    .badge{
+      display:inline-block;
+      padding:5px 10px;
+      border-radius:999px;
+      font-size:11px;
+      margin:4px 4px 0 0;
+      border:1px solid var(--line);
+    }
+    .badge.bad{ background:rgba(220,38,38,.12); }
+    .badge.warn{ background:rgba(245,158,11,.14); }
+    .badge.info{ background:rgba(10,98,190,.14); }
+
+    /* MODAL */
+    dialog{
+      width:min(960px,calc(100% - 24px));
+      border-radius:22px;
+      border:1px solid var(--line);
+      background:#fff;
       padding:0;
-}
-
+      box-shadow:0 30px 80px rgba(11,27,58,.3);
+    }
     dialog::backdrop{
-  background: rgba(11,27,58,.28);
-  backdrop-filter: blur(3px);
-}
-    .modalHead{
-      display:flex; align-items:flex-start; justify-content:space-between; gap:12px;
-      padding:16px 16px 12px;
-      border-bottom:1px solid var(--line);
+      background:rgba(11,27,58,.28);
+      backdrop-filter:blur(3px);
     }
-    .modalHead h3{ margin:0; font-size:15px; line-height:1.25; }
-    .modalHead .close{ border-radius:999px; padding:8px 10px; }
-    .modalBody{ padding:16px; display:grid; grid-template-columns: 1.1fr .9fr; gap:14px; }
-    @media (max-width: 860px){ .modalBody{ grid-template-columns: 1fr; } }
-   .panel{
-  border:1px solid var(--line);
-  border-radius:var(--radius);
-  background: #f7faff;
-  padding:14px;
-}
 
+    .modalHead{
+      padding:16px;
+      border-bottom:1px solid var(--line);
+      display:flex; justify-content:space-between; align-items:start;
+    }
+
+    .modalBody{
+      padding:16px;
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:16px;
+    }
+    @media(max-width:800px){
+      .modalBody{ grid-template-columns:1fr; }
+    }
+
+    .panel{
+      background:#f7faff;
+      border:1px solid var(--line);
+      border-radius:var(--radius);
+      padding:14px;
+    }
     .panel h4{
-  margin:0 0 8px;
-  font-size:12px;
-  letter-spacing:.3px;
-  text-transform:uppercase;
-  color: rgba(60,86,122,.95);
-}
-    .panel p{ margin:0; color:var(--text); font-size:13px; line-height:1.5; }
-    .panel ul{ margin:10px 0 0 18px; padding:0; color: var(--text); font-size:13px; line-height:1.55; }
-    .panel ol{ margin:10px 0 0 18px; padding:0; color: var(--text); font-size:13px; line-height:1.55; }
-    .panel li{ margin: 6px 0; }
-    .modalFoot{
-      display:flex; gap:10px; flex-wrap:wrap; align-items:center; justify-content:space-between;
-      padding:14px 16px;
-      border-top:1px solid var(--line);
+      margin:0 0 8px;
+      font-size:12px;
+      text-transform:uppercase;
+      color:var(--muted);
     }
-    .muted{ color:var(--muted); font-size:12px; line-height:1.4; }
-    .copyRow{ display:flex; gap:10px; flex-wrap:wrap; }
-    .toast{
-      position:fixed; bottom:18px; left:50%; transform:translateX(-50%);
-      background: rgba(0,0,0,.75); border:1px solid rgba(255,255,255,.15);
-      padding:10px 12px; border-radius: 999px; color: var(--text); font-size:12px;
-      opacity:0; pointer-events:none; transition: opacity .18s ease, transform .18s ease;
+    .panel ul, .panel ol{
+      margin:8px 0 0 18px;
+      font-size:13px;
+      line-height:1.55;
     }
-    .toast.show{ opacity:1; transform: translateX(-50%) translateY(-2px); }
-    .smallcode{ font-family:var(--mono); font-size:11px; color: rgba(232,236,255,.9); }
+
+    .emailBox{
+      background:#fff;
+      border:1px solid var(--line);
+      border-radius:14px;
+      padding:12px;
+      white-space:pre-wrap;
+      font-size:13px;
+      line-height:1.55;
+    }
+
+    .btn{
+      padding:10px 14px;
+      border-radius:12px;
+      border:1px solid var(--line);
+      background:#fff;
+      cursor:pointer;
+      font-size:12px;
+    }
+    .btn.primary{
+      background:rgba(10,98,190,.14);
+      border-color:rgba(10,98,190,.45);
+    }
   </style>
 </head>
 
 <body>
-  <div class="wrap">
-    <header>
-      <div class="title">
-        <h1>Diagnóstico de Ocorrências Recorrentes — DIEF/SEFAZ-RR</h1>
-        <p>
-          Uso interno. Página para visualizar problemas recorrentes ligados ao sistema e consultar procedimentos padronizados (passo a passo).
-          Atualize conforme novos padrões, correções e orientações da TI/gestão.
-        </p>
-      </div>
-      <div class="pill">
-        <span>Modo:</span> <b>Landing page estática</b> <span>•</span>
-        <span class="smallcode">index.html</span>
-      </div>
-    </header>
+<div class="wrap">
+  <header>
+    <h1>Diagnóstico de Ocorrências Recorrentes — DIEF/SEFAZ-RR</h1>
+    <p>Uso interno. Página para diagnóstico visual e procedimentos padronizados.</p>
+  </header>
 
-    <section class="grid kpis" id="kpis"></section>
-
-    <section class="bar">
-      <div class="barTop">
-        <div class="search" title="Pesquisar por título, sintomas, categoria, tags...">
-          🔎 <input id="q" type="text" placeholder="Buscar (ex.: DARE, DSOT, Simples, agrupamento, baixa, SEI...)" />
-        </div>
-        <div class="chips" id="chips"></div>
-      </div>
-      <div class="subnote">
-        Dica: clique em um card para abrir o detalhe com <b>Como identificar</b>, <b>Procedimento</b> e botões para copiar o texto.
-      </div>
-    </section>
-
-    <section class="list">
-      <div class="sectionTitle">
-        <h2>Lista de problemas</h2>
-        <div class="count" id="count"></div>
-      </div>
-      <div class="cards" id="cards"></div>
-    </section>
+  <div class="search" style="margin-top:16px;">
+    🔎 <input id="q" placeholder="Buscar (DARE, DSOT, Simples, agrupamento…)" />
   </div>
 
-  <dialog id="modal">
-    <div class="modalHead">
-      <div>
-        <h3 id="m_title">Detalhe</h3>
-        <div class="meta" id="m_badges" style="margin-top:10px;"></div>
-      </div>
-      <button class="btn close" id="m_close">✕</button>
+  <div class="chips" id="chips"></div>
+
+  <div class="cards" id="cards"></div>
+</div>
+
+<dialog id="modal">
+  <div class="modalHead">
+    <h3 id="m_title"></h3>
+    <button class="btn" onclick="modal.close()">✕</button>
+  </div>
+
+  <div class="modalBody">
+    <div class="panel">
+      <h4>Procedimento</h4>
+      <ol id="m_steps"></ol>
     </div>
 
-    <div class="modalBody">
-      <div class="panel">
-        <h4>Descrição</h4>
-        <p id="m_desc"></p>
-
-        <div style="height:12px"></div>
-
-        <h4>Impacto / Risco</h4>
-        <ul id="m_impact"></ul>
-
-        <div style="height:12px"></div>
-
-        <h4>Como identificar</h4>
-        <ul id="m_identify"></ul>
-      </div>
-
-      <div class="panel">
-        <h4>Procedimento</h4>
-        <ol id="m_steps"></ol>
-
-        <div style="height:12px"></div>
-
-        <h4>Evidências recomendadas</h4>
-        <ul id="m_evidence"></ul>
-
-        <div style="height:12px"></div>
-
-        <h4>Resultado esperado</h4>
-        <p id="m_expected"></p>
+    <div class="panel">
+      <h4>Resposta padrão (e-mail)</h4>
+      <div class="emailBox" id="m_email"></div>
+      <div style="margin-top:10px;">
+        <button class="btn primary" onclick="copyEmail()">Copiar resposta padrão</button>
       </div>
     </div>
+  </div>
+</dialog>
 
-    <div class="modalFoot">
-      <div class="copyRow">
-        <button class="btn primary" id="copy_proc">Copiar procedimento</button>
-        <button class="btn" id="copy_summary">Copiar resumo p/ e-mail interno</button>
-      </div>
-      <div class="muted">
-        Sempre registrar evidências e encaminhamentos no processo/controle interno quando aplicável.
-      </div>
-    </div>
-  </dialog>
+<script>
+const PROBLEMS = [
+{
+  title:"DARE Avulso pago, mas débito não baixou automaticamente",
+  snippet:"Pagamento confirmado, mas sistema/DSOT não reflete baixa.",
+  steps:[
+    "Consultar DSOT e identificar débitos em aberto.",
+    "Confirmar pagamento do DARE no sistema.",
+    "Conferir se o valor foi creditado ao Tesouro.",
+    "Anexar comprovantes.",
+    "Encaminhar para baixa/ajuste interno."
+  ],
+  emailTemplate:
+`Prezado(a),
 
-  <div class="toast" id="toast">Copiado ✅</div>
+Verificamos a existência de comprovante de pagamento do DARE informado. No entanto, o sistema ainda não refletiu automaticamente a baixa do(s) débito(s).
 
-  <script>
-    // ======= DADOS (edite aqui para adicionar/ajustar problemas) =======
-    const PROBLEMS = [
-      {
-        id: "dare-avulso-sem-baixa",
-        title: "DARE Avulso pago, mas débito não baixou automaticamente",
-        category: "Arrecadação/DARE",
-        recurrence: "Alta",
-        status: "Aberto",
-        howShort: "Comprovante de pagamento existe, mas DSOT/sistema não reflete baixa.",
-        desc: "Ocorrência em que o contribuinte paga por DARE Avulso e o sistema não reconhece/baixa automaticamente os débitos, exigindo conferência manual e encaminhamento interno.",
-        impact: [
-          "Retrabalho para conferência e anexação de comprovantes.",
-          "Risco de resposta incorreta ao contribuinte.",
-          "Inconsistência entre pagamento efetivo e situação no DSOT/sistema."
-        ],
-        identify: [
-          "Existe comprovante bancário do pagamento do DARE.",
-          "No sistema/DSOT, o débito permanece em aberto ou não aparece como quitado.",
-          "Valores batem (ou quase batem), mas status não muda."
-        ],
-        steps: [
-          "Consultar DSOT e registrar quais débitos constam em aberto (valores e referências).",
-          "Localizar no sistema da SEFAZ o registro do DARE e confirmar status de pagamento/compensação.",
-          "Conferir se o pagamento caiu na conta do Tesouro (quando houver evidência sistêmica).",
-          "Comparar valores: total pago x soma dos débitos indicados.",
-          "Anexar evidências: DSOT, comprovante bancário, comprovante do sistema/DARE.",
-          "Registrar resumo do achado e encaminhar para providências internas (baixa manual/ajuste).",
-          "Após regularização, reconsultar DSOT e verificar se a baixa refletiu."
-        ],
-        evidence: ["DSOT atualizado", "Comprovante bancário", "Comprovante do DARE no sistema", "Print/registro da tela com status"],
-        expected: "Débitos baixados corretamente no sistema/DSOT e registro interno do procedimento realizado.",
-        tags: ["baixa", "pagamento", "dare avulso", "dsot"]
-      },
-      {
-        id: "dare-agrupamento-sem-espelho",
-        title: "DARE Agrupamento sem espelho de itens (sem rastreabilidade)",
-        category: "Arrecadação/DARE",
-        recurrence: "Alta",
-        status: "Em TI",
-        howShort: "DARE de agrupamento pago, mas não é possível listar quais débitos compõem o agrupamento.",
-        desc: "O DARE de agrupamento não apresenta (ou o sistema não persiste/exibe) a composição dos débitos/notas, dificultando a conferência e a baixa item a item.",
-        impact: [
-          "Falha de rastreabilidade do pagamento (DARE → itens).",
-          "Risco de baixa incorreta ou não baixa.",
-          "Aumento de demanda para conferência manual."
-        ],
-        identify: [
-          "Pagamento do DARE agrupamento confirmado.",
-          "Sistema/relatórios não exibem os itens/debitos vinculados ao agrupamento.",
-          "DSOT não reflete baixa coerente com o valor total pago."
-        ],
-        steps: [
-          "Confirmar pagamento do DARE agrupamento (sistema e comprovante bancário).",
-          "Levantar, no DSOT, quais débitos poderiam compor o total pago (soma aproximada).",
-          "Registrar evidências de que não há espelho/composição disponível no sistema.",
-          "Montar planilha/registro interno: débitos suspeitos + valores + soma vs DARE.",
-          "Encaminhar para TI a demanda de implementação do 'espelho do agrupamento' e baixa item a item.",
-          "Enquanto não implementado: proceder com conferência manual e anexação das evidências.",
-          "Após providência, revalidar baixa no DSOT."
-        ],
-        evidence: ["DARE agrupamento", "Comprovante bancário", "DSOT", "Registro interno de composição estimada", "Print evidenciando ausência do espelho"],
-        expected: "Implementação/consulta do espelho do agrupamento e baixa item a item; no curto prazo, conferência documentada e encaminhamento à TI.",
-        tags: ["agrupamento", "rastreabilidade", "itens", "ti"]
-      },
-      {
-        id: "debitos-nao-constam-agrupados",
-        title: "Débitos não constam como agrupados, apesar de valor total bater",
-        category: "DSOT/Débitos",
-        recurrence: "Média",
-        status: "Aberto",
-        howShort: "Soma dos comprovantes bate, mas sistema não marca todos os débitos como agrupados/quitados.",
-        desc: "Situação em que somente parte dos débitos aparece como agrupada/quitada no sistema, embora haja evidências de pagamento que cobrem a totalidade.",
-        impact: [
-          "Contribuinte fica irregular indevidamente.",
-          "Necessidade de análise detalhada e correção manual/ajuste sistêmico."
-        ],
-        identify: [
-          "Um ou poucos débitos constam como agrupados/quitados, outros não.",
-          "Comprovantes indicam quitação do total.",
-          "Divergência entre relatórios e registros de agrupamento."
-        ],
-        steps: [
-          "Listar todos os débitos no DSOT e identificar quais constam como pagos x em aberto.",
-          "Conferir comprovantes de pagamento (um a um) e vincular valores aos débitos.",
-          "Verificar se houve emissão de DAREs separados para alguns itens (ex.: último débito).",
-          "Registrar narrativa objetiva: o que consta como agrupado vs o que foi pago.",
-          "Anexar evidências e encaminhar para ajuste de baixa/correção de vínculo no sistema.",
-          "Revalidar DSOT após providências."
-        ],
-        evidence: ["DSOT", "DARE(s) envolvidos", "Comprovantes bancários", "Relatórios/prints do sistema"],
-        expected: "Todos os débitos pagos devem constar como quitados e/ou corretamente vinculados ao agrupamento no sistema.",
-        tags: ["divergência", "agrupamento", "baixa", "dsot"]
-      },
-      {
-        id: "ultimo-debito-desagrupado",
-        title: "Último débito desagrupado e pago em guia separada (gera divergência)",
-        category: "Arrecadação/DARE",
-        recurrence: "Média",
-        status: "Aberto",
-        howShort: "Relatório total diverge após desagrupamento e pagamento separado de item.",
-        desc: "O contribuinte desagrupa um dos itens e paga em DARE separado; o sistema pode manter o agrupamento parcial sem refletir corretamente nos relatórios/DSOT.",
-        impact: ["Dificuldade de conciliar total do agrupamento com DSOT.", "Possível não reconhecimento de pagamento de parte dos itens."],
-        identify: ["Há evidência de desagrupamento.", "Existe DARE separado para um dos débitos.", "Total original do agrupamento não bate com relatório atual."],
-        steps: [
-          "Confirmar quais DAREs foram pagos e em quais datas (agrupamento e avulsos).",
-          "Recompor a conciliação: total pago = DARE agrupamento (parcial) + DARE separado (desagrupado).",
-          "Comparar com lista de débitos do DSOT e marcar quais itens correspondem a cada DARE.",
-          "Documentar divergência do relatório e anexar evidências.",
-          "Encaminhar para correção de baixa/vínculo no sistema."
-        ],
-        evidence: ["DARE agrupamento", "DARE separado", "Comprovantes bancários", "DSOT", "Relatório divergente"],
-        expected: "Baixa correta de todos os itens e consistência entre relatórios, agrupamento e DSOT.",
-        tags: ["desagrupamento", "conciliação", "dare"]
-      },
-      {
-        id: "cadastro-regime-normal-desatualizado",
-        title: "Cadastro desatualizado: contribuinte é Simples, mas consta Regime Normal",
-        category: "Cadastro/Regime",
-        recurrence: "Alta",
-        status: "Contornado",
-        howShort: "Cadastro estadual não refletiu enquadramento no Simples; gera obrigações/multas indevidas.",
-        desc: "Como o cadastro estadual pode não integrar automaticamente com a base nacional, é comum o regime ficar desatualizado, gerando obrigações acessórias indevidas.",
-        impact: ["Geração de multas indevidas (ex.: GIM) e atendimentos recorrentes.", "Inconsistência cadastral e risco operacional."],
-        identify: ["Contribuinte comprova optância no Simples.", "No DSOT/sistema, regime consta como Normal.", "Multas por obrigações que Simples não entrega."],
-        steps: [
-          "Confirmar optância do Simples (documento/consulta disponível).",
-          "Atualizar regime no sistema conforme procedimento interno (ex.: 'Atualizar individual').",
-          "Se houver multas indevidas vinculadas a GIM, proceder com baixa/exclusão conforme regra interna.",
-          "Registrar evidência do enquadramento e do ajuste cadastral.",
-          "Orientar o registro interno e reconsultar DSOT para validar."
-        ],
-        evidence: ["Comprovação do Simples (consulta/termo)", "DSOT antes/depois", "Print do ajuste cadastral"],
-        expected: "Regime atualizado no cadastro estadual, com efeitos conforme enquadramento, e regularização de pendências indevidas.",
-        tags: ["simples", "cadastro", "regime"]
-      },
-      {
-        id: "multas-gim-indevidas-simples",
-        title: "Multas de GIM indevidas para optante do Simples",
-        category: "Obrigações Acessórias",
-        recurrence: "Alta",
-        status: "Contornado",
-        howShort: "Optante do Simples não entrega GIM; multas por atraso são indevidas.",
-        desc: "Quando o regime está incorreto (ou a obrigação foi aplicada indevidamente), surgem multas por atraso de GIM para contribuintes do Simples.",
-        impact: ["Cobrança indevida e alto volume de e-mails.", "Risco de desgaste institucional."],
-        identify: ["Contribuinte é Simples.", "Existem multas relacionadas à GIM no DSOT.", "Cadastro/regime não estava atualizado ou obrigação aplicada indevidamente."],
-        steps: [
-          "Confirmar optância no Simples e vigência do enquadramento.",
-          "Atualizar regime no sistema, se necessário (procedimento interno).",
-          "Proceder com a retirada/baixa das multas de GIM indevidas conforme rotina do setor.",
-          "Registrar evidências (antes/depois).",
-          "Reconsultar DSOT para garantir regularização."
-        ],
-        evidence: ["Comprovação Simples", "DSOT", "Print da baixa das multas", "Registro interno"],
-        expected: "Multas de GIM indevidas removidas e DSOT regularizado.",
-        tags: ["gim", "multa", "simples"]
-      },
-      {
-        id: "sei-notificacoes-caixa",
-        title: "Notificações automáticas do SEI poluem a caixa de entrada",
-        category: "SEI/Notificações",
-        recurrence: "Média",
-        status: "Contornado",
-        howShort: "E-mails automáticos do SEI caem na caixa principal; precisa filtro/label.",
-        desc: "Mensagens automáticas do SEI competem com atendimentos reais, prejudicando triagem e produtividade.",
-        impact: ["Perda de foco na caixa de entrada.", "Risco de atrasar respostas importantes."],
-        identify: ["Volume alto de e-mails automáticos.", "Mesmos remetentes/assuntos repetidos."],
-        steps: [
-          "Identificar remetente(s) e padrões de assunto do SEI.",
-          "Criar filtro no Gmail/Grupo para aplicar marcador específico (ex.: 'SEI-AUTOMATICO').",
-          "Configurar para pular a Caixa de Entrada (arquivar) ou mover para categoria/label.",
-          "Testar com 2-3 mensagens recentes e validar que o filtro está funcionando.",
-          "Documentar o filtro no guia interno."
-        ],
-        evidence: ["Exemplos de e-mails do SEI", "Print do filtro", "Label criada"],
-        expected: "Notificações automáticas organizadas fora da caixa principal sem afetar atendimentos.",
-        tags: ["sei", "gmail", "filtro"]
-      },
-      {
-        id: "redesim-nao-integra",
-        title: "Integração inexistente: RedeSim x cadastro estadual (atualizações não refletem)",
-        category: "Cadastro/Regime",
-        recurrence: "Média",
-        status: "Em TI",
-        howShort: "Alterações na base nacional não atualizam automaticamente o cadastro estadual.",
-        desc: "Mudanças de condição (ex.: Simples) e eventos cadastrais não sincronizam automaticamente, exigindo correções manuais.",
-        impact: ["Inconsistência cadastral contínua.", "Demanda recorrente por atualizações manuais."],
-        identify: ["Contribuinte alega alteração na RedeSim/RFB.", "Cadastro estadual não mudou.", "Obrigações e pendências surgem por regime errado."],
-        steps: [
-          "Confirmar a alteração na base nacional (quando houver comprovação).",
-          "Atualizar manualmente o cadastro estadual conforme procedimento.",
-          "Registrar evidências e data do ajuste.",
-          "Encaminhar demanda estruturada à TI para integração/rotina de sincronização.",
-          "Monitorar reincidência e registrar casos para dimensionar impacto."
-        ],
-        evidence: ["Comprovação da alteração", "DSOT/print cadastro", "Registro interno de casos"],
-        expected: "Até integração existir: atualização manual padronizada; no futuro: sincronização automática e queda de recorrência.",
-        tags: ["redesim", "cadastro", "integração", "ti"]
-      }
-    ];
+Foi aberto procedimento interno para regularização da pendência. Orientamos acompanhar a situação após a atualização.
 
-    const CATEGORIES = ["Todas", ...new Set(PROBLEMS.map(p => p.category))];
+Atenciosamente,
 
-    // ======= Helpers =======
-    const el = (tag, attrs={}, children=[]) => {
-      const e = document.createElement(tag);
-      for (const [k,v] of Object.entries(attrs)){
-        if (k === "class") e.className = v;
-        else if (k.startsWith("on") && typeof v === "function") e.addEventListener(k.slice(2), v);
-        else e.setAttribute(k, v);
-      }
-      (Array.isArray(children) ? children : [children]).forEach(c => {
-        if (c === null || c === undefined) return;
-        e.appendChild(typeof c === "string" ? document.createTextNode(c) : c);
-      });
-      return e;
-    };
+Divisão de Informações Econômico-Fiscais - DIEF
+Departamento da Receita - DEPAR
+Secretaria de Estado da Fazenda de Roraima - SEFAZ/RR`
+}
+];
 
-    const badgeClass = (type, value) => {
-      if (type === "recurrence"){
-        if (value === "Alta") return "bad";
-        if (value === "Média") return "warn";
-        return "info";
-      }
-      if (type === "status"){
-        if (value === "Resolvido") return "ok";
-        if (value === "Contornado") return "info";
-        if (value === "Em TI") return "warn";
-        return "bad"; // Aberto
-      }
-      return "info";
-    };
+const cards = document.getElementById("cards");
+const modal = document.getElementById("modal");
+let current = null;
 
-    const toast = (msg="Copiado ✅") => {
-      const t = document.getElementById("toast");
-      t.textContent = msg;
-      t.classList.add("show");
-      setTimeout(() => t.classList.remove("show"), 1200);
-    };
+PROBLEMS.forEach(p=>{
+  const c=document.createElement("div");
+  c.className="card";
+  c.innerHTML=`<h3>${p.title}</h3><div class="snippet">${p.snippet}</div>`;
+  c.onclick=()=>openModal(p);
+  cards.appendChild(c);
+});
 
-    const copyText = async (text) => {
-      try{
-        await navigator.clipboard.writeText(text);
-        toast();
-      }catch(e){
-        // fallback
-        const ta = el("textarea", {style:"position:fixed;left:-9999px;top:-9999px;"}, text);
-        document.body.appendChild(ta);
-        ta.select();
-        document.execCommand("copy");
-        ta.remove();
-        toast();
-      }
-    };
+function openModal(p){
+  current=p;
+  document.getElementById("m_title").textContent=p.title;
+  document.getElementById("m_steps").innerHTML=p.steps.map(s=>`<li>${s}</li>`).join("");
+  document.getElementById("m_email").textContent=p.emailTemplate;
+  modal.showModal();
+}
 
-    // ======= Render =======
-    const state = {
-      q: "",
-      category: "Todas"
-    };
-
-    function computeKpis(items){
-      const total = items.length;
-      const alta = items.filter(p => p.recurrence==="Alta").length;
-      const media = items.filter(p => p.recurrence==="Média").length;
-      const baixa = items.filter(p => p.recurrence==="Baixa").length;
-      const emti = items.filter(p => p.status==="Em TI").length;
-      return [
-        {label:"Problemas cadastrados", value: total, hint:"Total de itens no painel"},
-        {label:"Alta recorrência", value: alta, hint:"Priorize correções estruturais"},
-        {label:"Média recorrência", value: media, hint:"Padronize procedimentos"},
-        {label:"Baixa recorrência", value: baixa, hint:"Monitore casos pontuais"},
-        {label:"Em acompanhamento (TI)", value: emti, hint:"Demandas pendentes de solução"}
-      ];
-    }
-
-    function filterProblems(){
-      const q = state.q.trim().toLowerCase();
-      return PROBLEMS.filter(p => {
-        const byCat = state.category === "Todas" ? true : p.category === state.category;
-        if (!byCat) return false;
-        if (!q) return true;
-        const hay = [
-          p.title, p.category, p.recurrence, p.status,
-          p.howShort, p.desc,
-          ...(p.tags||[]),
-          ...(p.identify||[]),
-          ...(p.steps||[])
-        ].join(" ").toLowerCase();
-        return hay.includes(q);
-      });
-    }
-
-    function renderChips(){
-      const host = document.getElementById("chips");
-      host.innerHTML = "";
-      CATEGORIES.forEach(cat => {
-        const chip = el("div", {
-          class: "chip" + (state.category === cat ? " active" : ""),
-          onclick: () => { state.category = cat; rerender(); }
-        }, cat);
-        host.appendChild(chip);
-      });
-    }
-
-    function renderKpis(items){
-      const host = document.getElementById("kpis");
-      host.innerHTML = "";
-      computeKpis(PROBLEMS).forEach(k => {
-        host.appendChild(el("div", {class:"kpi"}, [
-          el("div", {class:"label"}, k.label),
-          el("div", {class:"value"}, String(k.value)),
-          el("div", {class:"hint"}, k.hint)
-        ]));
-      });
-    }
-
-    function renderCards(items){
-      const host = document.getElementById("cards");
-      const count = document.getElementById("count");
-      host.innerHTML = "";
-      count.textContent = `${items.length} item(ns) exibido(s)`;
-
-      if (items.length === 0){
-        host.appendChild(el("div", {class:"panel"}, [
-          el("h4", {}, "Nenhum resultado"),
-          el("p", {class:"muted"}, "Tente ajustar a busca ou o filtro de categoria.")
-        ]));
-        return;
-      }
-
-      items.forEach(p => {
-        const badges = el("div", {class:"meta"}, [
-          el("span", {class:`badge info`}, [`Categoria: `, el("b", {}, p.category)]),
-          el("span", {class:`badge ${badgeClass("recurrence", p.recurrence)}`}, [`Recorrência: `, el("b", {}, p.recurrence)]),
-          el("span", {class:`badge ${badgeClass("status", p.status)}`}, [`Status: `, el("b", {}, p.status)])
-        ]);
-
-        const card = el("div", {class:"card", onclick: ()=>openModal(p)}, [
-          el("div", {class:"top"}, [
-            el("h3", {}, p.title),
-            el("span", {class:`badge ${badgeClass("status", p.status)}`}, p.status)
-          ]),
-          badges,
-          el("div", {class:"snippet"}, p.howShort),
-          el("div", {class:"footerRow"}, [
-            el("span", {}, `Tags: ${(p.tags||[]).slice(0,4).join(", ") || "—"}`),
-            el("span", {class:"btn mono"}, "Ver procedimento →")
-          ])
-        ]);
-        host.appendChild(card);
-      });
-    }
-
-    // ======= Modal =======
-    let current = null;
-    const modal = document.getElementById("modal");
-
-    function openModal(p){
-      current = p;
-      document.getElementById("m_title").textContent = p.title;
-
-      const mb = document.getElementById("m_badges");
-      mb.innerHTML = "";
-      mb.appendChild(el("span", {class:`badge info`}, [`Categoria: `, el("b", {}, p.category)]));
-      mb.appendChild(el("span", {class:`badge ${badgeClass("recurrence", p.recurrence)}`}, [`Recorrência: `, el("b", {}, p.recurrence)]));
-      mb.appendChild(el("span", {class:`badge ${badgeClass("status", p.status)}`}, [`Status: `, el("b", {}, p.status)]));
-
-      document.getElementById("m_desc").textContent = p.desc;
-
-      const impact = document.getElementById("m_impact");
-      impact.innerHTML = "";
-      (p.impact||[]).forEach(x => impact.appendChild(el("li", {}, x)));
-
-      const identify = document.getElementById("m_identify");
-      identify.innerHTML = "";
-      (p.identify||[]).forEach(x => identify.appendChild(el("li", {}, x)));
-
-      const steps = document.getElementById("m_steps");
-      steps.innerHTML = "";
-      (p.steps||[]).forEach(x => steps.appendChild(el("li", {}, x)));
-
-      const ev = document.getElementById("m_evidence");
-      ev.innerHTML = "";
-      (p.evidence||[]).forEach(x => ev.appendChild(el("li", {}, x)));
-
-      document.getElementById("m_expected").textContent = p.expected || "—";
-
-      modal.showModal();
-    }
-
-    function closeModal(){
-      modal.close();
-      current = null;
-    }
-
-    document.getElementById("m_close").addEventListener("click", closeModal);
-    modal.addEventListener("click", (e) => {
-      const rect = modal.getBoundingClientRect();
-      const isInDialog = (
-        rect.top <= e.clientY && e.clientY <= rect.top + rect.height &&
-        rect.left <= e.clientX && e.clientX <= rect.left + rect.width
-      );
-      if (!isInDialog) closeModal();
-    });
-
-    // Copy buttons
-    document.getElementById("copy_proc").addEventListener("click", () => {
-      if (!current) return;
-      const text =
-`PROBLEMA: ${current.title}
-CATEGORIA: ${current.category}
-RECORRÊNCIA: ${current.recurrence}
-STATUS: ${current.status}
-
-PROCEDIMENTO (passo a passo):
-${(current.steps||[]).map((s,i)=>`${i+1}. ${s}`).join("\n")}
-
-EVIDÊNCIAS RECOMENDADAS:
-${(current.evidence||[]).map(x=>`- ${x}`).join("\n")}
-
-RESULTADO ESPERADO:
-${current.expected || "—"}`;
-      copyText(text);
-    });
-
-    document.getElementById("copy_summary").addEventListener("click", () => {
-      if (!current) return;
-      const text =
-`Resumo interno — ${current.title}
-
-Como identificar:
-${(current.identify||[]).map(x=>`- ${x}`).join("\n")}
-
-Ações recomendadas (resumo):
-${(current.steps||[]).slice(0,5).map((s,i)=>`${i+1}. ${s}`).join("\n")}
-
-Observação:
-Registrar evidências e encaminhamentos no processo/controle interno quando aplicável.`;
-      copyText(text);
-    });
-
-    // Search
-    document.getElementById("q").addEventListener("input", (e) => {
-      state.q = e.target.value || "";
-      rerender();
-    });
-
-    function rerender(){
-      renderChips();
-      const items = filterProblems();
-      renderKpis(items);
-      renderCards(items);
-    }
-
-    // Initial render
-    rerender();
-  </script>
+function copyEmail(){
+  navigator.clipboard.writeText(current.emailTemplate);
+  alert("Resposta copiada!");
+}
+</script>
 </body>
 </html>
