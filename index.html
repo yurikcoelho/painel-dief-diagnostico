@@ -430,10 +430,10 @@
       {
         id: "baixa-mei",
         title: "Solicitação de Baixa — MEI",
-        categoryTag: "Cadastro / Baixa",
+        categoryTag: "Baixa",
         summary: "Consultar DSOT. Sem débitos: efetivar baixa no SIATE e enviar FIC ao contribuinte. Com débitos: orientar quitação via Agência de Rendas.",
-        tags: ["baixa", "mei", "dsot", "siate", "fic", "cnpj"],
-        procedureNote: "Procedimento interno da DIEF: a baixa somente pode ser efetivada se não houver débitos pendentes no DSOT.",
+        tags: ["baixa", "mei", "dsot", "siate", "fic"],
+        procedureNote: "A baixa somente pode ser efetivada se não houver débitos pendentes no DSOT.",
         steps: [
           "Consultar o DSOT do MEI pelo CNPJ no SIATE Web: Atendimento → Imprimir CND/DSOT.",
           "Caso haja débitos pendentes: orientar o contribuinte a quitá-los primeiro (Agência de Rendas da jurisdição).",
@@ -457,13 +457,8 @@
         emailDeferidoHtml:
 `<div>
   <p>Prezado(a),</p>
-  <p>Informamos que o pedido de baixa da inscrição estadual foi
-  <strong>analisado e deferido</strong>, não tendo sido identificados
-  débitos ou pendências impeditivas no âmbito das obrigações
-  tributárias estaduais.</p>
-  <p>Dessa forma, a inscrição estadual encontra-se baixada,
-  conforme demonstrado no documento em anexo da Ficha de Inscrição do Contribuinte (FIC).</p>
-  <p>Permanecemos à disposição para eventuais esclarecimentos.</p>
+  <p>Informamos que o pedido de baixa da inscrição estadual foi <strong>analisado e deferido</strong>, não tendo sido identificados débitos ou pendências impeditivas no âmbito das obrigações tributárias estaduais.</p>
+  <p>Dessa forma, a inscrição estadual encontra-se baixada, conforme demonstrado no documento em anexo da Ficha de Inscrição do Contribuinte (FIC).</p>
   <p>Atenciosamente,</p>
   <p>Divisão de Informações Econômico-Fiscais - DIEF<br>
      Departamento da Receita - DEPAR<br>
@@ -482,7 +477,6 @@
   <p>O contribuinte poderá enviar e-mail ou comparecer à Agência de Rendas de sua jurisdição para emissão do DARE e pagamento do débito. Após a regularização, o pedido de baixa poderá ser reapresentado.<p>
 
   <p>Atenciosamente,</p>
-
  <p>Divisão de Informações Econômico-Fiscais - DIEF<br>
 Departamento da Receita - DEPAR<br>
 Secretaria de Estado da Fazenda de Roraima - SEFAZ/RR<br>
