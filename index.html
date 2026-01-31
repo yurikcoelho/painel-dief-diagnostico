@@ -603,32 +603,47 @@ Secretaria de Estado da Fazenda de Roraima - SEFAZ/RR<br>
     });
 
     // ======= AJUSTE NA CÓPIA (LARGURA INVISÍVEL) =======
-    copyBtn.addEventListener("click", () => {
+    // ======= AJUSTE NA CÓPIA (RESOLVE COLAR CÓDIGO HTML) =======
+    copyBtn.addEventListener("click", async () => {
       if (!current) return;
 
-      // Cria um elemento invisível fora da tela com largura grande
+      const htmlContent = emailBox.innerHTML;
+      
+      // Criamos um elemento invisível largo para manter as linhas longas
       const tempDiv = document.createElement("div");
       tempDiv.style.position = "absolute";
       tempDiv.style.left = "-9999px";
-      tempDiv.style.width = "1200px"; // Força o texto a não quebrar linhas
-      tempDiv.innerHTML = emailBox.innerHTML;
+      tempDiv.style.width = "1200px"; 
+      tempDiv.innerHTML = htmlContent;
       document.body.appendChild(tempDiv);
 
-      // Seleciona o conteúdo do elemento invisível
-      const range = document.createRange();
-      range.selectNodeContents(tempDiv);
-      const sel = window.getSelection();
-      sel.removeAllRanges();
-      sel.addRange(range);
+      // Pegamos o texto puro sem as tags para o "fallback"
+      const plainText = tempDiv.innerText;
 
-      // Copia para a área de transferência
-      document.execCommand("copy");
+      try {
+        // A API moderna envia os dois formatos: o Gmail pegará o HTML formatado
+        const blobHtml = new Blob([tempDiv.innerHTML], { type: "text/html" });
+        const blobText = new Blob([plainText], { type: "text/plain" });
+        const data = [new ClipboardItem({
+          "text/html": blobHtml,
+          "text/plain": blobText
+        })];
 
-      // Limpa e remove o temporário
-      sel.removeAllRanges();
+        await navigator.clipboard.write(data);
+        toast("Resposta copiada ✅");
+      } catch (err) {
+        // Caso a API falhe (navegador antigo), usamos o método de seleção
+        const range = document.createRange();
+        range.selectNodeContents(tempDiv);
+        const sel = window.getSelection();
+        sel.removeAllRanges();
+        sel.addRange(range);
+        document.execCommand("copy");
+        sel.removeAllRanges();
+        toast("Resposta copiada ✅");
+      }
+
       document.body.removeChild(tempDiv);
-
-      toast("Resposta copiada ✅");
     });
 
     document.getElementById("q").addEventListener("input", (e) => {
