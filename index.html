@@ -7,6 +7,9 @@
   <title>Demandas Recorrentes — DIEF/SEFAZ RR</title>
 
   <style>
+    /* =========================
+       THEME VARIABLES (LIGHT)
+    ========================== */
     :root{
       --bg:#f3f7ff;
       --card:#ffffff;
@@ -24,7 +27,25 @@
       --sans: system-ui, -apple-system, Segoe UI, Roboto, Arial;
     }
 
+    /* =========================
+       THEME VARIABLES (DARK)
+    ========================== */
+    body.dark{
+      --bg:#0e1422;
+      --card:#141c2f;
+      --card2:#10182a;
+      --text:#e6ecff;
+      --muted:#9fb0d0;
+
+      --line:rgba(255,255,255,.12);
+      --primary:#5da9ff;
+      --primary2:rgba(93,169,255,.18);
+
+      --shadow:0 14px 36px rgba(0,0,0,.45);
+    }
+
     *{ box-sizing:border-box; }
+
     body{
       margin:0;
       font-family:var(--sans);
@@ -33,6 +54,7 @@
         radial-gradient(900px 600px at 90% 0%, rgba(10,98,190,.10), transparent 60%),
         var(--bg);
       color:var(--text);
+      transition: background .25s ease, color .25s ease;
     }
 
     a{ color: var(--primary); text-decoration:none; }
@@ -40,6 +62,7 @@
 
     .wrap{ max-width:1100px; margin:0 auto; padding:28px 18px 80px; }
 
+    /* ================= HEADER ================= */
     header{
       display:flex;
       align-items:flex-start;
@@ -47,51 +70,71 @@
       gap:14px;
       flex-wrap:wrap;
     }
-    h1{ font-size:22px; margin:0 0 6px; }
-    header p{ margin:0; color:var(--muted); font-size:13px; max-width:900px; line-height:1.45; }
 
-    /* SEARCH */
+    h1{ font-size:22px; margin:0 0 6px; }
+    header p{
+      margin:0;
+      color:var(--muted);
+      font-size:13px;
+      max-width:900px;
+      line-height:1.45;
+    }
+
+    .themeToggle{
+      border:1px solid var(--line);
+      background:var(--card);
+      color:var(--text);
+      padding:8px 12px;
+      border-radius:999px;
+      cursor:pointer;
+      font-size:12px;
+      box-shadow:var(--shadow);
+      white-space:nowrap;
+    }
+
+    /* ================= SEARCH ================= */
     .bar{
       margin-top:16px;
       border:1px solid var(--line);
       border-radius:var(--radius);
-      background:rgba(255,255,255,.75);
+      background:var(--card2);
       padding:14px;
       box-shadow: var(--shadow);
     }
+
     .search{
-      display:flex; align-items:center; gap:10px;
+      display:flex;
+      align-items:center;
+      gap:10px;
       border:1px solid var(--line);
-      background:#ffffff;
+      background:var(--card);
       border-radius:999px;
       padding:10px 14px;
-      box-shadow:0 6px 18px rgba(11,27,58,.08);
-    }
-    .search input{
-      border:none; outline:none; width:100%;
-      font-size:14px; color:var(--text);
-      background:transparent;
-    }
-    .search input::placeholder{ color:rgba(60,86,122,.75); }
-    .search:focus-within{
-      border-color:rgba(10,98,190,.45);
-      box-shadow:0 0 0 4px rgba(10,98,190,.12), 0 6px 18px rgba(11,27,58,.08);
     }
 
-    /* CARDS */
+    .search input{
+      border:none;
+      outline:none;
+      width:100%;
+      font-size:14px;
+      color:var(--text);
+      background:transparent;
+    }
+
+    .search input::placeholder{ color:var(--muted); }
+
+    /* ================= CARDS ================= */
     .sectionTitle{
-      display:flex; align-items:baseline; justify-content:space-between;
-      gap:10px; flex-wrap:wrap;
+      display:flex;
+      align-items:baseline;
+      justify-content:space-between;
       margin:18px 2px 10px;
     }
-    .sectionTitle h2{ margin:0; font-size:15px; letter-spacing:.2px; }
-    .sectionTitle .count{ color:var(--muted); font-size:12px; }
 
     .cards{
       display:grid;
       grid-template-columns:repeat(auto-fit,minmax(320px,1fr));
       gap:16px;
-      margin-top:10px;
     }
 
     .card{
@@ -101,233 +144,79 @@
       padding:14px;
       box-shadow:var(--shadow);
       cursor:pointer;
-      transition: transform .08s ease, border-color .12s ease;
-      min-height: 150px;
+      transition:transform .1s ease;
     }
-    .card:hover{ transform: translateY(-2px); border-color: rgba(10,98,190,.35); }
+
+    .card:hover{ transform:translateY(-2px); }
 
     .cardTop{
-      display:flex; align-items:flex-start; justify-content:space-between;
-      gap:12px;
+      display:flex;
+      justify-content:space-between;
+      gap:10px;
     }
-    .card h3{ margin:0; font-size:14px; line-height:1.25; }
+
     .tag{
-      display:inline-flex; align-items:center;
       padding:6px 10px;
       border-radius:999px;
-      border:1px solid rgba(10,98,190,.30);
-      background: rgba(10,98,190,.10);
-      color: var(--text);
       font-size:11px;
-      white-space:nowrap;
+      border:1px solid var(--primary);
+      background:var(--primary2);
     }
 
     .snippet{
       font-size:12px;
       color:var(--muted);
       margin-top:10px;
-      line-height:1.5;
     }
 
-    .metaRow{
-      margin-top:12px;
-      display:flex; align-items:center; justify-content:space-between;
-      gap:10px;
-      color:var(--muted);
-      font-size:12px;
-    }
-
-    .btnMini{
-      border:1px solid var(--line);
-      background: rgba(255,255,255,.85);
-      color: var(--text);
-      padding:8px 10px;
-      border-radius:12px;
-      font-size:12px;
-      cursor:pointer;
-    }
-
-    /* MODAL */
+    /* ================= MODAL ================= */
     dialog{
       width:min(1020px,calc(100% - 24px));
       border-radius:22px;
       border:1px solid var(--line);
-      background:#fff;
+      background:var(--card);
       padding:0;
-      box-shadow:0 30px 80px rgba(11,27,58,.30);
+      box-shadow:0 30px 80px rgba(0,0,0,.6);
     }
+
     dialog::backdrop{
-      background:rgba(11,27,58,.28);
+      background:rgba(0,0,0,.55);
       backdrop-filter:blur(3px);
     }
 
     .modalHead{
-      padding:16px 16px 12px;
+      padding:16px;
       border-bottom:1px solid var(--line);
-      display:flex; justify-content:space-between; align-items:flex-start;
-      gap:12px;
+      display:flex;
+      justify-content:space-between;
     }
-    .modalHead h3{ margin:0; font-size:15px; line-height:1.25; }
+
     .closeBtn{
       border-radius:999px;
       padding:8px 12px;
       border:1px solid var(--line);
-      background:#fff;
+      background:var(--card);
       cursor:pointer;
-      font-size:12px;
-    }
-
-    .modalBody{
-      padding:16px;
-      display:grid;
-      grid-template-columns: 1.1fr .9fr;
-      gap:16px;
-    }
-    @media(max-width:920px){
-      .modalBody{ grid-template-columns: 1fr; }
-    }
-
-    .panel{
-      background:#f7faff;
-      border:1px solid var(--line);
-      border-radius:var(--radius);
-      padding:14px;
-    }
-    .panel h4{
-      margin:0 0 8px;
-      font-size:12px;
-      text-transform:uppercase;
-      letter-spacing:.3px;
-      color:rgba(60,86,122,.95);
-    }
-    .panel p{
-      margin:0;
-      font-size:13px;
-      line-height:1.55;
       color:var(--text);
     }
-    .panel ul, .panel ol{
-      margin:8px 0 0 18px;
-      font-size:13px;
-      line-height:1.55;
-      color:var(--text);
-      padding:0;
-    }
-    .panel li{ margin:6px 0; }
 
-    /* Checklist de procedimentos */
-    .checklist-item{
-      display:flex;
-      align-items:flex-start;
-      gap:8px;
-    }
-    .checklist-item input[type="checkbox"]{
-      margin-top:3px;
-      cursor:pointer;
-    }
-    .checklist-item.done span{
-      text-decoration:line-through;
-      color: rgba(60,86,122,.65);
-    }
-
-    .muted{ color:var(--muted); }
-
-    .templateBox{
-      background:#ffffff;
-      border:1px solid var(--line);
-      border-radius:14px;
-      padding:12px;
-      font-size:13px;
-      line-height:1.55;
-      white-space:pre-wrap;
-      overflow:auto;
-      max-height: 320px;
-    }
-
-    /* Compactar visualização da resposta padrão (apenas na caixa) */
-    .templateBox p{ margin:0 0 6px; }
-    .templateBox p:last-child{ margin-bottom:0; }
-    .templateBox br{ display:none; }
-
-    .btn{
-      padding:10px 14px;
-      border-radius:12px;
-      border:1px solid var(--line);
-      background:#fff;
-      cursor:pointer;
-      font-size:12px;
-      white-space:nowrap;
-    }
-    .btn.primary{
-      background:rgba(10,98,190,.14);
-      border-color:rgba(10,98,190,.45);
-    }
-
-    .btnRow{
-      display:flex; gap:10px; flex-wrap:wrap;
-      margin-top:10px;
-    }
-
-    .segmented{
-      display:flex;
-      gap:8px;
-      flex-wrap:wrap;
-      margin-bottom:10px;
-    }
-
-    .segBtn{
-      border:1px solid var(--line);
-      background:#fff;
-      color:var(--text);
-      padding:8px 10px;
-      border-radius:999px;
-      font-size:12px;
-      cursor:pointer;
-    }
-    .segBtn.active{
-      background: rgba(10,98,190,.14);
-      border-color: rgba(10,98,190,.45);
-    }
-
+    /* ================= TOAST ================= */
     .toast{
       position:fixed;
       bottom:18px;
       left:50%;
       transform:translateX(-50%);
-      background: rgba(11,27,58,.90);
+      background:#000;
       color:#fff;
-      border:1px solid rgba(255,255,255,.15);
-      padding:10px 12px;
+      padding:10px 14px;
       border-radius:999px;
       font-size:12px;
       opacity:0;
-      pointer-events:none;
-      transition: opacity .18s ease, transform .18s ease;
+      transition:.2s;
       z-index:9999;
     }
-    .toast.show{
-      opacity:1;
-      transform:translateX(-50%) translateY(-2px);
-    }
 
-    /* ===== Painel de Identificadores (CNPJ + IE) ===== */
-    .idRow{
-      display:flex;
-      align-items:center;
-      gap:8px;
-      flex-wrap:wrap;
-      margin-bottom:10px;
-    }
-    .idRow:last-child{ margin-bottom:0; }
-
-    .idRow input{
-      width:240px;
-      padding:8px 10px;
-      border-radius:10px;
-      border:1px solid var(--line);
-      font-size:13px;
-      background:#fff;
-    }
+    .toast.show{ opacity:1; }
   </style>
 </head>
 
@@ -336,472 +225,59 @@
     <header>
       <div>
         <h1>Demandas Recorrentes — DIEF/SEFAZ RR</h1>
-        <p>
-          Repositório interno de demandas que chegam por e-mail. Clique em um card para ver <b>procedimentos</b> (quando aplicável)
-          e <b>respostas padrão</b> para copiar e colar no Gmail.
-        </p>
+        <p>Repositório interno de demandas com respostas padrão para agilizar o atendimento.</p>
       </div>
+
+      <button class="themeToggle" id="themeToggle">🌙 Modo escuro</button>
     </header>
 
     <section class="bar">
-      <div class="search" title="Buscar por título, tags, texto do procedimento...">
-        🔎 <input id="q" type="text" placeholder="Buscar demanda (ex.: baixa, MEI, simples, regime...)" />
+      <div class="search">
+        🔎 <input placeholder="Buscar demanda..." />
       </div>
     </section>
 
     <section>
       <div class="sectionTitle">
         <h2>Cards de demandas</h2>
-        <div class="count" id="count"></div>
       </div>
-      <div class="cards" id="cards"></div>
+
+      <div class="cards">
+        <div class="card">
+          <div class="cardTop">
+            <strong>Solicitação de Baixa — MEI</strong>
+            <span class="tag">Baixa</span>
+          </div>
+          <div class="snippet">Consultar DSOT, efetivar baixa ou orientar quitação.</div>
+        </div>
+      </div>
     </section>
   </div>
-
-  <dialog id="modal">
-    <div class="modalHead">
-      <div>
-        <h3 id="m_title">—</h3>
-        <div class="muted" id="m_sub" style="margin-top:6px;font-size:12px;line-height:1.4;"></div>
-      </div>
-      <button class="closeBtn" id="m_close">✕</button>
-    </div>
-
-    <div class="modalBody">
-      <div class="panel">
-        <h4>Procedimento</h4>
-        <p class="muted" id="m_proc_note"></p>
-        <ol id="m_steps"></ol>
-
-        <div style="height:12px;"></div>
-
-        <h4>Documentos / verificações</h4>
-        <ul id="m_docs"></ul>
-
-        <div style="height:12px;"></div>
-
-        <h4>Links úteis</h4>
-        <p id="m_links" class="muted"></p>
-      </div>
-
-      <div>
-        <!-- Painel CNPJ + IE -->
-        <div class="panel" style="margin-bottom:16px;">
-          <h4>Identificadores (colar aqui)</h4>
-
-          <div class="idRow">
-            <input id="cnpj_input" type="text" placeholder="CNPJ (00.000.000/0000-00)" />
-            <button class="btn" id="copy_cnpj" type="button">Copiar</button>
-            <button class="btn" id="clear_cnpj" type="button">Limpar</button>
-          </div>
-
-          <div class="idRow">
-            <input id="ie_input" type="text" placeholder="IE (Inscrição Estadual)" />
-            <button class="btn" id="copy_ie" type="button">Copiar</button>
-            <button class="btn" id="clear_ie" type="button">Limpar</button>
-          </div>
-        </div>
-
-        <!-- Painel Resposta Padrão -->
-        <div class="panel">
-          <h4>Respostas padrão</h4>
-          <p class="muted" style="font-size:12px;line-height:1.45;margin-bottom:10px;">
-            Selecione a opção e copie para colar no Gmail.
-          </p>
-
-          <div class="segmented" id="segmentedHost">
-            <!-- botões são montados via JS (conforme card) -->
-          </div>
-
-          <div class="templateBox" id="m_email"></div>
-
-          <div class="btnRow">
-            <button class="btn primary" id="copy_email" type="button">Copiar resposta</button>
-          </div>
-        </div>
-      </div>
-    </div>
-  </dialog>
 
   <div class="toast" id="toast">Copiado ✅</div>
 
   <script>
-    // ======= DADOS =======
-    const DEMANDS = [
-      // 1) Baixa MEI (mantém 2 respostas)
-      {
-        id: "baixa-mei",
-        title: "Solicitação de Baixa — MEI",
-        categoryTag: "Baixa",
-        summary: "Consultar DSOT. Sem débitos: efetivar baixa no SIATE e enviar FIC ao contribuinte. Com débitos: orientar quitação via Agência de Rendas.",
-        tags: ["baixa", "mei", "dsot", "siate", "fic"],
-        procedureNote: "A baixa somente pode ser efetivada se não houver débitos pendentes no DSOT.",
-        steps: [
-          "Consultar o DSOT do MEI pelo CNPJ no SIATE Web: Atendimento → Imprimir CND/DSOT.",
-          "Caso haja débitos pendentes: orientar o contribuinte a quitá-los primeiro (Agência de Rendas da jurisdição).",
-          "Caso NÃO haja débitos: efetuar a baixa no SIATE → Módulo Atendimento → Informações Econômico-Fiscais → Painel Geral do Contribuinte.",
-          "Documento a verificar: Certidão de Baixa de Inscrição no CNPJ (RFB). Se não anexou, consultar pelo CNPJ no site da RFB (link abaixo).",
-          "Número do processo: pode utilizar o último dígito da inscrição estadual e informar apenas o ano.",
-          "Quando baixar: Efetivar Situação → selecionar a caixa do contribuinte → Confirmar.",
-          "Imprimir FIC (Ficha de Inscrição Cadastral) → salvar como PDF.",
-          "Anexar a FIC na resposta ao contribuinte."
-        ],
-        docs: [
-          "Certidão de Baixa de Inscrição no CNPJ (RFB).",
-          "DSOT (Demonstrativo de Situação de Obrigações Tributárias Estaduais).",
-          "FIC (Ficha de Inscrição Cadastral) após efetivar a baixa."
-        ],
-        linksHtml:
-          `Se o contribuinte não anexou a certidão da RFB, consultar pelo CNPJ em:
-          <a href="https://solucoes.receita.fazenda.gov.br/servicos/cnpjreva/cnpjreva_solicitacao.asp" target="_blank" rel="noopener noreferrer">Consulta CNPJ — RFB</a>.`,
-        templates: [
-          {
-            key: "deferido",
-            label: "Deferido",
-            html:
-`<div>
-  <p>Prezado(a),</p>
-  <p>Informamos que o pedido de baixa da inscrição estadual foi <strong>analisado e deferido</strong>, não tendo sido identificados débitos ou pendências impeditivas no âmbito das obrigações tributárias estaduais.</p>
-  <p>Dessa forma, a inscrição estadual encontra-se baixada, conforme demonstrado no documento em anexo da Ficha de Inscrição do Contribuinte (FIC).</p>
-  <p>Atenciosamente,</p>
-  <p>Divisão de Informações Econômico-Fiscais - DIEF<br>
-     Departamento da Receita - DEPAR<br>
-     Secretaria de Estado da Fazenda de Roraima - SEFAZ/RR<br>
-  </p>
-</div>`
-          },
-          {
-            key: "indeferido",
-            label: "Indeferido",
-            html:
-`<div>
-  <p>Prezado(a),</p>
-  <p>Em análise ao pedido de baixa da inscrição estadual, <strong>verificou-se a existência de débitos pendentes</strong>, conforme consulta ao seu Demonstrativo de Situação de Obrigações Tributárias Estaduais (DSOT).</p>
-  <p>Enquanto houver pendências financeiras em aberto, não é possível efetivar a baixa da inscrição estadual.</p>
-  <p>O contribuinte poderá enviar e-mail ou comparecer à Agência de Rendas de sua jurisdição para emissão do DARE e pagamento do débito. Após a regularização, o pedido de baixa poderá ser reapresentado.</p>
-  <p>Atenciosamente,</p>
-  <p>Divisão de Informações Econômico-Fiscais - DIEF<br>
-     Departamento da Receita - DEPAR<br>
-     Secretaria de Estado da Fazenda de Roraima - SEFAZ/RR<br>
-  </p>
-</div>`
-          }
-        ]
-      },
+    /* =========================
+       DARK MODE TOGGLE
+    ========================== */
+    const toggleBtn = document.getElementById("themeToggle");
+    const prefersDark = localStorage.getItem("theme") === "dark";
 
-      // 2) Alteração de Regime: Normal -> Simples (1 resposta)
-      {
-        id: "alt-regime-normal-sn",
-        title: "Alteração de Regime: Normal → Simples Nacional",
-        categoryTag: "Cadastro / Regime",
-        summary: "Atualizar regime no SIATE Web (Normal para SN/DAS), excluir multas indevidas da GIM e registrar parecer fiscal com efeitos retroativos à data de enquadramento.",
-        tags: ["simples", "regime", "gim", "dsot", "siateweb", "das", "simei"],
-        procedureNote: "Atenção: clicar 2x em “Atualizar individual” é essencial para atualizar o regime e excluir multas da GIM quando indevidas.",
-        steps: [
-          "Clicar 2 vezes no botão “Atualizar individual” (sempre): atualiza o regime de tributação e exclui multas da GIM (IMPORTANTE).",
-          "Baixa da GIM: a apresentação da GIM só é obrigatória para contribuintes no Regime Normal do ICMS; optantes do Simples Nacional (SN – DAS) não são obrigados. Se houver multa por atraso de GIM, ela é indevida e deve ser retirada (consultar status no portal do Simples e verificar anexo do contribuinte).",
-          "Emitir/consultar o DSOT para verificar o Regime de Tributação.",
-          "SIATE Web → Atendimento → Cadastro de Contribuintes → Atualizar Fase Cadastral → Atualizar.",
-          "No Parecer Fiscal: “Alteração de regime de pagamento de Normal para SN (DAS) com efeitos a partir de xx/xx/xxxx” (usar a data de enquadramento no SN). Se for MEI, registrar “SN - SIMEI”."
-        ],
-        docs: [
-          "Certidão / Comprovante do Simples Nacional (com: “Situação no Simples Nacional: Optante desde xx/xx/xxxx”).",
-          "Consulta no Portal do Simples Nacional (para validação do status).",
-          "DSOT para conferência do Regime de Tributação."
-        ],
-        linksHtml:
-          `Consulta de Optantes do Simples Nacional:
-          <a href="https://www8.receita.fazenda.gov.br/SimplesNacional/aplicacoes.aspx?id=21" target="_blank" rel="noopener noreferrer">Portal do Simples Nacional — Consulta</a>.`,
-        templates: [
-          {
-            key: "padrao",
-            label: "Resposta Padrão",
-            html:
-`<div>
-  <p>Prezado(a),</p>
-
-  <p>Informamos que o regime de pagamento do contribuinte foi atualizado para o Simples Nacional em nosso cadastro, com efeitos retroativos à data de enquadramento informada no referido regime.</p>
-
-  <p>Atenciosamente,</p>
-
-  <p>Divisão de Informações Econômico-Fiscais - DIEF<br>
-Departamento da Receita - DEPAR<br>
-Secretaria de Estado da Fazenda de Roraima - SEFAZ/RR<br>
-  </p>
-</div>`
-          }
-        ]
-      }
-    ];
-
-    // ======= Helpers =======
-    const toast = (msg="Copiado ✅") => {
-      const t = document.getElementById("toast");
-      t.textContent = msg;
-      t.classList.add("show");
-      setTimeout(() => t.classList.remove("show"), 1200);
-    };
-
-    // ======= Render =======
-    const state = { q: "" };
-    const cardsHost = document.getElementById("cards");
-    const countHost = document.getElementById("count");
-
-    function filterDemands(){
-  const q = state.q.trim().toLowerCase();
-  if (!q) return DEMANDS;
-
-  // permite buscar várias tags separadas por espaço:
-  // ex.: "simples gim" -> precisa bater nas duas
-  const terms = q.split(/\s+/).filter(Boolean);
-
-  return DEMANDS.filter(d => {
-    const tags = (d.tags || []).map(t => String(t).toLowerCase());
-
-    // cada termo precisa existir em alguma tag
-    return terms.every(term => tags.some(tag => tag.includes(term)));
-  });
-}
-
-
-    function render(){
-      const items = filterDemands();
-      cardsHost.innerHTML = "";
-      countHost.textContent = `${items.length} demanda(s)`;
-
-      items.forEach(d => {
-        const card = document.createElement("div");
-        card.className = "card";
-        card.innerHTML = `
-          <div class="cardTop">
-            <h3>${d.title}</h3>
-            <span class="tag">${d.categoryTag}</span>
-          </div>
-          <div class="snippet">${d.summary}</div>
-          <div class="metaRow">
-            <span>Tags: ${(d.tags||[]).slice(0,4).join(", ") || "—"}</span>
-            <button class="btnMini" type="button">Abrir →</button>
-          </div>
-        `;
-        card.addEventListener("click", () => openModal(d));
-        cardsHost.appendChild(card);
-      });
+    if (prefersDark) {
+      document.body.classList.add("dark");
+      toggleBtn.textContent = "☀️ Modo claro";
     }
 
-    // ======= Modal =======
-    const modal = document.getElementById("modal");
-    const mClose = document.getElementById("m_close");
-    const emailBox = document.getElementById("m_email");
-    const copyEmailBtn = document.getElementById("copy_email");
+    toggleBtn.addEventListener("click", () => {
+      document.body.classList.toggle("dark");
 
-    // Segmento de respostas (dinâmico)
-    const segmentedHost = document.getElementById("segmentedHost");
+      const isDark = document.body.classList.contains("dark");
+      localStorage.setItem("theme", isDark ? "dark" : "light");
 
-    // Identificadores
-    const cnpjInput = document.getElementById("cnpj_input");
-    const ieInput = document.getElementById("ie_input");
-    const copyCnpjBtn = document.getElementById("copy_cnpj");
-    const clearCnpjBtn = document.getElementById("clear_cnpj");
-    const copyIeBtn = document.getElementById("copy_ie");
-    const clearIeBtn = document.getElementById("clear_ie");
-
-    let current = null;
-    let currentTemplateKey = null;
-
-    function openModal(d){
-      current = d;
-
-      document.getElementById("m_title").textContent = d.title;
-      document.getElementById("m_sub").textContent = d.summary;
-
-      document.getElementById("m_proc_note").textContent = d.procedureNote || "";
-
-      // checklist
-      const steps = document.getElementById("m_steps");
-      steps.innerHTML = "";
-      (d.steps || []).forEach(s => {
-        const li = document.createElement("li");
-        li.className = "checklist-item";
-
-        const checkbox = document.createElement("input");
-        checkbox.type = "checkbox";
-
-        const text = document.createElement("span");
-        text.textContent = s;
-
-        checkbox.addEventListener("change", () => {
-          li.classList.toggle("done", checkbox.checked);
-        });
-
-        li.appendChild(checkbox);
-        li.appendChild(text);
-        steps.appendChild(li);
-      });
-
-      const docs = document.getElementById("m_docs");
-      docs.innerHTML = "";
-      (d.docs||[]).forEach(s => {
-        const li = document.createElement("li");
-        li.textContent = s;
-        docs.appendChild(li);
-      });
-
-      document.getElementById("m_links").innerHTML = d.linksHtml || "";
-
-      // reset campos
-      cnpjInput.value = "";
-      ieInput.value = "";
-
-      // montar botões de template
-      buildTemplateButtons(d);
-
-      modal.showModal();
-    }
-
-    function buildTemplateButtons(d){
-      segmentedHost.innerHTML = "";
-      const templates = d.templates || [];
-
-      if (!templates.length){
-        // fallback: sem templates
-        emailBox.innerHTML = "<div><p class='muted'>Sem resposta padrão cadastrada para esta demanda.</p></div>";
-        currentTemplateKey = null;
-        return;
-      }
-
-      templates.forEach((t, idx) => {
-        const btn = document.createElement("button");
-        btn.className = "segBtn" + (idx === 0 ? " active" : "");
-        btn.type = "button";
-        btn.textContent = t.label;
-        btn.dataset.key = t.key;
-
-        btn.addEventListener("click", () => {
-          segmentedHost.querySelectorAll(".segBtn").forEach(b => b.classList.remove("active"));
-          btn.classList.add("active");
-          currentTemplateKey = t.key;
-          setEmailView();
-        });
-
-        segmentedHost.appendChild(btn);
-      });
-
-      currentTemplateKey = templates[0].key;
-      setEmailView();
-    }
-
-    function setEmailView(){
-      if (!current) return;
-      const templates = current.templates || [];
-      const t = templates.find(x => x.key === currentTemplateKey) || templates[0];
-      emailBox.innerHTML = (t && t.html) ? t.html : "<div><p class='muted'>Sem resposta padrão.</p></div>";
-    }
-
-    function closeModal(){
-      modal.close();
-      current = null;
-      currentTemplateKey = null;
-      cnpjInput.value = "";
-      ieInput.value = "";
-    }
-
-    mClose.addEventListener("click", closeModal);
-
-    modal.addEventListener("click", (e) => {
-      const rect = modal.getBoundingClientRect();
-      const isInDialog = (
-        rect.top <= e.clientY && e.clientY <= rect.top + rect.height &&
-        rect.left <= e.clientX && e.clientY <= rect.top + rect.height &&
-        rect.left <= e.clientX && e.clientX <= rect.left + rect.width
-      );
-      if (!isInDialog) closeModal();
+      toggleBtn.textContent = isDark
+        ? "☀️ Modo claro"
+        : "🌙 Modo escuro";
     });
-
-    // ======= Copiar / Limpar CNPJ =======
-    copyCnpjBtn.addEventListener("click", async () => {
-      const value = (cnpjInput.value || "").trim();
-      if (!value) return toast("Cole um CNPJ primeiro");
-
-      try{
-        await navigator.clipboard.writeText(value);
-        toast("CNPJ copiado ✅");
-      } catch {
-        cnpjInput.select();
-        document.execCommand("copy");
-        toast("CNPJ copiado ✅");
-      }
-    });
-
-    clearCnpjBtn.addEventListener("click", () => {
-      cnpjInput.value = "";
-      toast("CNPJ limpo ✅");
-    });
-
-    // ======= Copiar / Limpar IE =======
-    copyIeBtn.addEventListener("click", async () => {
-      const value = (ieInput.value || "").trim();
-      if (!value) return toast("Cole uma IE primeiro");
-
-      try{
-        await navigator.clipboard.writeText(value);
-        toast("IE copiada ✅");
-      } catch {
-        ieInput.select();
-        document.execCommand("copy");
-        toast("IE copiada ✅");
-      }
-    });
-
-    clearIeBtn.addEventListener("click", () => {
-      ieInput.value = "";
-      toast("IE limpa ✅");
-    });
-
-    // ======= Copiar e-mail (HTML + texto) =======
-    copyEmailBtn.addEventListener("click", async () => {
-      if (!current) return;
-
-      const htmlContent = emailBox.innerHTML;
-
-      const tempDiv = document.createElement("div");
-      tempDiv.style.position = "absolute";
-      tempDiv.style.left = "-9999px";
-      tempDiv.style.width = "1200px";
-      tempDiv.innerHTML = htmlContent;
-      document.body.appendChild(tempDiv);
-
-      const plainText = tempDiv.innerText;
-
-      try {
-        const blobHtml = new Blob([tempDiv.innerHTML], { type: "text/html" });
-        const blobText = new Blob([plainText], { type: "text/plain" });
-        const data = [new ClipboardItem({
-          "text/html": blobHtml,
-          "text/plain": blobText
-        })];
-
-        await navigator.clipboard.write(data);
-        toast("Resposta copiada ✅");
-      } catch (err) {
-        const range = document.createRange();
-        range.selectNodeContents(tempDiv);
-        const sel = window.getSelection();
-        sel.removeAllRanges();
-        sel.addRange(range);
-        document.execCommand("copy");
-        sel.removeAllRanges();
-        toast("Resposta copiada ✅");
-      }
-
-      document.body.removeChild(tempDiv);
-    });
-
-    document.getElementById("q").addEventListener("input", (e) => {
-      state.q = e.target.value || "";
-      render();
-    });
-
-    render();
   </script>
 </body>
 </html>
