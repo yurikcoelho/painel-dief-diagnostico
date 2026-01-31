@@ -491,6 +491,25 @@ body.dark #m_title,
 body[data-theme="dark"] .modalHead h3,
 body.dark .modalHead h3{
   color: var(--text);
+
+  /* Segmented buttons (Respostas padrão) — estado NÃO ativo no dark */
+:root[data-theme="dark"] .segBtn:not(.active),
+body[data-theme="dark"] .segBtn:not(.active),
+body.dark .segBtn:not(.active){
+  background: rgba(13,26,48,.75);
+  border-color: var(--line);
+  color: var(--muted);
+}
+
+/* Mantém o ativo com destaque correto */
+:root[data-theme="dark"] .segBtn.active,
+body[data-theme="dark"] .segBtn.active,
+body.dark .segBtn.active{
+  background: rgba(127,180,255,.22);
+  border-color: rgba(127,180,255,.45);
+  color: var(--text);
+}
+
   </style>
 </head>
 
