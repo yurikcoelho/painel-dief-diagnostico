@@ -9,263 +9,296 @@
 <style>
 :root{
   --bg:#f3f7ff;
-  --card:#ffffff;
+  --card:#fff;
   --text:#0b1b3a;
   --muted:#3c567a;
   --line:rgba(11,27,58,.14);
   --primary:#0a62be;
-  --shadow:0 10px 28px rgba(11,27,58,.12);
   --radius:18px;
-  --sans: system-ui, -apple-system, Segoe UI, Roboto, Arial;
+  --shadow:0 10px 28px rgba(11,27,58,.12);
+  font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial;
 }
 
-*{box-sizing:border-box;}
 body{
   margin:0;
-  font-family:var(--sans);
   background:var(--bg);
   color:var(--text);
 }
 
-.wrap{max-width:1100px;margin:0 auto;padding:28px 18px 80px;}
+.wrap{
+  max-width:1100px;
+  margin:auto;
+  padding:28px 18px 80px;
+}
 
-h1{font-size:22px;margin:0 0 6px;}
-p{margin:0;color:var(--muted);font-size:13px;line-height:1.45;}
+h1{ font-size:22px; margin:0 0 6px }
+p{ margin:0; color:var(--muted); font-size:13px }
 
-.bar{
-  margin-top:16px;
-  border:1px solid var(--line);
-  border-radius:var(--radius);
-  background:#fff;
+.searchBar{
+  margin:20px 0;
   padding:14px;
+  background:#fff;
+  border-radius:var(--radius);
   box-shadow:var(--shadow);
 }
 
-.search{
+.searchInput{
   display:flex;
+  gap:8px;
   align-items:center;
-  gap:10px;
   border:1px solid var(--line);
   border-radius:999px;
   padding:10px 14px;
 }
 
-.search input{
+.searchInput input{
   border:none;
   outline:none;
   width:100%;
   font-size:14px;
 }
 
-.chipBar{
-  margin-top:10px;
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  gap:10px;
-  flex-wrap:wrap;
-}
-
 .chips{
   display:flex;
-  gap:8px;
+  gap:6px;
   flex-wrap:wrap;
+  margin-top:10px;
 }
 
 .chip{
-  display:inline-flex;
-  align-items:center;
-  gap:6px;
+  background:#e9f1ff;
+  border:1px solid #cfe0ff;
   padding:6px 10px;
   border-radius:999px;
-  background:rgba(10,98,190,.12);
-  border:1px solid rgba(10,98,190,.3);
   font-size:12px;
 }
 
-.chip button{
-  border:none;
-  background:transparent;
-  cursor:pointer;
-  font-size:14px;
+/* chips VISUAIS dos cards */
+.chip.readonly{
+  pointer-events:none;
+  background:#f0f4ff;
+  border-color:#d8e4ff;
 }
 
-.clearBtn{
-  border:1px solid var(--line);
-  background:#fff;
-  padding:8px 10px;
-  border-radius:12px;
-  cursor:pointer;
-  font-size:12px;
-}
-
-.suggestions{
-  display:none;
-  margin-top:8px;
-  border:1px solid var(--line);
-  border-radius:12px;
-  background:#fff;
-  box-shadow:var(--shadow);
-}
-
-.suggestions.show{display:block;}
-
-.sugItem{
-  padding:10px 12px;
-  cursor:pointer;
-  font-size:13px;
-}
-
-.sugItem:hover,
-.sugItem.active{
-  background:rgba(10,98,190,.1);
-}
-
+/* cards */
 .cards{
   display:grid;
   grid-template-columns:repeat(auto-fit,minmax(320px,1fr));
   gap:16px;
-  margin-top:18px;
 }
 
 .card{
-  background:#fff;
+  background:var(--card);
   border:1px solid var(--line);
   border-radius:var(--radius);
   padding:14px;
   box-shadow:var(--shadow);
   cursor:pointer;
+  transition:.1s;
 }
 
-.card h3{margin:0;font-size:14px;}
-.snippet{margin-top:8px;font-size:12px;color:var(--muted);}
-.tag{
-  font-size:11px;
-  background:rgba(10,98,190,.12);
-  padding:4px 8px;
-  border-radius:999px;
+.card:hover{
+  transform:translateY(-2px);
 }
+
+.card h3{
+  margin:0 0 6px;
+  font-size:15px;
+}
+
+.card p{
+  font-size:13px;
+  margin-bottom:10px;
+}
+
+dialog{
+  width:min(960px,calc(100% - 24px));
+  border-radius:20px;
+  border:none;
+  box-shadow:0 40px 90px rgba(0,0,0,.3);
+}
+
+dialog::backdrop{
+  background:rgba(0,0,0,.3);
+}
+
+.modalHead{
+  padding:16px;
+  border-bottom:1px solid var(--line);
+  display:flex;
+  justify-content:space-between;
+}
+
+.modalBody{
+  padding:16px;
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:16px;
+}
+
+.panel{
+  background:#f7faff;
+  border-radius:16px;
+  padding:14px;
+}
+
+button{
+  cursor:pointer;
+  border-radius:10px;
+  border:1px solid var(--line);
+  padding:8px 12px;
+  background:#fff;
+}
+
+button.primary{
+  background:#e9f1ff;
+  border-color:#a9c6ff;
+}
+
+.templateBox{
+  background:#fff;
+  border:1px solid var(--line);
+  border-radius:12px;
+  padding:12px;
+  font-size:13px;
+  max-height:280px;
+  overflow:auto;
+}
+
+.templateBox p{ margin:0 0 6px }
 </style>
 </head>
 
 <body>
 <div class="wrap">
   <h1>Demandas Recorrentes — DIEF/SEFAZ RR</h1>
-  <p>Busca por <strong>tags</strong>. Clique nos cards para detalhes.</p>
+  <p>Busca por <b>tags</b>. Clique nos cards para detalhes.</p>
 
-  <section class="bar">
-    <div class="search">
-      🔎 <input id="q" placeholder="Digite uma tag (ex.: simples, gim, mei)" />
+  <div class="searchBar">
+    <div class="searchInput">
+      🔎 <input id="tagInput" placeholder="Digite uma tag (ex.: mei, simples, gim)" />
     </div>
-
-    <div class="chipBar">
-      <div class="chips" id="chips"></div>
-      <button class="clearBtn" id="clearTags">Limpar filtros</button>
-    </div>
-
-    <div class="suggestions" id="suggestions"></div>
-  </section>
+    <div class="chips" id="activeTags"></div>
+  </div>
 
   <div class="cards" id="cards"></div>
 </div>
+
+<dialog id="modal">
+  <div class="modalHead">
+    <h3 id="m_title"></h3>
+    <button onclick="modal.close()">✕</button>
+  </div>
+  <div class="modalBody">
+    <div class="panel">
+      <h4>Procedimento</h4>
+      <ol id="m_steps"></ol>
+    </div>
+    <div class="panel">
+      <h4>Resposta padrão</h4>
+      <div class="templateBox" id="m_email"></div>
+      <button class="primary" onclick="copyEmail()">Copiar resposta</button>
+    </div>
+  </div>
+</dialog>
 
 <script>
 const DEMANDS = [
   {
     title:"Solicitação de Baixa — MEI",
     summary:"Baixa mediante DSOT sem débitos.",
-    tags:["baixa","mei","dsot","siate"]
+    tags:["baixa","mei","dsot","siate"],
+    steps:[
+      "Consultar DSOT no SIATE",
+      "Sem débitos: efetivar baixa",
+      "Emitir FIC e anexar"
+    ],
+    email:`<p>Prezado(a),</p>
+<p>Informamos que o pedido foi analisado e deferido.</p>
+<p>Atenciosamente,<br>DIEF</p>`
   },
   {
     title:"Alteração de Regime: Normal → Simples Nacional",
     summary:"Atualizar regime e excluir multas indevidas da GIM.",
-    tags:["simples","regime","gim","dsot","sn"]
+    tags:["simples","regime","gim","dsot","sn"],
+    steps:[
+      "Atualizar individual (2x)",
+      "Excluir multas de GIM",
+      "Atualizar fase cadastral no SIATE"
+    ],
+    email:`<p>Prezado(a),</p>
+<p>O regime foi atualizado para o Simples Nacional.</p>
+<p>Atenciosamente,<br>DIEF</p>`
   }
 ];
 
-const state = { q:"", selectedTags:[] };
+const cardsEl = document.getElementById("cards");
+const tagInput = document.getElementById("tagInput");
+const activeTagsEl = document.getElementById("activeTags");
+const modal = document.getElementById("modal");
 
-const qInput = document.getElementById("q");
-const chipsHost = document.getElementById("chips");
-const sugHost = document.getElementById("suggestions");
-const cardsHost = document.getElementById("cards");
-
-const ALL_TAGS = [...new Set(DEMANDS.flatMap(d=>d.tags))].sort();
+let activeTags = [];
 
 function render(){
-  cardsHost.innerHTML="";
-  const filtered = state.selectedTags.length
-    ? DEMANDS.filter(d => state.selectedTags.every(t => d.tags.includes(t)))
-    : DEMANDS;
-
-  filtered.forEach(d=>{
-    const c=document.createElement("div");
-    c.className="card";
-    c.innerHTML=`
-      <h3>${d.title}</h3>
-      <div class="snippet">${d.summary}</div>
-      <div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap;">
-        ${d.tags.map(t=>`<span class="tag">${t}</span>`).join("")}
-      </div>
-    `;
-    cardsHost.appendChild(c);
-  });
+  cardsEl.innerHTML="";
+  DEMANDS
+    .filter(d => activeTags.length === 0 || activeTags.every(t => d.tags.includes(t)))
+    .forEach(d=>{
+      const card = document.createElement("div");
+      card.className="card";
+      card.innerHTML=`
+        <h3>${d.title}</h3>
+        <p>${d.summary}</p>
+        <div class="chips">
+          ${d.tags.map(t=>`<span class="chip readonly">${t}</span>`).join("")}
+        </div>
+      `;
+      card.addEventListener("click",()=>openModal(d));
+      cardsEl.appendChild(card);
+    });
 }
 
-function renderChips(){
-  chipsHost.innerHTML="";
-  state.selectedTags.forEach(t=>{
-    const chip=document.createElement("span");
-    chip.className="chip";
-    chip.innerHTML=`${t} <button>✕</button>`;
-    chip.querySelector("button").onclick=()=>{
-      state.selectedTags=state.selectedTags.filter(x=>x!==t);
-      renderChips();render();
-    };
-    chipsHost.appendChild(chip);
-  });
+function openModal(d){
+  document.getElementById("m_title").textContent=d.title;
+  document.getElementById("m_steps").innerHTML=d.steps.map(s=>`<li>${s}</li>`).join("");
+  document.getElementById("m_email").innerHTML=d.email;
+  modal.showModal();
 }
 
-function updateSuggestions(){
-  const q=qInput.value.toLowerCase().trim();
-  if(!q){sugHost.classList.remove("show");return;}
-
-  const list=ALL_TAGS.filter(t =>
-    t.includes(q) && !state.selectedTags.includes(t)
+function copyEmail(){
+  const html = document.getElementById("m_email").innerHTML;
+  navigator.clipboard.writeText(
+    document.getElementById("m_email").innerText
   );
-
-  sugHost.innerHTML="";
-  list.forEach(tag=>{
-    const d=document.createElement("div");
-    d.className="sugItem";
-    d.textContent=tag;
-    d.onclick=()=>addTag(tag);
-    sugHost.appendChild(d);
-  });
-
-  sugHost.classList.toggle("show",list.length>0);
 }
 
-function addTag(tag){
-  state.selectedTags.push(tag);
-  qInput.value="";
-  sugHost.classList.remove("show");
-  renderChips();render();
-}
-
-qInput.addEventListener("input",updateSuggestions);
-
-qInput.addEventListener("keydown",e=>{
-  if(e.key==="Enter"){
-    const first=sugHost.querySelector(".sugItem");
-    if(first){addTag(first.textContent);}
+tagInput.addEventListener("keydown",e=>{
+  if(e.key==="Enter" && tagInput.value.trim()){
+    const tag = tagInput.value.trim().toLowerCase();
+    if(!activeTags.includes(tag)){
+      activeTags.push(tag);
+      const chip=document.createElement("span");
+      chip.className="chip";
+      chip.textContent=tag+" ✕";
+      chip.onclick=()=>{activeTags=activeTags.filter(t=>t!==tag);renderTags()};
+      activeTagsEl.appendChild(chip);
+    }
+    tagInput.value="";
+    render();
   }
 });
 
-document.getElementById("clearTags").onclick=()=>{
-  state.selectedTags=[];
-  renderChips();render();
-};
+function renderTags(){
+  activeTagsEl.innerHTML="";
+  activeTags.forEach(t=>{
+    const chip=document.createElement("span");
+    chip.className="chip";
+    chip.textContent=t+" ✕";
+    chip.onclick=()=>{activeTags=activeTags.filter(x=>x!==t);renderTags()};
+    activeTagsEl.appendChild(chip);
+  });
+  render();
+}
 
 render();
 </script>
