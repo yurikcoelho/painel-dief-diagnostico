@@ -728,22 +728,24 @@ a:hover{
         id: "baixa-mei",
         title: "Solicitação de Baixa — MEI",
         categoryTag: "Baixa",
-        summary: "Consultar DSOT. Sem débitos: efetivar baixa no SIATE e enviar FIC ao contribuinte. Com débitos: orientar quitação via Agência de Rendas.",
-        tags: ["baixa", "mei", "dsot", "siate", "fic"],
+        summary: "Consultar DSOT. Sem débitos: efetivar baixa no SIATE e enviar FIC ao contribuinte. Com débitos: orientar quitação das pendências.",
+        tags: ["baixa", "mei"],
         procedureNote: "A baixa somente pode ser efetivada se não houver débitos pendentes no DSOT.",
         steps: [
-          "Consultar o DSOT do MEI pelo CNPJ no SIATE Web: Atendimento → Imprimir CND/DSOT.",
-          "Caso haja débitos pendentes: orientar o contribuinte a quitá-los primeiro (Agência de Rendas da jurisdição).",
-          "Caso NÃO haja débitos: efetuar a baixa no SIATE → Módulo Atendimento → Informações Econômico-Fiscais → Painel Geral do Contribuinte.",
           "Documento a verificar: Certidão de Baixa de Inscrição no CNPJ (RFB). Se não anexou, consultar pelo CNPJ no site da RFB (link abaixo).",
-          "Número do processo: pode utilizar o último dígito da inscrição estadual e informar apenas o ano.",
+          "Consultar o DSOT do MEI pelo CNPJ/IE no SIATE Web: Atendimento → Imprimir CND/DSOT.",
+          "Caso haja débitos impeditivos: orientar o contribuinte a quitá-los primeiro (Agência de Rendas da jurisdição).",
+          "Caso não haja débitos impeditivos: efetuar a baixa no SIATE → Módulo Atendimento → Informações Econômico-Fiscais → Painel Geral do Contribuinte.",
+          "Caso tenha algum débito que você não saiba se é impeditivo (ex: parcelamento), emita e consulte a CND dele. Se for Certidão Positiva com Efeito de Negativa, pode dar baixa.",
+          "No SIATE, em Número do Processo, pode utilizar o último dígito da inscrição estadual e informar apenas o ano. ",
           "Quando baixar: Efetivar Situação → selecionar a caixa do contribuinte → Confirmar.",
-          "Imprimir FIC (Ficha de Inscrição Cadastral) → salvar como PDF.",
-          "Anexar a FIC na resposta ao contribuinte."
+          "Imprimir FIC (Ficha de Inscrição Cadastral) → salvar como PDF.Anexar a FIC na resposta ao contribuinte.",
+          "Anexar a FIC no e-mail de resposta ao contribuinte."
         ],
         docs: [
           "Certidão de Baixa de Inscrição no CNPJ (RFB).",
           "DSOT (Demonstrativo de Situação de Obrigações Tributárias Estaduais).",
+          "CND (Certidão Negativa de Débitos), se for o caso.",
           "FIC (Ficha de Inscrição Cadastral) após efetivar a baixa."
         ],
         linksHtml:
