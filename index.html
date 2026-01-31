@@ -328,6 +328,21 @@
       font-size:13px;
       background:#fff;
     }
+
+    /* ======= DARK MODE (ADICIONADO) ======= */
+    body.dark{
+      --bg:#0e1422;
+      --card:#141c2f;
+      --card2:#10182a;
+      --text:#e6ecff;
+      --muted:#9fb0d0;
+
+      --line:rgba(255,255,255,.12);
+      --primary:#5da9ff;
+      --primary2:rgba(93,169,255,.18);
+
+      --shadow:0 10px 28px rgba(0,0,0,.55);
+    }
   </style>
 </head>
 
@@ -341,6 +356,9 @@
           e <b>respostas padrão</b> para copiar e colar no Gmail.
         </p>
       </div>
+
+      <!-- ======= DARK MODE (ADICIONADO) ======= -->
+      <button class="btn" id="themeToggle" type="button">🌙 Modo escuro</button>
     </header>
 
     <section class="bar">
@@ -623,185 +641,4 @@ Secretaria de Estado da Fazenda de Roraima - SEFAZ/RR<br>
         const li = document.createElement("li");
         li.className = "checklist-item";
 
-        const checkbox = document.createElement("input");
-        checkbox.type = "checkbox";
-
-        const text = document.createElement("span");
-        text.textContent = s;
-
-        checkbox.addEventListener("change", () => {
-          li.classList.toggle("done", checkbox.checked);
-        });
-
-        li.appendChild(checkbox);
-        li.appendChild(text);
-        steps.appendChild(li);
-      });
-
-      const docs = document.getElementById("m_docs");
-      docs.innerHTML = "";
-      (d.docs||[]).forEach(s => {
-        const li = document.createElement("li");
-        li.textContent = s;
-        docs.appendChild(li);
-      });
-
-      document.getElementById("m_links").innerHTML = d.linksHtml || "";
-
-      // reset campos
-      cnpjInput.value = "";
-      ieInput.value = "";
-
-      // montar botões de template
-      buildTemplateButtons(d);
-
-      modal.showModal();
-    }
-
-    function buildTemplateButtons(d){
-      segmentedHost.innerHTML = "";
-      const templates = d.templates || [];
-
-      if (!templates.length){
-        // fallback: sem templates
-        emailBox.innerHTML = "<div><p class='muted'>Sem resposta padrão cadastrada para esta demanda.</p></div>";
-        currentTemplateKey = null;
-        return;
-      }
-
-      templates.forEach((t, idx) => {
-        const btn = document.createElement("button");
-        btn.className = "segBtn" + (idx === 0 ? " active" : "");
-        btn.type = "button";
-        btn.textContent = t.label;
-        btn.dataset.key = t.key;
-
-        btn.addEventListener("click", () => {
-          segmentedHost.querySelectorAll(".segBtn").forEach(b => b.classList.remove("active"));
-          btn.classList.add("active");
-          currentTemplateKey = t.key;
-          setEmailView();
-        });
-
-        segmentedHost.appendChild(btn);
-      });
-
-      currentTemplateKey = templates[0].key;
-      setEmailView();
-    }
-
-    function setEmailView(){
-      if (!current) return;
-      const templates = current.templates || [];
-      const t = templates.find(x => x.key === currentTemplateKey) || templates[0];
-      emailBox.innerHTML = (t && t.html) ? t.html : "<div><p class='muted'>Sem resposta padrão.</p></div>";
-    }
-
-    function closeModal(){
-      modal.close();
-      current = null;
-      currentTemplateKey = null;
-      cnpjInput.value = "";
-      ieInput.value = "";
-    }
-
-    mClose.addEventListener("click", closeModal);
-
-    modal.addEventListener("click", (e) => {
-      const rect = modal.getBoundingClientRect();
-      const isInDialog = (
-        rect.top <= e.clientY && e.clientY <= rect.top + rect.height &&
-        rect.left <= e.clientX && e.clientY <= rect.top + rect.height &&
-        rect.left <= e.clientX && e.clientX <= rect.left + rect.width
-      );
-      if (!isInDialog) closeModal();
-    });
-
-    // ======= Copiar / Limpar CNPJ =======
-    copyCnpjBtn.addEventListener("click", async () => {
-      const value = (cnpjInput.value || "").trim();
-      if (!value) return toast("Cole um CNPJ primeiro");
-
-      try{
-        await navigator.clipboard.writeText(value);
-        toast("CNPJ copiado ✅");
-      } catch {
-        cnpjInput.select();
-        document.execCommand("copy");
-        toast("CNPJ copiado ✅");
-      }
-    });
-
-    clearCnpjBtn.addEventListener("click", () => {
-      cnpjInput.value = "";
-      toast("CNPJ limpo ✅");
-    });
-
-    // ======= Copiar / Limpar IE =======
-    copyIeBtn.addEventListener("click", async () => {
-      const value = (ieInput.value || "").trim();
-      if (!value) return toast("Cole uma IE primeiro");
-
-      try{
-        await navigator.clipboard.writeText(value);
-        toast("IE copiada ✅");
-      } catch {
-        ieInput.select();
-        document.execCommand("copy");
-        toast("IE copiada ✅");
-      }
-    });
-
-    clearIeBtn.addEventListener("click", () => {
-      ieInput.value = "";
-      toast("IE limpa ✅");
-    });
-
-    // ======= Copiar e-mail (HTML + texto) =======
-    copyEmailBtn.addEventListener("click", async () => {
-      if (!current) return;
-
-      const htmlContent = emailBox.innerHTML;
-
-      const tempDiv = document.createElement("div");
-      tempDiv.style.position = "absolute";
-      tempDiv.style.left = "-9999px";
-      tempDiv.style.width = "1200px";
-      tempDiv.innerHTML = htmlContent;
-      document.body.appendChild(tempDiv);
-
-      const plainText = tempDiv.innerText;
-
-      try {
-        const blobHtml = new Blob([tempDiv.innerHTML], { type: "text/html" });
-        const blobText = new Blob([plainText], { type: "text/plain" });
-        const data = [new ClipboardItem({
-          "text/html": blobHtml,
-          "text/plain": blobText
-        })];
-
-        await navigator.clipboard.write(data);
-        toast("Resposta copiada ✅");
-      } catch (err) {
-        const range = document.createRange();
-        range.selectNodeContents(tempDiv);
-        const sel = window.getSelection();
-        sel.removeAllRanges();
-        sel.addRange(range);
-        document.execCommand("copy");
-        sel.removeAllRanges();
-        toast("Resposta copiada ✅");
-      }
-
-      document.body.removeChild(tempDiv);
-    });
-
-    document.getElementById("q").addEventListener("input", (e) => {
-      state.q = e.target.value || "";
-      render();
-    });
-
-    render();
-  </script>
-</body>
-</html>
+       
