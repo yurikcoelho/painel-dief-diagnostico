@@ -257,6 +257,7 @@
       background:#fff;
       cursor:pointer;
       font-size:12px;
+      white-space:nowrap;
     }
     .btn.primary{
       background:var(--primary2);
@@ -310,67 +311,56 @@
       transform:translateX(-50%) translateY(-2px);
     }
 
-    /* ===== CNPJ compacto ===== */
-    .cnpjBox{
+    /* ===== Toggle CNPJ / IE + ações ===== */
+    .idHead{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      margin-bottom:10px;
+    }
+
+    .idToggle{
+      display:flex;
+      gap:6px;
+      padding:4px;
+      border:1px solid var(--line);
+      border-radius:999px;
+      background: rgba(255,255,255,.75);
+    }
+
+    .idBtn{
+      border:none;
+      background:transparent;
+      padding:6px 10px;
+      border-radius:999px;
+      font-size:12px;
+      cursor:pointer;
+      color:var(--muted);
+    }
+
+    .idBtn.active{
+      background: rgba(10,98,190,.14);
+      color: var(--text);
+      border:1px solid rgba(10,98,190,.35);
+    }
+
+    .idBox{
       display:flex;
       align-items:center;
       gap:8px;
-      max-width:320px;
+      max-width:520px;
+      flex-wrap:wrap;
     }
-    .cnpjBox input{
-      width:200px;
+
+    .idBox input{
+      width:220px;
       padding:8px 10px;
       border-radius:10px;
       border:1px solid var(--line);
       font-size:13px;
       background:#fff;
     }
-    /* ===== Toggle CNPJ / IE + ações ===== */
-.idHead{
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  gap:10px;
-  margin-bottom:10px;
-}
-
-.idToggle{
-  display:flex;
-  gap:6px;
-  padding:4px;
-  border:1px solid var(--line);
-  border-radius:999px;
-  background: rgba(255,255,255,.75);
-}
-
-.idBtn{
-  border:none;
-  background:transparent;
-  padding:6px 10px;
-  border-radius:999px;
-  font-size:12px;
-  cursor:pointer;
-  color:var(--muted);
-}
-
-.idBtn.active{
-  background: rgba(10,98,190,.14);
-  color: var(--text);
-  border:1px solid rgba(10,98,190,.35);
-}
-
-.cnpjBox{
-  display:flex;
-  align-items:center;
-  gap:8px;
-  max-width:520px; /* um pouco maior pra caber 2 botões */
-  flex-wrap:wrap;
-}
-
-.cnpjBox input{
-  width:220px;
-}
-
   </style>
 </head>
 
@@ -428,24 +418,25 @@
       </div>
 
       <div>
+        <!-- Painel Identificador -->
         <div class="panel" style="margin-bottom:16px;">
-  <div class="idHead">
-    <h4 id="id_label">CNPJ (colar aqui)</h4>
+          <div class="idHead">
+            <h4 id="id_label">CNPJ (colar aqui)</h4>
 
-    <div class="idToggle" role="tablist" aria-label="Alternar identificador">
-      <button class="idBtn active" id="toggle_cnpj" type="button">CNPJ</button>
-      <button class="idBtn" id="toggle_ie" type="button">IE</button>
-    </div>
-  </div>
+            <div class="idToggle" role="tablist" aria-label="Alternar identificador">
+              <button class="idBtn active" id="toggle_cnpj" type="button">CNPJ</button>
+              <button class="idBtn" id="toggle_ie" type="button">IE</button>
+            </div>
+          </div>
 
-  <div class="cnpjBox">
-    <input id="id_input" type="text" placeholder="00.000.000/0000-00" />
-    <button class="btn" id="copy_id" type="button">Copiar</button>
-    <button class="btn" id="clear_id" type="button">Limpar</button>
-  </div>
-</div>
+          <div class="idBox">
+            <input id="id_input" type="text" placeholder="00.000.000/0000-00" />
+            <button class="btn" id="copy_id" type="button">Copiar</button>
+            <button class="btn" id="clear_all" type="button">Limpar</button>
+          </div>
+        </div>
 
-
+        <!-- Painel Resposta Padrão -->
         <div class="panel">
           <h4>Respostas padrão</h4>
           <p class="muted" style="font-size:12px;line-height:1.45;margin-bottom:10px;">
@@ -582,67 +573,36 @@
     const tabOk = document.getElementById("tab_ok");
     const tabBad = document.getElementById("tab_bad");
     const emailBox = document.getElementById("m_email");
-    const copyBtn = document.getElementById("copy_email");
+    const copyEmailBtn = document.getElementById("copy_email");
 
-   // ======= Identificador (CNPJ/IE) =======
-const idLabel = document.getElementById("id_label");
-const idInput = document.getElementById("id_input");
-const copyIdBtn = document.getElementById("copy_id");
-const clearIdBtn = document.getElementById("clear_id");
-
-const toggleCnpj = document.getElementById("toggle_cnpj");
-const toggleIe = document.getElementById("toggle_ie");
-
-let idMode = "cnpj"; // "cnpj" | "ie"
-
-function setIdMode(mode){
-  idMode = mode;
-
-  toggleCnpj.classList.toggle("active", mode === "cnpj");
-  toggleIe.classList.toggle("active", mode === "ie");
-
-  if (mode === "cnpj"){
-    idLabel.textContent = "CNPJ (colar aqui)";
-    idInput.placeholder = "00.000.000/0000-00";
-  } else {
-    idLabel.textContent = "IE (colar aqui)";
-    idInput.placeholder = "Inscrição Estadual";
-  }
-}
-
-toggleCnpj.addEventListener("click", () => setIdMode("cnpj"));
-toggleIe.addEventListener("click", () => setIdMode("ie"));
-
-copyIdBtn.addEventListener("click", async () => {
-  const value = (idInput.value || "").trim();
-  if (!value) return toast("Cole um valor primeiro");
-
-  try{
-    await navigator.clipboard.writeText(value);
-    toast(`${idMode.toUpperCase()} copiado ✅`);
-  } catch {
-    idInput.select();
-    document.execCommand("copy");
-    toast(`${idMode.toUpperCase()} copiado ✅`);
-  }
-
-  clearIdBtn.addEventListener("click", () => {
-  // limpa campo
-  idInput.value = "";
-
-  // desmarca checklist
-  document.querySelectorAll("#m_steps input[type='checkbox']").forEach(cb => {
-    cb.checked = false;
-    cb.dispatchEvent(new Event("change"));
-  });
-
-  toast("Limpo ✅");
-});
-
-});
+    // Identificador
+    const idLabel = document.getElementById("id_label");
+    const idInput = document.getElementById("id_input");
+    const copyIdBtn = document.getElementById("copy_id");
+    const clearAllBtn = document.getElementById("clear_all");
+    const toggleCnpj = document.getElementById("toggle_cnpj");
+    const toggleIe = document.getElementById("toggle_ie");
 
     let current = null;
     let currentMode = "ok"; // ok | bad
+    let idMode = "cnpj"; // cnpj | ie
+
+    function setIdMode(mode){
+      idMode = mode;
+      toggleCnpj.classList.toggle("active", mode === "cnpj");
+      toggleIe.classList.toggle("active", mode === "ie");
+
+      if (mode === "cnpj"){
+        idLabel.textContent = "CNPJ (colar aqui)";
+        idInput.placeholder = "00.000.000/0000-00";
+      } else {
+        idLabel.textContent = "IE (colar aqui)";
+        idInput.placeholder = "Inscrição Estadual";
+      }
+    }
+
+    toggleCnpj.addEventListener("click", () => setIdMode("cnpj"));
+    toggleIe.addEventListener("click", () => setIdMode("ie"));
 
     function openModal(d){
       current = d;
@@ -655,6 +615,7 @@ copyIdBtn.addEventListener("click", async () => {
 
       document.getElementById("m_proc_note").textContent = d.procedureNote || "";
 
+      // checklist
       const steps = document.getElementById("m_steps");
       steps.innerHTML = "";
       (d.steps || []).forEach(s => {
@@ -686,9 +647,9 @@ copyIdBtn.addEventListener("click", async () => {
 
       document.getElementById("m_links").innerHTML = d.linksHtml || "";
 
-      if (cnpjInput) cnpjInput.value = "";
-setIdMode("cnpj");
-idInput.value = "";
+      // reset identificador e campo
+      setIdMode("cnpj");
+      idInput.value = "";
 
       setEmailView();
       modal.showModal();
@@ -705,7 +666,7 @@ idInput.value = "";
     function closeModal(){
       modal.close();
       current = null;
-      if (cnpjInput) cnpjInput.value = "";
+      idInput.value = "";
     }
 
     mClose.addEventListener("click", closeModal);
@@ -733,23 +694,35 @@ idInput.value = "";
       setEmailView();
     });
 
-    // ======= Copiar CNPJ =======
-    copyCnpjBtn.addEventListener("click", async () => {
-      const value = (cnpjInput.value || "").trim();
-      if (!value) return toast("Cole um CNPJ primeiro");
+    // ======= Copiar ID (CNPJ/IE) =======
+    copyIdBtn.addEventListener("click", async () => {
+      const value = (idInput.value || "").trim();
+      if (!value) return toast("Cole um valor primeiro");
 
       try{
         await navigator.clipboard.writeText(value);
-        toast("CNPJ copiado ✅");
+        toast(`${idMode.toUpperCase()} copiado ✅`);
       } catch {
-        cnpjInput.select();
+        idInput.select();
         document.execCommand("copy");
-        toast("CNPJ copiado ✅");
+        toast(`${idMode.toUpperCase()} copiado ✅`);
       }
     });
 
+    // ======= Limpar (campo + checklist) =======
+    clearAllBtn.addEventListener("click", () => {
+      idInput.value = "";
+
+      document.querySelectorAll("#m_steps input[type='checkbox']").forEach(cb => {
+        cb.checked = false;
+        cb.dispatchEvent(new Event("change"));
+      });
+
+      toast("Limpo ✅");
+    });
+
     // ======= Copiar e-mail (HTML + texto) =======
-    copyBtn.addEventListener("click", async () => {
+    copyEmailBtn.addEventListener("click", async () => {
       if (!current) return;
 
       const htmlContent = emailBox.innerHTML;
