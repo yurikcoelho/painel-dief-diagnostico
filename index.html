@@ -23,7 +23,6 @@
 
       --mono: ui-monospace, Menlo, Consolas, monospace;
       --sans: system-ui, -apple-system, Segoe UI, Roboto, Arial;
-      
     }
 
     *{ box-sizing:border-box; }
@@ -52,19 +51,6 @@
     h1{ font-size:22px; margin:0 0 6px; }
     header p{ margin:0; color:var(--muted); font-size:13px; max-width:900px; line-height:1.45; }
 
-    .pill{
-      display:inline-flex; align-items:center; gap:8px;
-      padding:10px 12px;
-      border:1px solid var(--line);
-      border-radius:999px;
-      background:rgba(255,255,255,.75);
-      color:var(--muted);
-      font-size:12px;
-      box-shadow: 0 10px 22px rgba(11,27,58,.08);
-      white-space:nowrap;
-    }
-    .pill b{ color:var(--text); font-weight:700; }
-
     /* SEARCH */
     .bar{
       margin-top:16px;
@@ -77,7 +63,7 @@
     .search{
       display:flex; align-items:center; gap:10px;
       border:1px solid var(--line);
-      background:#ffffff; /* fundo branco */
+      background:#ffffff;
       border-radius:999px;
       padding:10px 14px;
       box-shadow:0 6px 18px rgba(11,27,58,.08);
@@ -91,13 +77,6 @@
     .search:focus-within{
       border-color:rgba(10,98,190,.45);
       box-shadow:0 0 0 4px rgba(10,98,190,.12), 0 6px 18px rgba(11,27,58,.08);
-    }
-
-    .hint{
-      margin-top:10px;
-      color:var(--muted);
-      font-size:12px;
-      line-height:1.45;
     }
 
     /* CARDS */
@@ -236,22 +215,21 @@
       padding:0;
     }
     .panel li{ margin:6px 0; }
-/* Checklist de procedimentos */
-.checklist-item{
-  display: flex;
-  align-items: flex-start;
-  gap: 8px;
-}
 
-.checklist-item input[type="checkbox"]{
-  margin-top: 3px;
-  cursor: pointer;
-}
-
-.checklist-item.done span{
-  text-decoration: line-through;
-  color: rgba(60,86,122,.65);
-}
+    /* Checklist de procedimentos */
+    .checklist-item{
+      display:flex;
+      align-items:flex-start;
+      gap:8px;
+    }
+    .checklist-item input[type="checkbox"]{
+      margin-top:3px;
+      cursor:pointer;
+    }
+    .checklist-item.done span{
+      text-decoration:line-through;
+      color: rgba(60,86,122,.65);
+    }
 
     .muted{ color:var(--muted); }
 
@@ -268,17 +246,9 @@
     }
 
     /* Compactar visualização da resposta padrão (apenas na caixa) */
-.templateBox p{
-  margin: 0 0 6px;
-}
-
-.templateBox p:last-child{
-  margin-bottom: 0;
-}
-
-.templateBox br{
-  display: none;
-}
+    .templateBox p{ margin:0 0 6px; }
+    .templateBox p:last-child{ margin-bottom:0; }
+    .templateBox br{ display:none; }
 
     .btn{
       padding:10px 14px;
@@ -340,10 +310,20 @@
       transform:translateX(-50%) translateY(-2px);
     }
 
-    .smallCode{
-      font-family: var(--mono);
-      font-size: 11px;
-      color: rgba(60,86,122,.95);
+    /* ===== CNPJ compacto ===== */
+    .cnpjBox{
+      display:flex;
+      align-items:center;
+      gap:8px;
+      max-width:320px;
+    }
+    .cnpjBox input{
+      width:200px;
+      padding:8px 10px;
+      border-radius:10px;
+      border:1px solid var(--line);
+      font-size:13px;
+      background:#fff;
     }
   </style>
 </head>
@@ -358,7 +338,6 @@
           e <b>respostas padrão</b> para copiar e colar no Gmail.
         </p>
       </div>
-      
     </header>
 
     <section class="bar">
@@ -401,68 +380,32 @@
         <h4>Links úteis</h4>
         <p id="m_links" class="muted"></p>
       </div>
-<h4>CNPJ (colar aqui)</h4>
 
-<div class="cnpjBox">
-  <input
-    id="cnpj_input"
-    type="text"
-    placeholder="00.000.000/0000-00"
-  />
-  <button class="btn" id="copy_cnpj" type="button">
-    Copiar
-  </button>
-</div>
-
-/* ===== CNPJ compacto ===== */
-.cnpjBox{
-  display:flex;
-  align-items:center;
-  gap:8px;
-  max-width:320px;   /* controla o tamanho total */
-}
-
-.cnpjBox input{
-  width:200px;       /* largura do campo */
-  padding:8px 10px;
-  border-radius:10px;
-  border:1px solid var(--line);
-  font-size:13px;
-}
-
-<div style="display:flex; gap:8px; margin-bottom:14px;">
-  <input
-    id="cnpj_input"
-    type="text"
-    placeholder="00.000.000/0000-00"
-    style="
-      flex:1;
-      padding:10px 12px;
-      border-radius:12px;
-      border:1px solid var(--line);
-      font-size:13px;
-    "
-  />
-  <button class="btn" id="copy_cnpj" type="button">
-    Copiar
-  </button>
-</div>
-
-      <div class="panel">
-        <h4>Respostas padrão</h4>
-        <p class="muted" style="font-size:12px;line-height:1.45;margin-bottom:10px;">
-          Selecione a opção e copie para colar no Gmail.
-        </p>
-
-        <div class="segmented">
-          <button class="segBtn active" id="tab_ok" type="button">Deferido</button>
-          <button class="segBtn" id="tab_bad" type="button">Indeferido</button>
+      <div>
+        <div class="panel" style="margin-bottom:16px;">
+          <h4>CNPJ (colar aqui)</h4>
+          <div class="cnpjBox">
+            <input id="cnpj_input" type="text" placeholder="00.000.000/0000-00" />
+            <button class="btn" id="copy_cnpj" type="button">Copiar</button>
+          </div>
         </div>
 
-        <div class="templateBox" id="m_email"></div>
+        <div class="panel">
+          <h4>Respostas padrão</h4>
+          <p class="muted" style="font-size:12px;line-height:1.45;margin-bottom:10px;">
+            Selecione a opção e copie para colar no Gmail.
+          </p>
 
-        <div class="btnRow">
-          <button class="btn primary" id="copy_email" type="button">Copiar resposta</button>
+          <div class="segmented">
+            <button class="segBtn active" id="tab_ok" type="button">Deferido</button>
+            <button class="segBtn" id="tab_bad" type="button">Indeferido</button>
+          </div>
+
+          <div class="templateBox" id="m_email"></div>
+
+          <div class="btnRow">
+            <button class="btn primary" id="copy_email" type="button">Copiar resposta</button>
+          </div>
         </div>
       </div>
     </div>
@@ -499,7 +442,6 @@
           `Se o contribuinte não anexou a certidão da RFB, consultar pelo CNPJ em:
           <a href="https://solucoes.receita.fazenda.gov.br/servicos/cnpjreva/cnpjreva_solicitacao.asp" target="_blank" rel="noopener noreferrer">Consulta CNPJ — RFB</a>.`,
 
-        // E-mails fornecidos por você (HTML)
         emailDeferidoHtml:
 `<div>
   <p>Prezado(a),</p>
@@ -515,17 +457,13 @@
         emailIndeferidoHtml:
 `<div>
   <p>Prezado(a),</p>
-
-  <p>Em análise ao pedido de baixa da inscrição estadual, <strong> verificou-se a existência de débitos pendentes</strong>, conforme consulta ao seu Demonstrativo de Situação de Obrigações Tributárias Estaduais (DSOT).</p>
-
+  <p>Em análise ao pedido de baixa da inscrição estadual, <strong>verificou-se a existência de débitos pendentes</strong>, conforme consulta ao seu Demonstrativo de Situação de Obrigações Tributárias Estaduais (DSOT).</p>
   <p>Enquanto houver pendências financeiras em aberto, não é possível efetivar a baixa da inscrição estadual.</p>
-
-  <p>O contribuinte poderá enviar e-mail ou comparecer à Agência de Rendas de sua jurisdição para emissão do DARE e pagamento do débito. Após a regularização, o pedido de baixa poderá ser reapresentado.<p>
-
+  <p>O contribuinte poderá enviar e-mail ou comparecer à Agência de Rendas de sua jurisdição para emissão do DARE e pagamento do débito. Após a regularização, o pedido de baixa poderá ser reapresentado.</p>
   <p>Atenciosamente,</p>
- <p>Divisão de Informações Econômico-Fiscais - DIEF<br>
-Departamento da Receita - DEPAR<br>
-Secretaria de Estado da Fazenda de Roraima - SEFAZ/RR<br>
+  <p>Divisão de Informações Econômico-Fiscais - DIEF<br>
+     Departamento da Receita - DEPAR<br>
+     Secretaria de Estado da Fazenda de Roraima - SEFAZ/RR<br>
   </p>
 </div>`
       }
@@ -590,6 +528,9 @@ Secretaria de Estado da Fazenda de Roraima - SEFAZ/RR<br>
     const emailBox = document.getElementById("m_email");
     const copyBtn = document.getElementById("copy_email");
 
+    const cnpjInput = document.getElementById("cnpj_input");
+    const copyCnpjBtn = document.getElementById("copy_cnpj");
+
     let current = null;
     let currentMode = "ok"; // ok | bad
 
@@ -606,25 +547,24 @@ Secretaria de Estado da Fazenda de Roraima - SEFAZ/RR<br>
 
       const steps = document.getElementById("m_steps");
       steps.innerHTML = "";
-     (d.steps || []).forEach(s => {
-  const li = document.createElement("li");
-  li.className = "checklist-item";
+      (d.steps || []).forEach(s => {
+        const li = document.createElement("li");
+        li.className = "checklist-item";
 
-  const checkbox = document.createElement("input");
-  checkbox.type = "checkbox";
+        const checkbox = document.createElement("input");
+        checkbox.type = "checkbox";
 
-  const text = document.createElement("span");
-  text.textContent = s;
+        const text = document.createElement("span");
+        text.textContent = s;
 
-  checkbox.addEventListener("change", () => {
-    li.classList.toggle("done", checkbox.checked);
-  });
+        checkbox.addEventListener("change", () => {
+          li.classList.toggle("done", checkbox.checked);
+        });
 
-  li.appendChild(checkbox);
-  li.appendChild(text);
-  steps.appendChild(li);
-});
-
+        li.appendChild(checkbox);
+        li.appendChild(text);
+        steps.appendChild(li);
+      });
 
       const docs = document.getElementById("m_docs");
       docs.innerHTML = "";
@@ -636,6 +576,8 @@ Secretaria de Estado da Fazenda de Roraima - SEFAZ/RR<br>
 
       document.getElementById("m_links").innerHTML = d.linksHtml || "";
 
+      if (cnpjInput) cnpjInput.value = "";
+
       setEmailView();
       modal.showModal();
     }
@@ -645,9 +587,7 @@ Secretaria de Estado da Fazenda de Roraima - SEFAZ/RR<br>
       const html = (currentMode === "ok")
         ? (current.emailDeferidoHtml || "")
         : (current.emailIndeferidoHtml || "");
-
       emailBox.innerHTML = html;
-
     }
 
     function closeModal(){
@@ -681,70 +621,62 @@ Secretaria de Estado da Fazenda de Roraima - SEFAZ/RR<br>
       setEmailView();
     });
 
-  // ======= AJUSTE NA CÓPIA (LARGURA INVISÍVEL) =======
-// ======= AJUSTE NA CÓPIA (RESOLVE COLAR CÓDIGO HTML) =======
-copyBtn.addEventListener("click", async () => {
-  if (!current) return;
+    // ======= Copiar CNPJ =======
+    copyCnpjBtn.addEventListener("click", async () => {
+      const value = (cnpjInput.value || "").trim();
+      if (!value) return toast("Cole um CNPJ primeiro");
 
-  const htmlContent = emailBox.innerHTML;
-  
-  const tempDiv = document.createElement("div");
-  tempDiv.style.position = "absolute";
-  tempDiv.style.left = "-9999px";
-  tempDiv.style.width = "1200px"; 
-  tempDiv.innerHTML = htmlContent;
-  document.body.appendChild(tempDiv);
+      try{
+        await navigator.clipboard.writeText(value);
+        toast("CNPJ copiado ✅");
+      } catch {
+        cnpjInput.select();
+        document.execCommand("copy");
+        toast("CNPJ copiado ✅");
+      }
+    });
 
-  const plainText = tempDiv.innerText;
+    // ======= Copiar e-mail (HTML + texto) =======
+    copyBtn.addEventListener("click", async () => {
+      if (!current) return;
 
-  try {
-    const blobHtml = new Blob([tempDiv.innerHTML], { type: "text/html" });
-    const blobText = new Blob([plainText], { type: "text/plain" });
-    const data = [new ClipboardItem({
-      "text/html": blobHtml,
-      "text/plain": blobText
-    })];
+      const htmlContent = emailBox.innerHTML;
 
-    await navigator.clipboard.write(data);
-    toast("Resposta copiada ✅");
-  } catch (err) {
-    const range = document.createRange();
-    range.selectNodeContents(tempDiv);
-    const sel = window.getSelection();
-    sel.removeAllRanges();
-    sel.addRange(range);
-    document.execCommand("copy");
-    sel.removeAllRanges();
-    toast("Resposta copiada ✅");
-  }
+      const tempDiv = document.createElement("div");
+      tempDiv.style.position = "absolute";
+      tempDiv.style.left = "-9999px";
+      tempDiv.style.width = "1200px";
+      tempDiv.innerHTML = htmlContent;
+      document.body.appendChild(tempDiv);
 
-  document.body.removeChild(tempDiv);
-});
+      const plainText = tempDiv.innerText;
 
+      try {
+        const blobHtml = new Blob([tempDiv.innerHTML], { type: "text/html" });
+        const blobText = new Blob([plainText], { type: "text/plain" });
+        const data = [new ClipboardItem({
+          "text/html": blobHtml,
+          "text/plain": blobText
+        })];
+
+        await navigator.clipboard.write(data);
+        toast("Resposta copiada ✅");
+      } catch (err) {
+        const range = document.createRange();
+        range.selectNodeContents(tempDiv);
+        const sel = window.getSelection();
+        sel.removeAllRanges();
+        sel.addRange(range);
+        document.execCommand("copy");
+        sel.removeAllRanges();
+        toast("Resposta copiada ✅");
+      }
+
+      document.body.removeChild(tempDiv);
+    });
 
     document.getElementById("q").addEventListener("input", (e) => {
       state.q = e.target.value || "";
-      // ======= COPIAR CNPJ =======
-const cnpjInput = document.getElementById("cnpj_input");
-const copyCnpjBtn = document.getElementById("copy_cnpj");
-
-copyCnpjBtn.addEventListener("click", async () => {
-  const value = (cnpjInput.value || "").trim();
-  if (!value) {
-    toast("Cole um CNPJ primeiro");
-    return;
-  }
-
-  try {
-    await navigator.clipboard.writeText(value);
-    toast("CNPJ copiado ✅");
-  } catch {
-    cnpjInput.select();
-    document.execCommand("copy");
-    toast("CNPJ copiado ✅");
-  }
-});
-
       render();
     });
 
