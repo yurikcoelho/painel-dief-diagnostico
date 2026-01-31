@@ -1,202 +1,201 @@
 <!doctype html>
 <html lang="pt-BR">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <meta name="robots" content="noindex,nofollow" />
-  <title>Demandas Recorrentes — DIEF/SEFAZ RR</title>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<meta name="robots" content="noindex,nofollow" />
+<title>Demandas Recorrentes — DIEF/SEFAZ RR</title>
 
-  <style>
-    :root{
-      --bg:#f3f7ff;
-      --card:#ffffff;
-      --card2:#f7faff;
-      --text:#0b1b3a;
-      --muted:#3c567a;
+<style>
+:root{
+  --bg:#f3f7ff;
+  --card:#ffffff;
+  --card2:#f7faff;
+  --text:#0b1b3a;
+  --muted:#3c567a;
+  --line:rgba(11,27,58,.14);
+  --primary:#0a62be;
+  --primary2:rgba(10,98,190,.14);
+  --shadow:0 10px 28px rgba(11,27,58,.12);
+  --radius:18px;
+  --sans: system-ui, -apple-system, Segoe UI, Roboto, Arial;
+}
 
-      --line:rgba(11,27,58,.14);
-      --primary:#0a62be;
-      --primary2:rgba(10,98,190,.14);
+*{ box-sizing:border-box; }
 
-      --shadow:0 10px 28px rgba(11,27,58,.12);
-      --radius:18px;
+body{
+  margin:0;
+  font-family:var(--sans);
+  background:
+    radial-gradient(1100px 700px at 15% -10%, rgba(10,98,190,.18), transparent 60%),
+    radial-gradient(900px 600px at 90% 0%, rgba(10,98,190,.10), transparent 60%),
+    var(--bg);
+  color:var(--text);
+}
 
-      --sans: system-ui, -apple-system, Segoe UI, Roboto, Arial;
-    }
+a{ color: var(--primary); text-decoration:none; }
+a:hover{ text-decoration:underline; }
 
-    *{ box-sizing:border-box; }
-    body{
-      margin:0;
-      font-family:var(--sans);
-      background:
-        radial-gradient(1100px 700px at 15% -10%, rgba(10,98,190,.18), transparent 60%),
-        radial-gradient(900px 600px at 90% 0%, rgba(10,98,190,.10), transparent 60%),
-        var(--bg);
-      color:var(--text);
-    }
+.wrap{ max-width:1100px; margin:0 auto; padding:28px 18px 80px; }
 
-    a{ color: var(--primary); text-decoration:none; }
-    a:hover{ text-decoration:underline; }
+header{
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:14px;
+  flex-wrap:wrap;
+}
 
-    .wrap{ max-width:1100px; margin:0 auto; padding:28px 18px 80px; }
+h1{ font-size:22px; margin:0 0 6px; }
+header p{
+  margin:0;
+  color:var(--muted);
+  font-size:13px;
+  max-width:900px;
+  line-height:1.45;
+}
 
-    header{
-      display:flex;
-      align-items:flex-start;
-      justify-content:space-between;
-      gap:14px;
-      flex-wrap:wrap;
-    }
-    h1{ font-size:22px; margin:0 0 6px; }
-    header p{ margin:0; color:var(--muted); font-size:13px; max-width:900px; line-height:1.45; }
+/* SEARCH */
+.bar{
+  margin-top:16px;
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  background:rgba(255,255,255,.75);
+  padding:14px;
+  box-shadow: var(--shadow);
+}
 
-    .bar{
-      margin-top:16px;
-      border:1px solid var(--line);
-      border-radius:var(--radius);
-      background:rgba(255,255,255,.75);
-      padding:14px;
-      box-shadow: var(--shadow);
-    }
+.search{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  border:1px solid var(--line);
+  background:#ffffff;
+  border-radius:999px;
+  padding:10px 14px;
+  box-shadow:0 6px 18px rgba(11,27,58,.08);
+}
 
-    .search{
-      display:flex; align-items:center; gap:10px;
-      border:1px solid var(--line);
-      background:#ffffff;
-      border-radius:999px;
-      padding:10px 14px;
-      box-shadow:0 6px 18px rgba(11,27,58,.08);
-    }
-    .search input{
-      border:none; outline:none; width:100%;
-      font-size:14px; color:var(--text);
-      background:transparent;
-    }
+.search input{
+  border:none;
+  outline:none;
+  width:100%;
+  font-size:14px;
+  color:var(--text);
+  background:transparent;
+}
 
-    .sectionTitle{
-      display:flex; align-items:baseline; justify-content:space-between;
-      margin:18px 2px 10px;
-    }
+.search input::placeholder{ color:rgba(60,86,122,.75); }
 
-    .cards{
-      display:grid;
-      grid-template-columns:repeat(auto-fit,minmax(320px,1fr));
-      gap:16px;
-    }
+/* CARDS */
+.cards{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(320px,1fr));
+  gap:16px;
+  margin-top:10px;
+}
 
-    .card{
-      background:var(--card);
-      border:1px solid var(--line);
-      border-radius:var(--radius);
-      padding:14px;
-      box-shadow:var(--shadow);
-      cursor:pointer;
-    }
+.card{
+  background:var(--card);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:14px;
+  box-shadow:var(--shadow);
+  cursor:pointer;
+}
 
-    .tag{
-      padding:6px 10px;
-      border-radius:999px;
-      border:1px solid rgba(10,98,190,.30);
-      background: rgba(10,98,190,.10);
-      font-size:11px;
-    }
+/* MODAL */
+dialog{
+  width:min(1020px,calc(100% - 24px));
+  border-radius:22px;
+  border:1px solid var(--line);
+  background:#fff;
+  padding:0;
+  box-shadow:0 30px 80px rgba(11,27,58,.30);
+}
 
-    dialog{
-      width:min(1020px,calc(100% - 24px));
-      border-radius:22px;
-      border:1px solid var(--line);
-      background:#fff;
-      padding:0;
-      box-shadow:0 30px 80px rgba(11,27,58,.30);
-    }
+dialog::backdrop{
+  background:rgba(11,27,58,.28);
+  backdrop-filter:blur(3px);
+}
 
-    dialog::backdrop{
-      background:rgba(11,27,58,.28);
-      backdrop-filter:blur(3px);
-    }
+/* TOAST */
+.toast{
+  position:fixed;
+  bottom:18px;
+  left:50%;
+  transform:translateX(-50%);
+  background: rgba(11,27,58,.90);
+  color:#fff;
+  padding:10px 12px;
+  border-radius:999px;
+  font-size:12px;
+  opacity:0;
+}
 
-    .toast{
-      position:fixed;
-      bottom:18px;
-      left:50%;
-      transform:translateX(-50%);
-      background: rgba(11,27,58,.90);
-      color:#fff;
-      padding:10px 12px;
-      border-radius:999px;
-      font-size:12px;
-      opacity:0;
-      transition: opacity .18s ease;
-      z-index:9999;
-    }
+.toast.show{ opacity:1; }
 
-    .toast.show{ opacity:1; }
-
-    /* =========================
-       DARK MODE (ONLY ADDITION)
-       ========================= */
-    body.dark{
-      --bg:#0e1422;
-      --card:#141c2f;
-      --card2:#10182a;
-      --text:#e6ecff;
-      --muted:#9fb0d0;
-      --line:rgba(255,255,255,.12);
-      --primary:#5da9ff;
-      --primary2:rgba(93,169,255,.18);
-      --shadow:0 14px 36px rgba(0,0,0,.45);
-    }
-  </style>
+/* =========================
+   DARK MODE — ÚNICA ADIÇÃO
+   ========================= */
+body.dark{
+  --bg:#0e1422;
+  --card:#141c2f;
+  --card2:#10182a;
+  --text:#e6ecff;
+  --muted:#9fb0d0;
+  --line:rgba(255,255,255,.12);
+  --primary:#5da9ff;
+  --primary2:rgba(93,169,255,.18);
+  --shadow:0 14px 36px rgba(0,0,0,.45);
+}
+</style>
 </head>
 
 <body>
-  <div class="wrap">
-    <header>
-      <div>
-        <h1>Demandas Recorrentes — DIEF/SEFAZ RR</h1>
-        <p>
-          Repositório interno de demandas que chegam por e-mail. Clique em um card para ver <b>procedimentos</b>
-          e <b>respostas padrão</b> para copiar e colar no Gmail.
-        </p>
-      </div>
-
-      <!-- BOTÃO DARK MODE (ONLY ADDITION) -->
-      <button class="btn" id="themeToggle" type="button">🌙 Modo escuro</button>
-    </header>
-
-    <section class="bar">
-      <div class="search">
-        🔎 <input placeholder="Buscar demanda..." />
-      </div>
-    </section>
+<div class="wrap">
+<header>
+  <div>
+    <h1>Demandas Recorrentes — DIEF/SEFAZ RR</h1>
+    <p>
+      Repositório interno de demandas que chegam por e-mail. Clique em um card para ver <b>procedimentos</b>
+      (quando aplicável) e <b>respostas padrão</b> para copiar e colar no Gmail.
+    </p>
   </div>
 
-  <div class="toast" id="toast">Copiado ✅</div>
+  <!-- DARK MODE: botão adicionado -->
+  <button class="btn" id="themeToggle" type="button">🌙 Modo escuro</button>
+</header>
 
-  <script>
-    // ======= Dark Mode (ONLY ADDITION) =======
-    const themeToggle = document.getElementById("themeToggle");
+<section class="bar">
+  <div class="search">
+    🔎 <input id="q" type="text" placeholder="Buscar demanda (ex.: baixa, MEI, simples, regime...)" />
+  </div>
+</section>
 
-    function applyTheme(theme){
-      document.body.classList.toggle("dark", theme === "dark");
-      if (themeToggle){
-        themeToggle.textContent =
-          theme === "dark" ? "☀️ Modo claro" : "🌙 Modo escuro";
-      }
-    }
+<div class="cards" id="cards"></div>
+</div>
 
-    const savedTheme = localStorage.getItem("theme") || "light";
-    applyTheme(savedTheme);
+<div class="toast" id="toast">Copiado ✅</div>
 
-    if (themeToggle){
-      themeToggle.addEventListener("click", () => {
-        const nextTheme = document.body.classList.contains("dark")
-          ? "light"
-          : "dark";
-        localStorage.setItem("theme", nextTheme);
-        applyTheme(nextTheme);
-      });
-    }
-  </script>
+<script>
+/* ======= DARK MODE — ÚNICA ADIÇÃO ======= */
+const themeToggle = document.getElementById("themeToggle");
+
+function applyTheme(theme){
+  document.body.classList.toggle("dark", theme === "dark");
+  themeToggle.textContent =
+    theme === "dark" ? "☀️ Modo claro" : "🌙 Modo escuro";
+}
+
+const savedTheme = localStorage.getItem("theme") || "light";
+applyTheme(savedTheme);
+
+themeToggle.addEventListener("click", () => {
+  const next = document.body.classList.contains("dark") ? "light" : "dark";
+  localStorage.setItem("theme", next);
+  applyTheme(next);
+});
+</script>
 </body>
 </html>
