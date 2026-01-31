@@ -64,7 +64,6 @@
     }
     .pill b{ color:var(--text); font-weight:700; }
 
-    /* SEARCH */
     .bar{
       margin-top:16px;
       border:1px solid var(--line);
@@ -76,7 +75,7 @@
     .search{
       display:flex; align-items:center; gap:10px;
       border:1px solid var(--line);
-      background:#ffffff; /* fundo branco */
+      background:#ffffff;
       border-radius:999px;
       padding:10px 14px;
       box-shadow:0 6px 18px rgba(11,27,58,.08);
@@ -86,20 +85,7 @@
       font-size:14px; color:var(--text);
       background:transparent;
     }
-    .search input::placeholder{ color:rgba(60,86,122,.75); }
-    .search:focus-within{
-      border-color:rgba(10,98,190,.45);
-      box-shadow:0 0 0 4px rgba(10,98,190,.12), 0 6px 18px rgba(11,27,58,.08);
-    }
 
-    .hint{
-      margin-top:10px;
-      color:var(--muted);
-      font-size:12px;
-      line-height:1.45;
-    }
-
-    /* CARDS */
     .sectionTitle{
       display:flex; align-items:baseline; justify-content:space-between;
       gap:10px; flex-wrap:wrap;
@@ -127,11 +113,6 @@
     }
     .card:hover{ transform: translateY(-2px); border-color: rgba(10,98,190,.35); }
 
-    .cardTop{
-      display:flex; align-items:flex-start; justify-content:space-between;
-      gap:12px;
-    }
-    .card h3{ margin:0; font-size:14px; line-height:1.25; }
     .tag{
       display:inline-flex; align-items:center;
       padding:6px 10px;
@@ -140,35 +121,25 @@
       background: rgba(10,98,190,.10);
       color: var(--text);
       font-size:11px;
-      white-space:nowrap;
     }
 
-    .snippet{
-      font-size:12px;
-      color:var(--muted);
-      margin-top:10px;
-      line-height:1.5;
-    }
+    .snippet{ font-size:12px; color:var(--muted); margin-top:10px; line-height:1.5; }
 
     .metaRow{
       margin-top:12px;
       display:flex; align-items:center; justify-content:space-between;
-      gap:10px;
-      color:var(--muted);
-      font-size:12px;
+      color:var(--muted); font-size:12px;
     }
 
     .btnMini{
       border:1px solid var(--line);
       background: rgba(255,255,255,.85);
-      color: var(--text);
       padding:8px 10px;
       border-radius:12px;
       font-size:12px;
       cursor:pointer;
     }
 
-    /* MODAL */
     dialog{
       width:min(1020px,calc(100% - 24px));
       border-radius:22px;
@@ -177,25 +148,12 @@
       padding:0;
       box-shadow:0 30px 80px rgba(11,27,58,.30);
     }
-    dialog::backdrop{
-      background:rgba(11,27,58,.28);
-      backdrop-filter:blur(3px);
-    }
+    dialog::backdrop{ background:rgba(11,27,58,.28); backdrop-filter:blur(3px); }
 
     .modalHead{
       padding:16px 16px 12px;
       border-bottom:1px solid var(--line);
       display:flex; justify-content:space-between; align-items:flex-start;
-      gap:12px;
-    }
-    .modalHead h3{ margin:0; font-size:15px; line-height:1.25; }
-    .closeBtn{
-      border-radius:999px;
-      padding:8px 12px;
-      border:1px solid var(--line);
-      background:#fff;
-      cursor:pointer;
-      font-size:12px;
     }
 
     .modalBody{
@@ -204,9 +162,7 @@
       grid-template-columns: 1.1fr .9fr;
       gap:16px;
     }
-    @media(max-width:920px){
-      .modalBody{ grid-template-columns: 1fr; }
-    }
+    @media(max-width:920px){ .modalBody{ grid-template-columns: 1fr; } }
 
     .panel{
       background:#f7faff;
@@ -214,29 +170,8 @@
       border-radius:var(--radius);
       padding:14px;
     }
-    .panel h4{
-      margin:0 0 8px;
-      font-size:12px;
-      text-transform:uppercase;
-      letter-spacing:.3px;
-      color:rgba(60,86,122,.95);
-    }
-    .panel p{
-      margin:0;
-      font-size:13px;
-      line-height:1.55;
-      color:var(--text);
-    }
-    .panel ul, .panel ol{
-      margin:8px 0 0 18px;
-      font-size:13px;
-      line-height:1.55;
-      color:var(--text);
-      padding:0;
-    }
-    .panel li{ margin:6px 0; }
-
-    .muted{ color:var(--muted); }
+    .panel h4{ margin:0 0 8px; font-size:12px; text-transform:uppercase; color:rgba(60,86,122,.95); }
+    .panel p, .panel li{ font-size:13px; line-height:1.55; color:var(--text); }
 
     .templateBox{
       background:#ffffff;
@@ -245,76 +180,26 @@
       padding:12px;
       font-size:13px;
       line-height:1.55;
-      white-space:pre-wrap;
+      white-space: normal; /* Permite ajuste natural de linha */
       overflow:auto;
       max-height: 320px;
     }
 
-    .btn{
-      padding:10px 14px;
-      border-radius:12px;
-      border:1px solid var(--line);
-      background:#fff;
-      cursor:pointer;
-      font-size:12px;
-    }
-    .btn.primary{
-      background:var(--primary2);
-      border-color:rgba(10,98,190,.45);
-    }
+    .btn{ padding:10px 14px; border-radius:12px; border:1px solid var(--line); background:#fff; cursor:pointer; font-size:12px; }
+    .btn.primary{ background:var(--primary2); border-color:rgba(10,98,190,.45); }
 
-    .btnRow{
-      display:flex; gap:10px; flex-wrap:wrap;
-      margin-top:10px;
-    }
-
-    .segmented{
-      display:flex;
-      gap:8px;
-      flex-wrap:wrap;
-      margin-bottom:10px;
-    }
-
-    .segBtn{
-      border:1px solid var(--line);
-      background:#fff;
-      color:var(--text);
-      padding:8px 10px;
-      border-radius:999px;
-      font-size:12px;
-      cursor:pointer;
-    }
-    .segBtn.active{
-      background: rgba(10,98,190,.14);
-      border-color: rgba(10,98,190,.45);
-    }
+    .segmented{ display:flex; gap:8px; margin-bottom:10px; }
+    .segBtn{ border:1px solid var(--line); background:#fff; padding:8px 10px; border-radius:999px; font-size:12px; cursor:pointer; }
+    .segBtn.active{ background: rgba(10,98,190,.14); border-color: rgba(10,98,190,.45); }
 
     .toast{
-      position:fixed;
-      bottom:18px;
-      left:50%;
-      transform:translateX(-50%);
-      background: rgba(11,27,58,.90);
-      color:#fff;
-      border:1px solid rgba(255,255,255,.15);
-      padding:10px 12px;
-      border-radius:999px;
-      font-size:12px;
-      opacity:0;
-      pointer-events:none;
-      transition: opacity .18s ease, transform .18s ease;
-      z-index:9999;
+      position:fixed; bottom:18px; left:50%; transform:translateX(-50%);
+      background: rgba(11,27,58,.90); color:#fff; padding:10px 12px;
+      border-radius:999px; font-size:12px; opacity:0; transition: .18s ease; z-index:9999;
     }
-    .toast.show{
-      opacity:1;
-      transform:translateX(-50%) translateY(-2px);
-    }
+    .toast.show{ opacity:1; transform:translateX(-50%) translateY(-2px); }
 
-    .smallCode{
-      font-family: var(--mono);
-      font-size: 11px;
-      color: rgba(60,86,122,.95);
-    }
+    .closeBtn{ border-radius:999px; padding:8px 12px; border:1px solid var(--line); background:#fff; cursor:pointer; }
   </style>
 </head>
 
@@ -323,18 +208,13 @@
     <header>
       <div>
         <h1>Demandas Recorrentes — DIEF/SEFAZ-RR</h1>
-        <p>
-          Repositório interno de demandas que chegam por e-mail. Clique em um card para ver <b>procedimentos</b> (quando aplicável)
-          e <b>respostas padrão</b> para copiar e colar no Gmail.
-        </p>
+        <p>Repositório interno de demandas. Clique no card para ver procedimentos e respostas para o Gmail.</p>
       </div>
-      <div class="pill"><span>Uso:</span> <b>interno</b> <span>•</span> <span class="smallCode">index.html</span></div>
+      <div class="pill"><span>Uso:</span> <b>interno</b></div>
     </header>
 
     <section class="bar">
-      <div class="search" title="Buscar por título, tags, texto do procedimento...">
-        🔎 <input id="q" type="text" placeholder="Buscar demanda (ex.: baixa, MEI, alteração cadastral...)" />
-    
+      <div class="search">🔎 <input id="q" type="text" placeholder="Buscar demanda..." /></div>
     </section>
 
     <section>
@@ -350,7 +230,7 @@
     <div class="modalHead">
       <div>
         <h3 id="m_title">—</h3>
-        <div class="muted" id="m_sub" style="margin-top:6px;font-size:12px;line-height:1.4;"></div>
+        <div id="m_sub" style="font-size:12px; color:var(--muted);"></div>
       </div>
       <button class="closeBtn" id="m_close">✕</button>
     </div>
@@ -358,36 +238,23 @@
     <div class="modalBody">
       <div class="panel">
         <h4>Procedimento</h4>
-        <p class="muted" id="m_proc_note"></p>
+        <p id="m_proc_note" style="margin-bottom:10px; font-weight:600;"></p>
         <ol id="m_steps"></ol>
-
-        <div style="height:12px;"></div>
-
-        <h4>Documentos / verificações</h4>
+        <h4>Documentos</h4>
         <ul id="m_docs"></ul>
-
-        <div style="height:12px;"></div>
-
         <h4>Links úteis</h4>
-        <p id="m_links" class="muted"></p>
+        <p id="m_links"></p>
       </div>
 
       <div class="panel">
         <h4>Respostas padrão</h4>
-        <p class="muted" style="font-size:12px;line-height:1.45;margin-bottom:10px;">
-          Selecione a opção e copie para colar no Gmail.
-        </p>
-
         <div class="segmented">
-          <button class="segBtn active" id="tab_ok" type="button">Deferido</button>
-          <button class="segBtn" id="tab_bad" type="button">Indeferido</button>
+          <button class="segBtn active" id="tab_ok">Deferido</button>
+          <button class="segBtn" id="tab_bad">Indeferido</button>
         </div>
-
-        <div class="templateBox" id="m_email" contenteditable="true" spellcheck="false"></div>
-
-
-        <div class="btnRow">
-          <button class="btn primary" id="copy_email" type="button">Copiar resposta</button>
+        <div class="templateBox" id="m_email" contenteditable="true"></div>
+        <div style="margin-top:10px;">
+          <button class="btn primary" id="copy_email">Copiar para o Gmail</button>
         </div>
       </div>
     </div>
@@ -396,289 +263,120 @@
   <div class="toast" id="toast">Copiado ✅</div>
 
   <script>
-    // ======= DADOS (MVP com 1 card: Solicitação de Baixa - MEI) =======
     const DEMANDS = [
       {
         id: "baixa-mei",
         title: "Solicitação de Baixa — MEI",
         categoryTag: "Cadastro / Baixa",
-        summary: "Consultar DSOT. Sem débitos: efetivar baixa no SIATE e enviar FIC ao contribuinte. Com débitos: orientar quitação via Agência de Rendas.",
-        tags: ["baixa", "mei", "dsot", "siate", "fic", "cnpj"],
-        procedureNote: "Procedimento interno da DIEF: a baixa somente pode ser efetivada se não houver débitos pendentes no DSOT.",
+        summary: "Consultar DSOT. Sem débitos: efetivar baixa. Com débitos: orientar quitação.",
+        tags: ["baixa", "mei", "dsot", "siate"],
+        procedureNote: "Verificar débitos no DSOT antes de qualquer ação.",
         steps: [
-          "Consultar o DSOT do MEI pelo CNPJ no SIATE Web: Atendimento → Imprimir CND/DSOT.",
-          "Caso haja débitos pendentes: orientar o contribuinte a quitá-los primeiro (Agência de Rendas da jurisdição).",
-          "Caso NÃO haja débitos: efetuar a baixa no SIATE → Módulo Atendimento → Informações Econômico-Fiscais → Painel Geral do Contribuinte.",
-          "Documento a verificar: Certidão de Baixa de Inscrição no CNPJ (RFB). Se não anexou, consultar pelo CNPJ no site da RFB (link abaixo).",
-          "Número do processo: pode utilizar o último dígito da inscrição estadual e informar apenas o ano.",
-          "Quando baixar: Efetivar Situação → selecionar a caixa do contribuinte → Confirmar.",
-          "Imprimir FIC (Ficha de Inscrição Cadastral) → salvar como PDF.",
-          "Anexar a FIC na resposta ao contribuinte."
+          "Consultar DSOT pelo CNPJ no SIATE Web.",
+          "Se houver débitos: não baixar. Orientar quitação.",
+          "Sem débitos: Efetuar baixa no SIATE (Painel Geral do Contribuinte).",
+          "Emitir FIC e anexar na resposta."
         ],
-        docs: [
-          "Certidão de Baixa de Inscrição no CNPJ (RFB).",
-          "DSOT (Demonstrativo de Situação de Obrigações Tributárias Estaduais).",
-          "FIC (Ficha de Inscrição Cadastral) após efetivar a baixa."
-        ],
-        linksHtml:
-          `Se o contribuinte não anexou a certidão da RFB, consultar pelo CNPJ em:
-          <a href="https://solucoes.receita.fazenda.gov.br/servicos/cnpjreva/cnpjreva_solicitacao.asp" target="_blank" rel="noopener noreferrer">Consulta CNPJ — RFB</a>.`,
-
-        // E-mails fornecidos por você (HTML)
-        emailDeferidoHtml:
-`<div>
-  <p>Prezado(a),</p>
-
-  <p>Informamos que o pedido de baixa da inscrição estadual foi
-  <strong>analisado e deferido</strong>, não tendo sido identificados
-  débitos ou pendências impeditivas no âmbito das obrigações
-  tributárias estaduais.</p>
-
-  <p>Dessa forma, a inscrição estadual encontra-se baixada,
-  conforme demonstrado no documento em anexo da Ficha de Inscrição do Contribuinte (FIC).</p>
-
-  <p>Permanecemos à disposição para eventuais esclarecimentos.</p>
-
-  <p>Atenciosamente,</p>
-
-  <p>Divisão de Informações Econômico-Fiscais - DIEF<br>
-Departamento da Receita - DEPAR<br>
-Secretaria de Estado da Fazenda de Roraima - SEFAZ/RR<br>
-  </p>
-</div>`,
-
-        emailIndeferidoHtml:
-`<div>
-  <p>Prezado(a),</p>
-
-  <p>Em análise ao pedido de baixa da inscrição estadual, <strong> verificou-se a existência de débitos pendentes</strong>, conforme consulta ao seu Demonstrativo de Situação de Obrigações Tributárias Estaduais (DSOT).</p>
-
-  <p>Enquanto houver pendências financeiras em aberto, não é possível efetivar a baixa da inscrição estadual.</p>
-
-  <p>O contribuinte poderá enviar e-mail ou comparecer à Agência de Rendas de sua jurisdição para emissão do DARE e pagamento do débito. Após a regularização, o pedido de baixa poderá ser reapresentado.<p>
-
-  <p>Atenciosamente,</p>
-
- <p>Divisão de Informações Econômico-Fiscais - DIEF<br>
-Departamento da Receita - DEPAR<br>
-Secretaria de Estado da Fazenda de Roraima - SEFAZ/RR<br>
-  </p>
-</div>`
+        docs: ["Certidão Baixa CNPJ (RFB)", "DSOT sem débitos", "FIC atualizada"],
+        linksHtml: `<a href="https://solucoes.receita.fazenda.gov.br/servicos/cnpjreva/cnpjreva_solicitacao.asp" target="_blank">Consulta CNPJ RFB</a>`,
+        
+        // Estrutura de e-mail otimizada para cópia
+        emailDeferidoHtml: `<div><p>Prezado(a),</p><p>Informamos que o pedido de baixa da inscrição estadual foi <strong>analisado e deferido</strong>, não tendo sido identificados débitos ou pendências impeditivas no âmbito das obrigações tributárias estaduais.</p><p>Dessa forma, a inscrição estadual encontra-se baixada, conforme demonstrado no documento em anexo da Ficha de Inscrição do Contribuinte (FIC).</p><p>Permanecemos à disposição.</p><p>Atenciosamente,<br><strong>DIEF/DEPAR/SEFAZ-RR</strong></p></div>`,
+        
+        emailIndeferidoHtml: `<div><p>Prezado(a),</p><p>Em análise ao pedido, <strong>verificou-se a existência de débitos pendentes</strong> no seu Demonstrativo de Situação de Obrigações Tributárias Estaduais (DSOT).</p><p>Enquanto houver pendências financeiras, não é possível efetivar a baixa. O contribuinte deve regularizar a situação junto à Agência de Rendas.</p><p>Atenciosamente,<br><strong>DIEF/DEPAR/SEFAZ-RR</strong></p></div>`
       }
     ];
 
-    // ======= Helpers =======
-    const toast = (msg="Copiado ✅") => {
+    const toast = (msg) => {
       const t = document.getElementById("toast");
       t.textContent = msg;
       t.classList.add("show");
-      setTimeout(() => t.classList.remove("show"), 1200);
+      setTimeout(() => t.classList.remove("show"), 1500);
     };
 
-   const copyHtml = async (html) => {
-  try {
-    // Copia como HTML (ideal para Gmail)
-    await navigator.clipboard.write([
-      new ClipboardItem({
-        "text/html": new Blob([html], { type: "text/html" }),
-        "text/plain": new Blob(
-          [html.replace(/<[^>]+>/g, "")],
-          { type: "text/plain" }
-        )
-      })
-    ]);
-    toast("Resposta copiada ✅");
-  } catch (e) {
-    // Fallback: texto simples sem quebras estranhas
-    const tmp = document.createElement("div");
-    tmp.innerHTML = html;
-    const text = tmp.innerText.replace(/\n{2,}/g, "\n\n");
-
-    const ta = document.createElement("textarea");
-    ta.style.position = "fixed";
-    ta.style.left = "-9999px";
-    ta.value = text;
-    document.body.appendChild(ta);
-    ta.select();
-    document.execCommand("copy");
-    ta.remove();
-
-    toast("Resposta copiada (texto)");
-  }
-};
-
-
-    // Converte HTML do seu e-mail em texto puro (cola melhor no Gmail)
-    const htmlToText = (html) => {
-      const tmp = document.createElement("div");
-      tmp.innerHTML = html;
-      return tmp.innerText;
-    };
-
-    // ======= Render =======
-    const state = { q: "" };
     const cardsHost = document.getElementById("cards");
     const countHost = document.getElementById("count");
-
-    function filterDemands(){
-      const q = state.q.trim().toLowerCase();
-      if (!q) return DEMANDS;
-      return DEMANDS.filter(d => {
-        const hay = [
-          d.title, d.categoryTag, d.summary,
-          ...(d.tags||[]),
-          ...(d.steps||[]),
-          ...(d.docs||[])
-        ].join(" ").toLowerCase();
-        return hay.includes(q);
-      });
-    }
-
-    function render(){
-      const items = filterDemands();
-      cardsHost.innerHTML = "";
-      countHost.textContent = `${items.length} demanda(s)`;
-
-      items.forEach(d => {
-        const card = document.createElement("div");
-        card.className = "card";
-        card.innerHTML = `
-          <div class="cardTop">
-            <h3>${d.title}</h3>
-            <span class="tag">${d.categoryTag}</span>
-          </div>
-          <div class="snippet">${d.summary}</div>
-          <div class="metaRow">
-            <span>Tags: ${(d.tags||[]).slice(0,4).join(", ") || "—"}</span>
-            <button class="btnMini" type="button">Abrir →</button>
-          </div>
-        `;
-        card.addEventListener("click", () => openModal(d));
-        cardsHost.appendChild(card);
-      });
-    }
-
-    // ======= Modal =======
     const modal = document.getElementById("modal");
-    const mClose = document.getElementById("m_close");
-    const tabOk = document.getElementById("tab_ok");
-    const tabBad = document.getElementById("tab_bad");
     const emailBox = document.getElementById("m_email");
     const copyBtn = document.getElementById("copy_email");
-
+    
     let current = null;
-    let currentMode = "ok"; // ok | bad
+    let currentMode = "ok";
+
+    function render(){
+      const q = document.getElementById("q").value.toLowerCase();
+      const filtered = DEMANDS.filter(d => d.title.toLowerCase().includes(q) || d.summary.toLowerCase().includes(q));
+      
+      cardsHost.innerHTML = "";
+      countHost.textContent = `${filtered.length} item(s)`;
+
+      filtered.forEach(d => {
+        const div = document.createElement("div");
+        div.className = "card";
+        div.innerHTML = `<h3>${d.title}</h3><span class="tag">${d.categoryTag}</span><div class="snippet">${d.summary}</div><div class="metaRow"><button class="btnMini">Abrir →</button></div>`;
+        div.onclick = () => openModal(d);
+        cardsHost.appendChild(div);
+      });
+    }
 
     function openModal(d){
       current = d;
       currentMode = "ok";
-      tabOk.classList.add("active");
-      tabBad.classList.remove("active");
-
       document.getElementById("m_title").textContent = d.title;
       document.getElementById("m_sub").textContent = d.summary;
+      document.getElementById("m_proc_note").textContent = d.procedureNote;
+      
+      const listFill = (id, data) => {
+        const el = document.getElementById(id);
+        el.innerHTML = "";
+        data.forEach(item => { const li = document.createElement("li"); li.textContent = item; el.appendChild(li); });
+      };
 
-      document.getElementById("m_proc_note").textContent = d.procedureNote || "";
-
-      const steps = document.getElementById("m_steps");
-      steps.innerHTML = "";
-      (d.steps||[]).forEach(s => {
-        const li = document.createElement("li");
-        li.textContent = s;
-        steps.appendChild(li);
-      });
-
-      const docs = document.getElementById("m_docs");
-      docs.innerHTML = "";
-      (d.docs||[]).forEach(s => {
-        const li = document.createElement("li");
-        li.textContent = s;
-        docs.appendChild(li);
-      });
-
-      // Links úteis (renderiza HTML com <a>)
-      document.getElementById("m_links").innerHTML = d.linksHtml || "";
-
-      setEmailView();
+      listFill("m_steps", d.steps);
+      listFill("m_docs", d.docs);
+      document.getElementById("m_links").innerHTML = d.linksHtml;
+      
+      updateEmailView();
       modal.showModal();
     }
 
-    function setEmailView(){
-      if (!current) return;
-      const html = (currentMode === "ok")
-        ? (current.emailDeferidoHtml || "")
-        : (current.emailIndeferidoHtml || "");
-
-      emailBox.innerHTML = html;
-emailBox.querySelectorAll("p").forEach(p => p.style.margin = "0 0 10px");
-emailBox.querySelectorAll("br").forEach(br => {});
-
+    function updateEmailView(){
+      emailBox.innerHTML = currentMode === "ok" ? current.emailDeferidoHtml : current.emailIndeferidoHtml;
     }
 
-    function closeModal(){
-      modal.close();
-      current = null;
-    }
+    // CORREÇÃO DA CÓPIA PARA O GMAIL
+    copyBtn.onclick = () => {
+      if(!current) return;
+      
+      // Cria div invisível larga para o navegador não quebrar linhas
+      const tempDiv = document.createElement("div");
+      tempDiv.style.position = "absolute";
+      tempDiv.style.left = "-9999px";
+      tempDiv.style.width = "1200px"; 
+      tempDiv.innerHTML = emailBox.innerHTML;
+      document.body.appendChild(tempDiv);
 
-    mClose.addEventListener("click", closeModal);
+      const range = document.createRange();
+      range.selectNodeContents(tempDiv);
+      const sel = window.getSelection();
+      sel.removeAllRanges();
+      sel.addRange(range);
 
-    modal.addEventListener("click", (e) => {
-      const rect = modal.getBoundingClientRect();
-      const isInDialog = (
-        rect.top <= e.clientY && e.clientY <= rect.top + rect.height &&
-        rect.left <= e.clientX && e.clientX <= rect.left + rect.width
-      );
-      if (!isInDialog) closeModal();
-    });
+      try {
+        document.execCommand("copy");
+        toast("Copiado! Agora cole no Gmail ✅");
+      } catch (e) {
+        toast("Erro ao copiar ❌");
+      }
 
-    tabOk.addEventListener("click", () => {
-      currentMode = "ok";
-      tabOk.classList.add("active");
-      tabBad.classList.remove("active");
-      setEmailView();
-    });
+      sel.removeAllRanges();
+      document.body.removeChild(tempDiv);
+    };
 
-    tabBad.addEventListener("click", () => {
-      currentMode = "bad";
-      tabBad.classList.add("active");
-      tabOk.classList.remove("active");
-      setEmailView();
-    });
-
-   copyBtn.addEventListener("click", () => {
-  if (!current) return;
-
-  const html = (currentMode === "ok")
-    ? (current.emailDeferidoHtml || "")
-    : (current.emailIndeferidoHtml || "");
-
-  // garante que o editor está com o HTML correto
-  emailBox.innerHTML = html;
-
-  // seleciona tudo dentro do editor
-  const range = document.createRange();
-  range.selectNodeContents(emailBox);
-
-  const sel = window.getSelection();
-  sel.removeAllRanges();
-  sel.addRange(range);
-
-  // copia (rich text)
-  document.execCommand("copy");
-
-  // limpa seleção
-  sel.removeAllRanges();
-
-  toast("Resposta copiada ✅");
-});
-
-
-
-    // Search
-    document.getElementById("q").addEventListener("input", (e) => {
-      state.q = e.target.value || "";
-      render();
-    });
+    document.getElementById("m_close").onclick = () => modal.close();
+    document.getElementById("tab_ok").onclick = (e) => { currentMode="ok"; e.target.classList.add("active"); document.getElementById("tab_bad").classList.remove("active"); updateEmailView(); };
+    document.getElementById("tab_bad").onclick = (e) => { currentMode="bad"; e.target.classList.add("active"); document.getElementById("tab_ok").classList.remove("active"); updateEmailView(); };
+    document.getElementById("q").oninput = render;
 
     render();
   </script>
