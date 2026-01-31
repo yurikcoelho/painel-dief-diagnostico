@@ -62,7 +62,7 @@
     .search{
       display:flex; align-items:center; gap:10px;
       border:1px solid var(--line);
-      background:#ffffff;
+      background:var(--card);
       border-radius:999px;
       padding:10px 14px;
       box-shadow:0 6px 18px rgba(11,27,58,.08);
@@ -139,7 +139,7 @@
 
     .btnMini{
       border:1px solid var(--line);
-      background: rgba(255,255,255,.85);
+      background: var(--card);
       color: var(--text);
       padding:8px 10px;
       border-radius:12px;
@@ -152,7 +152,7 @@
       width:min(1020px,calc(100% - 24px));
       border-radius:22px;
       border:1px solid var(--line);
-      background:#fff;
+      background:var(--card);
       padding:0;
       box-shadow:0 30px 80px rgba(11,27,58,.30);
     }
@@ -172,7 +172,7 @@
       border-radius:999px;
       padding:8px 12px;
       border:1px solid var(--line);
-      background:#fff;
+      background:var(--card);
       cursor:pointer;
       font-size:12px;
     }
@@ -188,7 +188,7 @@
     }
 
     .panel{
-      background:#f7faff;
+      background:var(--card2);
       border:1px solid var(--line);
       border-radius:var(--radius);
       padding:14px;
@@ -198,7 +198,7 @@
       font-size:12px;
       text-transform:uppercase;
       letter-spacing:.3px;
-      color:rgba(60,86,122,.95);
+      color:var(--muted);
     }
     .panel p{
       margin:0;
@@ -227,13 +227,13 @@
     }
     .checklist-item.done span{
       text-decoration:line-through;
-      color: rgba(60,86,122,.65);
+      color: var(--muted);
     }
 
     .muted{ color:var(--muted); }
 
     .templateBox{
-      background:#ffffff;
+      background:var(--card);
       border:1px solid var(--line);
       border-radius:14px;
       padding:12px;
@@ -253,13 +253,14 @@
       padding:10px 14px;
       border-radius:12px;
       border:1px solid var(--line);
-      background:#fff;
+      background:var(--card);
+      color:var(--text);
       cursor:pointer;
       font-size:12px;
       white-space:nowrap;
     }
     .btn.primary{
-      background:rgba(10,98,190,.14);
+      background:var(--primary2);
       border-color:rgba(10,98,190,.45);
     }
 
@@ -277,7 +278,7 @@
 
     .segBtn{
       border:1px solid var(--line);
-      background:#fff;
+      background:var(--card);
       color:var(--text);
       padding:8px 10px;
       border-radius:999px;
@@ -285,7 +286,7 @@
       cursor:pointer;
     }
     .segBtn.active{
-      background: rgba(10,98,190,.14);
+      background: var(--primary2);
       border-color: rgba(10,98,190,.45);
     }
 
@@ -326,10 +327,11 @@
       border-radius:10px;
       border:1px solid var(--line);
       font-size:13px;
-      background:#fff;
+      background:var(--card);
+      color:var(--text);
     }
 
-    /* ===== DARK MODE (ADICIONADO) ===== */
+    /* ======= DARK MODE (ADICIONADO) ======= */
     body.dark{
       --bg:#0e1422;
       --card:#141c2f;
@@ -342,6 +344,20 @@
       --primary2:rgba(93,169,255,.18);
 
       --shadow:0 10px 28px rgba(0,0,0,.55);
+    }
+
+    body.dark .bar{
+      background:rgba(20,28,47,.75);
+    }
+
+    body.dark .search input::placeholder{ 
+      color:rgba(159,176,208,.65); 
+    }
+
+    body.dark .toast{
+      background: rgba(230,236,255,.90);
+      color:#0e1422;
+      border:1px solid rgba(230,236,255,.25);
     }
   </style>
 </head>
@@ -357,7 +373,7 @@
         </p>
       </div>
 
-      <!-- ===== DARK MODE (ADICIONADO) ===== -->
+      <!-- ======= DARK MODE (ADICIONADO) ======= -->
       <button class="btn" id="themeToggle" type="button">🌙 Modo escuro</button>
     </header>
 
@@ -514,16 +530,16 @@
         categoryTag: "Cadastro / Regime",
         summary: "Atualizar regime no SIATE Web (Normal para SN/DAS), excluir multas indevidas da GIM e registrar parecer fiscal com efeitos retroativos à data de enquadramento.",
         tags: ["simples", "regime", "gim", "dsot", "siateweb", "das", "simei"],
-        procedureNote: "Atenção: clicar 2x em “Atualizar individual” é essencial para atualizar o regime e excluir multas da GIM quando indevidas.",
+        procedureNote: "Atenção: clicar 2x em "Atualizar individual" é essencial para atualizar o regime e excluir multas da GIM quando indevidas.",
         steps: [
-          "Clicar 2 vezes no botão “Atualizar individual” (sempre): atualiza o regime de tributação e exclui multas da GIM (IMPORTANTE).",
+          "Clicar 2 vezes no botão "Atualizar individual" (sempre): atualiza o regime de tributação e exclui multas da GIM (IMPORTANTE).",
           "Baixa da GIM: a apresentação da GIM só é obrigatória para contribuintes no Regime Normal do ICMS; optantes do Simples Nacional (SN – DAS) não são obrigados. Se houver multa por atraso de GIM, ela é indevida e deve ser retirada (consultar status no portal do Simples e verificar anexo do contribuinte).",
           "Emitir/consultar o DSOT para verificar o Regime de Tributação.",
           "SIATE Web → Atendimento → Cadastro de Contribuintes → Atualizar Fase Cadastral → Atualizar.",
-          "No Parecer Fiscal: “Alteração de regime de pagamento de Normal para SN (DAS) com efeitos a partir de xx/xx/xxxx” (usar a data de enquadramento no SN). Se for MEI, registrar “SN - SIMEI”."
+          "No Parecer Fiscal: "Alteração de regime de pagamento de Normal para SN (DAS) com efeitos a partir de xx/xx/xxxx" (usar a data de enquadramento no SN). Se for MEI, registrar "SN - SIMEI"."
         ],
         docs: [
-          "Certidão / Comprovante do Simples Nacional (com: “Situação no Simples Nacional: Optante desde xx/xx/xxxx”).",
+          "Certidão / Comprovante do Simples Nacional (com: "Situação no Simples Nacional: Optante desde xx/xx/xxxx").",
           "Consulta no Portal do Simples Nacional (para validação do status).",
           "DSOT para conferência do Regime de Tributação."
         ],
@@ -551,6 +567,24 @@ Secretaria de Estado da Fazenda de Roraima - SEFAZ/RR<br>
         ]
       }
     ];
+
+    // ======= DARK MODE =======
+    const themeToggle = document.getElementById("themeToggle");
+    
+    // Carregar tema salvo ou usar claro como padrão
+    const savedTheme = localStorage.getItem("theme") || "light";
+    if (savedTheme === "dark") {
+      document.body.classList.add("dark");
+      themeToggle.textContent = "☀️ Modo claro";
+    }
+
+    themeToggle.addEventListener("click", () => {
+      document.body.classList.toggle("dark");
+      const isDark = document.body.classList.contains("dark");
+      
+      themeToggle.textContent = isDark ? "☀️ Modo claro" : "🌙 Modo escuro";
+      localStorage.setItem("theme", isDark ? "dark" : "light");
+    });
 
     // ======= Helpers =======
     const toast = (msg="Copiado ✅") => {
@@ -637,206 +671,4 @@ Secretaria de Estado da Fazenda de Roraima - SEFAZ/RR<br>
       // checklist
       const steps = document.getElementById("m_steps");
       steps.innerHTML = "";
-      (d.steps || []).forEach(s => {
-        const li = document.createElement("li");
-        li.className = "checklist-item";
-
-        const checkbox = document.createElement("input");
-        checkbox.type = "checkbox";
-
-        const text = document.createElement("span");
-        text.textContent = s;
-
-        checkbox.addEventListener("change", () => {
-          li.classList.toggle("done", checkbox.checked);
-        });
-
-        li.appendChild(checkbox);
-        li.appendChild(text);
-        steps.appendChild(li);
-      });
-
-      const docs = document.getElementById("m_docs");
-      docs.innerHTML = "";
-      (d.docs||[]).forEach(s => {
-        const li = document.createElement("li");
-        li.textContent = s;
-        docs.appendChild(li);
-      });
-
-      document.getElementById("m_links").innerHTML = d.linksHtml || "";
-
-      // reset campos
-      cnpjInput.value = "";
-      ieInput.value = "";
-
-      // montar botões de template
-      buildTemplateButtons(d);
-
-      modal.showModal();
-    }
-
-    function buildTemplateButtons(d){
-      segmentedHost.innerHTML = "";
-      const templates = d.templates || [];
-
-      if (!templates.length){
-        // fallback: sem templates
-        emailBox.innerHTML = "<div><p class='muted'>Sem resposta padrão cadastrada para esta demanda.</p></div>";
-        currentTemplateKey = null;
-        return;
-      }
-
-      templates.forEach((t, idx) => {
-        const btn = document.createElement("button");
-        btn.className = "segBtn" + (idx === 0 ? " active" : "");
-        btn.type = "button";
-        btn.textContent = t.label;
-        btn.dataset.key = t.key;
-
-        btn.addEventListener("click", () => {
-          segmentedHost.querySelectorAll(".segBtn").forEach(b => b.classList.remove("active"));
-          btn.classList.add("active");
-          currentTemplateKey = t.key;
-          setEmailView();
-        });
-
-        segmentedHost.appendChild(btn);
-      });
-
-      currentTemplateKey = templates[0].key;
-      setEmailView();
-    }
-
-    function setEmailView(){
-      if (!current) return;
-      const templates = current.templates || [];
-      const t = templates.find(x => x.key === currentTemplateKey) || templates[0];
-      emailBox.innerHTML = (t && t.html) ? t.html : "<div><p class='muted'>Sem resposta padrão.</p></div>";
-    }
-
-    function closeModal(){
-      modal.close();
-      current = null;
-      currentTemplateKey = null;
-      cnpjInput.value = "";
-      ieInput.value = "";
-    }
-
-    mClose.addEventListener("click", closeModal);
-
-    modal.addEventListener("click", (e) => {
-      const rect = modal.getBoundingClientRect();
-      const isInDialog = (
-        rect.top <= e.clientY && e.clientY <= rect.top + rect.height &&
-        rect.left <= e.clientX && e.clientY <= rect.top + rect.height &&
-        rect.left <= e.clientX && e.clientX <= rect.left + rect.width
-      );
-      if (!isInDialog) closeModal();
-    });
-
-    // ======= Copiar / Limpar CNPJ =======
-    copyCnpjBtn.addEventListener("click", async () => {
-      const value = (cnpjInput.value || "").trim();
-      if (!value) return toast("Cole um CNPJ primeiro");
-
-      try{
-        await navigator.clipboard.writeText(value);
-        toast("CNPJ copiado ✅");
-      } catch {
-        cnpjInput.select();
-        document.execCommand("copy");
-        toast("CNPJ copiado ✅");
-      }
-    });
-
-    clearCnpjBtn.addEventListener("click", () => {
-      cnpjInput.value = "";
-      toast("CNPJ limpo ✅");
-    });
-
-    // ======= Copiar / Limpar IE =======
-    copyIeBtn.addEventListener("click", async () => {
-      const value = (ieInput.value || "").trim();
-      if (!value) return toast("Cole uma IE primeiro");
-
-      try{
-        await navigator.clipboard.writeText(value);
-        toast("IE copiada ✅");
-      } catch {
-        ieInput.select();
-        document.execCommand("copy");
-        toast("IE copiada ✅");
-      }
-    });
-
-    clearIeBtn.addEventListener("click", () => {
-      ieInput.value = "";
-      toast("IE limpa ✅");
-    });
-
-    // ======= Copiar e-mail (HTML + texto) =======
-    copyEmailBtn.addEventListener("click", async () => {
-      if (!current) return;
-
-      const htmlContent = emailBox.innerHTML;
-
-      const tempDiv = document.createElement("div");
-      tempDiv.style.position = "absolute";
-      tempDiv.style.left = "-9999px";
-      tempDiv.style.width = "1200px";
-      tempDiv.innerHTML = htmlContent;
-      document.body.appendChild(tempDiv);
-
-      const plainText = tempDiv.innerText;
-
-      try {
-        const blobHtml = new Blob([tempDiv.innerHTML], { type: "text/html" });
-        const blobText = new Blob([plainText], { type: "text/plain" });
-        const data = [new ClipboardItem({
-          "text/html": blobHtml,
-          "text/plain": blobText
-        })];
-
-        await navigator.clipboard.write(data);
-        toast("Resposta copiada ✅");
-      } catch (err) {
-        const range = document.createRange();
-        range.selectNodeContents(tempDiv);
-        const sel = window.getSelection();
-        sel.removeAllRanges();
-        sel.addRange(range);
-        document.execCommand("copy");
-        sel.removeAllRanges();
-        toast("Resposta copiada ✅");
-      }
-
-      document.body.removeChild(tempDiv);
-    });
-
-    document.getElementById("q").addEventListener("input", (e) => {
-      state.q = e.target.value || "";
-      render();
-    });
-
-    render();
-
-    /* ===== DARK MODE (ADICIONADO) ===== */
-    const themeToggle = document.getElementById("themeToggle");
-
-    function applyTheme(theme){
-      document.body.classList.toggle("dark", theme === "dark");
-      themeToggle.textContent = theme === "dark" ? "☀️ Modo claro" : "🌙 Modo escuro";
-    }
-
-    const savedTheme = localStorage.getItem("theme") || "light";
-    applyTheme(savedTheme);
-
-    themeToggle.addEventListener("click", () => {
-      const nextTheme = document.body.classList.contains("dark") ? "light" : "dark";
-      localStorage.setItem("theme", nextTheme);
-      applyTheme(nextTheme);
-    });
-  </script>
-</body>
-</html>
+      (d.steps || []).forEach(s => {*
