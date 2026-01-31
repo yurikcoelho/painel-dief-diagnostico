@@ -23,6 +23,7 @@
 
       --mono: ui-monospace, Menlo, Consolas, monospace;
       --sans: system-ui, -apple-system, Segoe UI, Roboto, Arial;
+      
     }
 
     *{ box-sizing:border-box; }
@@ -249,6 +250,19 @@
       overflow:auto;
       max-height: 320px;
     }
+
+    /* Compactar visualização da resposta padrão (apenas na caixa) */
+.templateBox p{
+  margin: 0 0 6px;
+}
+
+.templateBox p:last-child{
+  margin-bottom: 0;
+}
+
+.templateBox br{
+  display: none;
+}
 
     .btn{
       padding:10px 14px;
@@ -563,7 +577,7 @@ Secretaria de Estado da Fazenda de Roraima - SEFAZ/RR<br>
         : (current.emailIndeferidoHtml || "");
 
       emailBox.innerHTML = html;
-      emailBox.querySelectorAll("p").forEach(p => p.style.margin = "0 0 10px");
+
     }
 
     function closeModal(){
