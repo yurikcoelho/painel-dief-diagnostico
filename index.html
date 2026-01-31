@@ -602,42 +602,33 @@ Secretaria de Estado da Fazenda de Roraima - SEFAZ/RR<br>
       setEmailView();
     });
 
-    // ======= AJUSTE FINAL NA CÓPIA (HTML + TEXTO, PALCO LARGO) =======
+  // ======= AJUSTE NA CÓPIA (LARGURA INVISÍVEL) =======
+// ======= AJUSTE NA CÓPIA (RESOLVE COLAR CÓDIGO HTML) =======
 copyBtn.addEventListener("click", async () => {
   if (!current) return;
 
-  // SEMPRE copiar da fonte original (não do box editável)
-  const htmlContent =
-    currentMode === "ok"
-      ? (current.emailDeferidoHtml || "")
-      : (current.emailIndeferidoHtml || "");
-
-  // Palco invisível e largo (evita hard-wrap)
+  const htmlContent = emailBox.innerHTML;
+  
   const tempDiv = document.createElement("div");
-  tempDiv.style.position = "fixed";
-  tempDiv.style.left = "-10000px";
-  tempDiv.style.top = "0";
-  tempDiv.style.width = "1200px";
-  tempDiv.style.whiteSpace = "normal";
-  tempDiv.style.background = "#ffffff";
-  tempDiv.style.color = "#000000";
-  tempDiv.style.padding = "24px";
+  tempDiv.style.position = "absolute";
+  tempDiv.style.left = "-9999px";
+  tempDiv.style.width = "1200px"; 
   tempDiv.innerHTML = htmlContent;
-
   document.body.appendChild(tempDiv);
 
   const plainText = tempDiv.innerText;
 
   try {
-    await navigator.clipboard.write([
-      new ClipboardItem({
-        "text/html": new Blob([tempDiv.innerHTML], { type: "text/html" }),
-        "text/plain": new Blob([plainText], { type: "text/plain" })
-      })
-    ]);
+    const blobHtml = new Blob([tempDiv.innerHTML], { type: "text/html" });
+    const blobText = new Blob([plainText], { type: "text/plain" });
+    const data = [new ClipboardItem({
+      "text/html": blobHtml,
+      "text/plain": blobText
+    })];
+
+    await navigator.clipboard.write(data);
     toast("Resposta copiada ✅");
   } catch (err) {
-    // Fallback universal
     const range = document.createRange();
     range.selectNodeContents(tempDiv);
     const sel = window.getSelection();
@@ -645,15 +636,12 @@ copyBtn.addEventListener("click", async () => {
     sel.addRange(range);
     document.execCommand("copy");
     sel.removeAllRanges();
-    toast("Resposta copiada (texto)");
-  } finally {
-    document.body.removeChild(tempDiv);
+    toast("Resposta copiada ✅");
   }
+
+  document.body.removeChild(tempDiv);
 });
 
-
-      document.body.removeChild(tempDiv);
-    });
 
     document.getElementById("q").addEventListener("input", (e) => {
       state.q = e.target.value || "";
