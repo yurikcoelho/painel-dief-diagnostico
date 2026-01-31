@@ -325,6 +325,52 @@
       font-size:13px;
       background:#fff;
     }
+    /* ===== Toggle CNPJ / IE + ações ===== */
+.idHead{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  margin-bottom:10px;
+}
+
+.idToggle{
+  display:flex;
+  gap:6px;
+  padding:4px;
+  border:1px solid var(--line);
+  border-radius:999px;
+  background: rgba(255,255,255,.75);
+}
+
+.idBtn{
+  border:none;
+  background:transparent;
+  padding:6px 10px;
+  border-radius:999px;
+  font-size:12px;
+  cursor:pointer;
+  color:var(--muted);
+}
+
+.idBtn.active{
+  background: rgba(10,98,190,.14);
+  color: var(--text);
+  border:1px solid rgba(10,98,190,.35);
+}
+
+.cnpjBox{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  max-width:520px; /* um pouco maior pra caber 2 botões */
+  flex-wrap:wrap;
+}
+
+.cnpjBox input{
+  width:220px;
+}
+
   </style>
 </head>
 
@@ -383,12 +429,22 @@
 
       <div>
         <div class="panel" style="margin-bottom:16px;">
-          <h4>CNPJ (colar aqui)</h4>
-          <div class="cnpjBox">
-            <input id="cnpj_input" type="text" placeholder="00.000.000/0000-00" />
-            <button class="btn" id="copy_cnpj" type="button">Copiar</button>
-          </div>
-        </div>
+  <div class="idHead">
+    <h4 id="id_label">CNPJ (colar aqui)</h4>
+
+    <div class="idToggle" role="tablist" aria-label="Alternar identificador">
+      <button class="idBtn active" id="toggle_cnpj" type="button">CNPJ</button>
+      <button class="idBtn" id="toggle_ie" type="button">IE</button>
+    </div>
+  </div>
+
+  <div class="cnpjBox">
+    <input id="id_input" type="text" placeholder="00.000.000/0000-00" />
+    <button class="btn" id="copy_id" type="button">Copiar</button>
+    <button class="btn" id="clear_id" type="button">Limpar</button>
+  </div>
+</div>
+
 
         <div class="panel">
           <h4>Respostas padrão</h4>
@@ -528,8 +584,62 @@
     const emailBox = document.getElementById("m_email");
     const copyBtn = document.getElementById("copy_email");
 
-    const cnpjInput = document.getElementById("cnpj_input");
-    const copyCnpjBtn = document.getElementById("copy_cnpj");
+   // ======= Identificador (CNPJ/IE) =======
+const idLabel = document.getElementById("id_label");
+const idInput = document.getElementById("id_input");
+const copyIdBtn = document.getElementById("copy_id");
+const clearIdBtn = document.getElementById("clear_id");
+
+const toggleCnpj = document.getElementById("toggle_cnpj");
+const toggleIe = document.getElementById("toggle_ie");
+
+let idMode = "cnpj"; // "cnpj" | "ie"
+
+function setIdMode(mode){
+  idMode = mode;
+
+  toggleCnpj.classList.toggle("active", mode === "cnpj");
+  toggleIe.classList.toggle("active", mode === "ie");
+
+  if (mode === "cnpj"){
+    idLabel.textContent = "CNPJ (colar aqui)";
+    idInput.placeholder = "00.000.000/0000-00";
+  } else {
+    idLabel.textContent = "IE (colar aqui)";
+    idInput.placeholder = "Inscrição Estadual";
+  }
+}
+
+toggleCnpj.addEventListener("click", () => setIdMode("cnpj"));
+toggleIe.addEventListener("click", () => setIdMode("ie"));
+
+copyIdBtn.addEventListener("click", async () => {
+  const value = (idInput.value || "").trim();
+  if (!value) return toast("Cole um valor primeiro");
+
+  try{
+    await navigator.clipboard.writeText(value);
+    toast(`${idMode.toUpperCase()} copiado ✅`);
+  } catch {
+    idInput.select();
+    document.execCommand("copy");
+    toast(`${idMode.toUpperCase()} copiado ✅`);
+  }
+
+  clearIdBtn.addEventListener("click", () => {
+  // limpa campo
+  idInput.value = "";
+
+  // desmarca checklist
+  document.querySelectorAll("#m_steps input[type='checkbox']").forEach(cb => {
+    cb.checked = false;
+    cb.dispatchEvent(new Event("change"));
+  });
+
+  toast("Limpo ✅");
+});
+
+});
 
     let current = null;
     let currentMode = "ok"; // ok | bad
@@ -577,6 +687,8 @@
       document.getElementById("m_links").innerHTML = d.linksHtml || "";
 
       if (cnpjInput) cnpjInput.value = "";
+setIdMode("cnpj");
+idInput.value = "";
 
       setEmailView();
       modal.showModal();
