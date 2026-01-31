@@ -602,46 +602,55 @@ Secretaria de Estado da Fazenda de Roraima - SEFAZ/RR<br>
       setEmailView();
     });
 
-    // ======= AJUSTE NA CÓPIA (LARGURA INVISÍVEL) =======
-    // ======= AJUSTE NA CÓPIA (RESOLVE COLAR CÓDIGO HTML) =======
-    copyBtn.addEventListener("click", async () => {
-      if (!current) return;
+    // ======= AJUSTE FINAL NA CÓPIA (HTML + TEXTO, PALCO LARGO) =======
+copyBtn.addEventListener("click", async () => {
+  if (!current) return;
 
-      const htmlContent = emailBox.innerHTML;
-      
-      // Criamos um elemento invisível largo para manter as linhas longas
-      const tempDiv = document.createElement("div");
-      tempDiv.style.position = "absolute";
-      tempDiv.style.left = "-9999px";
-      tempDiv.style.width = "1200px"; 
-      tempDiv.innerHTML = htmlContent;
-      document.body.appendChild(tempDiv);
+  // SEMPRE copiar da fonte original (não do box editável)
+  const htmlContent =
+    currentMode === "ok"
+      ? (current.emailDeferidoHtml || "")
+      : (current.emailIndeferidoHtml || "");
 
-      // Pegamos o texto puro sem as tags para o "fallback"
-      const plainText = tempDiv.innerText;
+  // Palco invisível e largo (evita hard-wrap)
+  const tempDiv = document.createElement("div");
+  tempDiv.style.position = "fixed";
+  tempDiv.style.left = "-10000px";
+  tempDiv.style.top = "0";
+  tempDiv.style.width = "1200px";
+  tempDiv.style.whiteSpace = "normal";
+  tempDiv.style.background = "#ffffff";
+  tempDiv.style.color = "#000000";
+  tempDiv.style.padding = "24px";
+  tempDiv.innerHTML = htmlContent;
 
-      try {
-        // A API moderna envia os dois formatos: o Gmail pegará o HTML formatado
-        const blobHtml = new Blob([tempDiv.innerHTML], { type: "text/html" });
-        const blobText = new Blob([plainText], { type: "text/plain" });
-        const data = [new ClipboardItem({
-          "text/html": blobHtml,
-          "text/plain": blobText
-        })];
+  document.body.appendChild(tempDiv);
 
-        await navigator.clipboard.write(data);
-        toast("Resposta copiada ✅");
-      } catch (err) {
-        // Caso a API falhe (navegador antigo), usamos o método de seleção
-        const range = document.createRange();
-        range.selectNodeContents(tempDiv);
-        const sel = window.getSelection();
-        sel.removeAllRanges();
-        sel.addRange(range);
-        document.execCommand("copy");
-        sel.removeAllRanges();
-        toast("Resposta copiada ✅");
-      }
+  const plainText = tempDiv.innerText;
+
+  try {
+    await navigator.clipboard.write([
+      new ClipboardItem({
+        "text/html": new Blob([tempDiv.innerHTML], { type: "text/html" }),
+        "text/plain": new Blob([plainText], { type: "text/plain" })
+      })
+    ]);
+    toast("Resposta copiada ✅");
+  } catch (err) {
+    // Fallback universal
+    const range = document.createRange();
+    range.selectNodeContents(tempDiv);
+    const sel = window.getSelection();
+    sel.removeAllRanges();
+    sel.addRange(range);
+    document.execCommand("copy");
+    sel.removeAllRanges();
+    toast("Resposta copiada (texto)");
+  } finally {
+    document.body.removeChild(tempDiv);
+  }
+});
+
 
       document.body.removeChild(tempDiv);
     });
