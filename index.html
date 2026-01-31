@@ -15,14 +15,8 @@
       --muted:#3c567a;
 
       --line:rgba(11,27,58,.14);
-      --chip:rgba(10,98,190,.08);
-
       --primary:#0a62be;
       --primary2:rgba(10,98,190,.14);
-
-      --ok:#16a34a;
-      --warn:#f59e0b;
-      --bad:#dc2626;
 
       --shadow:0 10px 28px rgba(11,27,58,.12);
       --radius:18px;
@@ -42,8 +36,8 @@
       color:var(--text);
     }
 
-    a{ color: var(--primary); text-decoration: none; }
-    a:hover{ text-decoration: underline; }
+    a{ color: var(--primary); text-decoration:none; }
+    a:hover{ text-decoration:underline; }
 
     .wrap{ max-width:1100px; margin:0 auto; padding:28px 18px 80px; }
 
@@ -62,7 +56,7 @@
       padding:10px 12px;
       border:1px solid var(--line);
       border-radius:999px;
-      background:rgba(255,255,255,.7);
+      background:rgba(255,255,255,.75);
       color:var(--muted);
       font-size:12px;
       box-shadow: 0 10px 22px rgba(11,27,58,.08);
@@ -70,7 +64,7 @@
     }
     .pill b{ color:var(--text); font-weight:700; }
 
-    /* SEARCH BAR */
+    /* SEARCH */
     .bar{
       margin-top:16px;
       border:1px solid var(--line);
@@ -82,7 +76,7 @@
     .search{
       display:flex; align-items:center; gap:10px;
       border:1px solid var(--line);
-      background:#ffffff;               /* fundo branco, como você pediu */
+      background:#ffffff; /* fundo branco */
       border-radius:999px;
       padding:10px 14px;
       box-shadow:0 6px 18px rgba(11,27,58,.08);
@@ -129,7 +123,7 @@
       box-shadow:var(--shadow);
       cursor:pointer;
       transition: transform .08s ease, border-color .12s ease;
-      min-height: 140px;
+      min-height: 150px;
     }
     .card:hover{ transform: translateY(-2px); border-color: rgba(10,98,190,.35); }
 
@@ -176,7 +170,7 @@
 
     /* MODAL */
     dialog{
-      width:min(980px,calc(100% - 24px));
+      width:min(1020px,calc(100% - 24px));
       border-radius:22px;
       border:1px solid var(--line);
       background:#fff;
@@ -207,10 +201,10 @@
     .modalBody{
       padding:16px;
       display:grid;
-      grid-template-columns: 1fr 1fr;
+      grid-template-columns: 1.1fr .9fr;
       gap:16px;
     }
-    @media(max-width:880px){
+    @media(max-width:920px){
       .modalBody{ grid-template-columns: 1fr; }
     }
 
@@ -244,17 +238,6 @@
 
     .muted{ color:var(--muted); }
 
-    .linkBox{
-      margin-top:10px;
-      padding:10px 12px;
-      border:1px dashed rgba(10,98,190,.35);
-      border-radius:14px;
-      background: rgba(255,255,255,.65);
-      font-size:12px;
-      line-height:1.5;
-      color:var(--muted);
-    }
-
     .templateBox{
       background:#ffffff;
       border:1px solid var(--line);
@@ -285,6 +268,27 @@
       margin-top:10px;
     }
 
+    .segmented{
+      display:flex;
+      gap:8px;
+      flex-wrap:wrap;
+      margin-bottom:10px;
+    }
+
+    .segBtn{
+      border:1px solid var(--line);
+      background:#fff;
+      color:var(--text);
+      padding:8px 10px;
+      border-radius:999px;
+      font-size:12px;
+      cursor:pointer;
+    }
+    .segBtn.active{
+      background: rgba(10,98,190,.14);
+      border-color: rgba(10,98,190,.45);
+    }
+
     .toast{
       position:fixed;
       bottom:18px;
@@ -299,7 +303,7 @@
       opacity:0;
       pointer-events:none;
       transition: opacity .18s ease, transform .18s ease;
-      z-index: 9999;
+      z-index:9999;
     }
     .toast.show{
       opacity:1;
@@ -332,7 +336,7 @@
         🔎 <input id="q" type="text" placeholder="Buscar demanda (ex.: baixa, MEI, alteração cadastral...)" />
       </div>
       <div class="hint">
-        Dica: este é um MVP com 1 card. Depois, você vai só duplicando o objeto no array <span class="smallCode">DEMANDS</span>.
+        MVP com 1 card (“Solicitação de Baixa — MEI”). Depois, é só duplicar o objeto no array <span class="smallCode">DEMANDS</span>.
       </div>
     </section>
 
@@ -345,7 +349,6 @@
     </section>
   </div>
 
-  <!-- MODAL -->
   <dialog id="modal">
     <div class="modalHead">
       <div>
@@ -356,34 +359,37 @@
     </div>
 
     <div class="modalBody">
-      <!-- Painel esquerdo: procedimento/documentos -->
       <div class="panel">
         <h4>Procedimento</h4>
-        <div class="muted" id="m_proc_note" style="font-size:12px;line-height:1.45;"></div>
+        <p class="muted" id="m_proc_note"></p>
         <ol id="m_steps"></ol>
 
-        <div style="height:10px;"></div>
+        <div style="height:12px;"></div>
 
         <h4>Documentos / verificações</h4>
         <ul id="m_docs"></ul>
 
-        <div class="linkBox" id="m_links"></div>
+        <div style="height:12px;"></div>
+
+        <h4>Links úteis</h4>
+        <p id="m_links" class="muted"></p>
       </div>
 
-      <!-- Painel direito: respostas padrão -->
       <div class="panel">
-        <h4>Resposta padrão — Deferido</h4>
-        <div class="templateBox" id="m_email_ok"></div>
-        <div class="btnRow">
-          <button class="btn primary" id="copy_ok">Copiar (Deferido)</button>
+        <h4>Respostas padrão</h4>
+        <p class="muted" style="font-size:12px;line-height:1.45;margin-bottom:10px;">
+          Selecione a opção e copie para colar no Gmail.
+        </p>
+
+        <div class="segmented">
+          <button class="segBtn active" id="tab_ok" type="button">Deferido</button>
+          <button class="segBtn" id="tab_bad" type="button">Indeferido</button>
         </div>
 
-        <div style="height:14px;"></div>
+        <div class="templateBox" id="m_email"></div>
 
-        <h4>Resposta padrão — Indeferido</h4>
-        <div class="templateBox" id="m_email_bad"></div>
         <div class="btnRow">
-          <button class="btn primary" id="copy_bad">Copiar (Indeferido)</button>
+          <button class="btn primary" id="copy_email" type="button">Copiar resposta</button>
         </div>
       </div>
     </div>
@@ -392,22 +398,23 @@
   <div class="toast" id="toast">Copiado ✅</div>
 
   <script>
-    // ======= DADOS (MVP com 1 card) =======
+    // ======= DADOS (MVP com 1 card: Solicitação de Baixa - MEI) =======
     const DEMANDS = [
       {
         id: "baixa-mei",
         title: "Solicitação de Baixa — MEI",
         categoryTag: "Cadastro / Baixa",
-        summary: "Verificar DSOT (débitos). Se sem pendências, efetivar baixa no SIATE e enviar FIC ao contribuinte.",
+        summary: "Consultar DSOT. Sem débitos: efetivar baixa no SIATE e enviar FIC ao contribuinte. Com débitos: orientar quitação via Agência de Rendas.",
         tags: ["baixa", "mei", "dsot", "siate", "fic", "cnpj"],
-        procedureNote: "Quando houver análise: consultar DSOT para verificar débitos pendentes. Se a demanda não for da DIEF, orientar o contribuinte para a Agência de Rendas.",
+        procedureNote: "Procedimento interno da DIEF: a baixa somente pode ser efetivada se não houver débitos pendentes no DSOT.",
         steps: [
           "Consultar o DSOT do MEI pelo CNPJ no SIATE Web: Atendimento → Imprimir CND/DSOT.",
-          "Se houver débitos pendentes: orientar o contribuinte a quitar as pendências antes da baixa (Agência de Rendas da jurisdição).",
-          "Se não houver débitos: efetuar a baixa no SIATE: Módulo Atendimento → Informações Econômico-Fiscais → Painel Geral do Contribuinte.",
-          "Número do processo: pode utilizar o último dígito da inscrição estadual e inserir apenas o ano.",
-          "Ao baixar: Efetivar Situação → selecionar a caixa do contribuinte → Confirmar.",
-          "Imprimir a FIC (Ficha de Inscrição Cadastral) → salvar em PDF.",
+          "Caso haja débitos pendentes: orientar o contribuinte a quitá-los primeiro (Agência de Rendas da jurisdição).",
+          "Caso NÃO haja débitos: efetuar a baixa no SIATE → Módulo Atendimento → Informações Econômico-Fiscais → Painel Geral do Contribuinte.",
+          "Documento a verificar: Certidão de Baixa de Inscrição no CNPJ (RFB). Se não anexou, consultar pelo CNPJ no site da RFB (link abaixo).",
+          "Número do processo: pode utilizar o último dígito da inscrição estadual e informar apenas o ano.",
+          "Quando baixar: Efetivar Situação → selecionar a caixa do contribuinte → Confirmar.",
+          "Imprimir FIC (Ficha de Inscrição Cadastral) → salvar como PDF.",
           "Anexar a FIC na resposta ao contribuinte."
         ],
         docs: [
@@ -416,7 +423,10 @@
           "FIC (Ficha de Inscrição Cadastral) após efetivar a baixa."
         ],
         linksHtml:
-          `Se o contribuinte não anexou a certidão da RFB, consultar pelo CNPJ em: <a href="https://solucoes.receita.fazenda.gov.br/servicos/cnpjreva/cnpjreva_solicitacao.asp" target="_blank" rel="noopener noreferrer">Consulta CNPJ — RFB</a>.`,
+          `Se o contribuinte não anexou a certidão da RFB, consultar pelo CNPJ em:
+          <a href="https://solucoes.receita.fazenda.gov.br/servicos/cnpjreva/cnpjreva_solicitacao.asp" target="_blank" rel="noopener noreferrer">Consulta CNPJ — RFB</a>.`,
+
+        // E-mails fornecidos por você (HTML)
         emailDeferidoHtml:
 `<div>
   <p>Prezado(a),</p>
@@ -438,6 +448,7 @@ Departamento da Receita - DEPAR<br>
 Secretaria de Estado da Fazenda de Roraima - SEFAZ/RR<br>
   </p>
 </div>`,
+
         emailIndeferidoHtml:
 `<div>
   <p>Prezado(a),</p>
@@ -484,6 +495,7 @@ Secretaria de Estado da Fazenda de Roraima - SEFAZ/RR<br>
       }
     };
 
+    // Converte HTML do seu e-mail em texto puro (cola melhor no Gmail)
     const htmlToText = (html) => {
       const tmp = document.createElement("div");
       tmp.innerHTML = html;
@@ -536,11 +548,20 @@ Secretaria de Estado da Fazenda de Roraima - SEFAZ/RR<br>
     // ======= Modal =======
     const modal = document.getElementById("modal");
     const mClose = document.getElementById("m_close");
+    const tabOk = document.getElementById("tab_ok");
+    const tabBad = document.getElementById("tab_bad");
+    const emailBox = document.getElementById("m_email");
+    const copyBtn = document.getElementById("copy_email");
 
     let current = null;
+    let currentMode = "ok"; // ok | bad
 
     function openModal(d){
       current = d;
+      currentMode = "ok";
+      tabOk.classList.add("active");
+      tabBad.classList.remove("active");
+
       document.getElementById("m_title").textContent = d.title;
       document.getElementById("m_sub").textContent = d.summary;
 
@@ -562,14 +583,20 @@ Secretaria de Estado da Fazenda de Roraima - SEFAZ/RR<br>
         docs.appendChild(li);
       });
 
-      const links = document.getElementById("m_links");
-      links.innerHTML = d.linksHtml || "";
+      // Links úteis (renderiza HTML com <a>)
+      document.getElementById("m_links").innerHTML = d.linksHtml || "";
 
-      // Mostrar HTML no box, mas copiar como TEXTO (Gmail aceita melhor)
-      document.getElementById("m_email_ok").textContent = htmlToText(d.emailDeferidoHtml || "");
-      document.getElementById("m_email_bad").textContent = htmlToText(d.emailIndeferidoHtml || "");
-
+      setEmailView();
       modal.showModal();
+    }
+
+    function setEmailView(){
+      if (!current) return;
+      const html = (currentMode === "ok")
+        ? (current.emailDeferidoHtml || "")
+        : (current.emailIndeferidoHtml || "");
+
+      emailBox.textContent = htmlToText(html);
     }
 
     function closeModal(){
@@ -588,14 +615,26 @@ Secretaria de Estado da Fazenda de Roraima - SEFAZ/RR<br>
       if (!isInDialog) closeModal();
     });
 
-    document.getElementById("copy_ok").addEventListener("click", () => {
-      if (!current) return;
-      copyText(htmlToText(current.emailDeferidoHtml || ""));
+    tabOk.addEventListener("click", () => {
+      currentMode = "ok";
+      tabOk.classList.add("active");
+      tabBad.classList.remove("active");
+      setEmailView();
     });
 
-    document.getElementById("copy_bad").addEventListener("click", () => {
+    tabBad.addEventListener("click", () => {
+      currentMode = "bad";
+      tabBad.classList.add("active");
+      tabOk.classList.remove("active");
+      setEmailView();
+    });
+
+    copyBtn.addEventListener("click", () => {
       if (!current) return;
-      copyText(htmlToText(current.emailIndeferidoHtml || ""));
+      const html = (currentMode === "ok")
+        ? (current.emailDeferidoHtml || "")
+        : (current.emailIndeferidoHtml || "");
+      copyText(htmlToText(html));
     });
 
     // Search
@@ -604,7 +643,6 @@ Secretaria de Estado da Fazenda de Roraima - SEFAZ/RR<br>
       render();
     });
 
-    // Initial render
     render();
   </script>
 </body>
