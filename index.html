@@ -345,7 +345,7 @@
 
     <section class="bar">
       <div class="search" title="Buscar por título, tags, texto do procedimento...">
-        🔎 <input id="q" type="text" placeholder="Buscar demanda (ex.: baixa, MEI, alteração cadastral...)" />
+        🔎 <input id="q" type="text" placeholder="Buscar demanda (ex.: baixa, MEI, simples, regime...)" />
       </div>
     </section>
 
@@ -409,9 +409,8 @@
             Selecione a opção e copie para colar no Gmail.
           </p>
 
-          <div class="segmented">
-            <button class="segBtn active" id="tab_ok" type="button">Deferido</button>
-            <button class="segBtn" id="tab_bad" type="button">Indeferido</button>
+          <div class="segmented" id="segmentedHost">
+            <!-- botões são montados via JS (conforme card) -->
           </div>
 
           <div class="templateBox" id="m_email"></div>
@@ -427,8 +426,9 @@
   <div class="toast" id="toast">Copiado ✅</div>
 
   <script>
-    // ======= DADOS (MVP com 1 card: Solicitação de Baixa - MEI) =======
+    // ======= DADOS =======
     const DEMANDS = [
+      // 1) Baixa MEI (mantém 2 respostas)
       {
         id: "baixa-mei",
         title: "Solicitação de Baixa — MEI",
@@ -454,8 +454,11 @@
         linksHtml:
           `Se o contribuinte não anexou a certidão da RFB, consultar pelo CNPJ em:
           <a href="https://solucoes.receita.fazenda.gov.br/servicos/cnpjreva/cnpjreva_solicitacao.asp" target="_blank" rel="noopener noreferrer">Consulta CNPJ — RFB</a>.`,
-
-        emailDeferidoHtml:
+        templates: [
+          {
+            key: "deferido",
+            label: "Deferido",
+            html:
 `<div>
   <p>Prezado(a),</p>
   <p>Informamos que o pedido de baixa da inscrição estadual foi <strong>analisado e deferido</strong>, não tendo sido identificados débitos ou pendências impeditivas no âmbito das obrigações tributárias estaduais.</p>
@@ -465,9 +468,12 @@
      Departamento da Receita - DEPAR<br>
      Secretaria de Estado da Fazenda de Roraima - SEFAZ/RR<br>
   </p>
-</div>`,
-
-        emailIndeferidoHtml:
+</div>`
+          },
+          {
+            key: "indeferido",
+            label: "Indeferido",
+            html:
 `<div>
   <p>Prezado(a),</p>
   <p>Em análise ao pedido de baixa da inscrição estadual, <strong>verificou-se a existência de débitos pendentes</strong>, conforme consulta ao seu Demonstrativo de Situação de Obrigações Tributárias Estaduais (DSOT).</p>
@@ -479,6 +485,52 @@
      Secretaria de Estado da Fazenda de Roraima - SEFAZ/RR<br>
   </p>
 </div>`
+          }
+        ]
+      },
+
+      // 2) Alteração de Regime: Normal -> Simples (1 resposta)
+      {
+        id: "alt-regime-normal-sn",
+        title: "Alteração de Regime: Normal → Simples Nacional",
+        categoryTag: "Cadastro / Regime",
+        summary: "Atualizar regime no SIATE Web (Normal para SN/DAS), excluir multas indevidas da GIM e registrar parecer fiscal com efeitos retroativos à data de enquadramento.",
+        tags: ["simples", "regime", "gim", "dsot", "siateweb", "das", "simei"],
+        procedureNote: "Atenção: clicar 2x em “Atualizar individual” é essencial para atualizar o regime e excluir multas da GIM quando indevidas.",
+        steps: [
+          "Clicar 2 vezes no botão “Atualizar individual” (sempre): atualiza o regime de tributação e exclui multas da GIM (IMPORTANTE).",
+          "Baixa da GIM: a apresentação da GIM só é obrigatória para contribuintes no Regime Normal do ICMS; optantes do Simples Nacional (SN – DAS) não são obrigados. Se houver multa por atraso de GIM, ela é indevida e deve ser retirada (consultar status no portal do Simples e verificar anexo do contribuinte).",
+          "Emitir/consultar o DSOT para verificar o Regime de Tributação.",
+          "SIATE Web → Atendimento → Cadastro de Contribuintes → Atualizar Fase Cadastral → Atualizar.",
+          "No Parecer Fiscal: “Alteração de regime de pagamento de Normal para SN (DAS) com efeitos a partir de xx/xx/xxxx” (usar a data de enquadramento no SN). Se for MEI, registrar “SN - SIMEI”."
+        ],
+        docs: [
+          "Certidão / Comprovante do Simples Nacional (com: “Situação no Simples Nacional: Optante desde xx/xx/xxxx”).",
+          "Consulta no Portal do Simples Nacional (para validação do status).",
+          "DSOT para conferência do Regime de Tributação."
+        ],
+        linksHtml:
+          `Consulta de Optantes do Simples Nacional:
+          <a href="https://www8.receita.fazenda.gov.br/SimplesNacional/aplicacoes.aspx?id=21" target="_blank" rel="noopener noreferrer">Portal do Simples Nacional — Consulta</a>.`,
+        templates: [
+          {
+            key: "padrao",
+            label: "Resposta Padrão",
+            html:
+`<div>
+  <p>Prezado(a),</p>
+
+  <p>Informamos que o regime de pagamento do contribuinte foi atualizado para o Simples Nacional em nosso cadastro, com efeitos retroativos à data de enquadramento informada no referido regime.</p>
+
+  <p>Atenciosamente,</p>
+
+  <p>Divisão de Informações Econômico-Fiscais - DIEF<br>
+Departamento da Receita - DEPAR<br>
+Secretaria de Estado da Fazenda de Roraima - SEFAZ/RR<br>
+  </p>
+</div>`
+          }
+        ]
       }
     ];
 
@@ -536,10 +588,11 @@
     // ======= Modal =======
     const modal = document.getElementById("modal");
     const mClose = document.getElementById("m_close");
-    const tabOk = document.getElementById("tab_ok");
-    const tabBad = document.getElementById("tab_bad");
     const emailBox = document.getElementById("m_email");
     const copyEmailBtn = document.getElementById("copy_email");
+
+    // Segmento de respostas (dinâmico)
+    const segmentedHost = document.getElementById("segmentedHost");
 
     // Identificadores
     const cnpjInput = document.getElementById("cnpj_input");
@@ -550,13 +603,10 @@
     const clearIeBtn = document.getElementById("clear_ie");
 
     let current = null;
-    let currentMode = "ok"; // ok | bad
+    let currentTemplateKey = null;
 
     function openModal(d){
       current = d;
-      currentMode = "ok";
-      tabOk.classList.add("active");
-      tabBad.classList.remove("active");
 
       document.getElementById("m_title").textContent = d.title;
       document.getElementById("m_sub").textContent = d.summary;
@@ -595,25 +645,59 @@
 
       document.getElementById("m_links").innerHTML = d.linksHtml || "";
 
-      // reset campos (sem mexer em checklist por botões)
+      // reset campos
       cnpjInput.value = "";
       ieInput.value = "";
 
-      setEmailView();
+      // montar botões de template
+      buildTemplateButtons(d);
+
       modal.showModal();
+    }
+
+    function buildTemplateButtons(d){
+      segmentedHost.innerHTML = "";
+      const templates = d.templates || [];
+
+      if (!templates.length){
+        // fallback: sem templates
+        emailBox.innerHTML = "<div><p class='muted'>Sem resposta padrão cadastrada para esta demanda.</p></div>";
+        currentTemplateKey = null;
+        return;
+      }
+
+      templates.forEach((t, idx) => {
+        const btn = document.createElement("button");
+        btn.className = "segBtn" + (idx === 0 ? " active" : "");
+        btn.type = "button";
+        btn.textContent = t.label;
+        btn.dataset.key = t.key;
+
+        btn.addEventListener("click", () => {
+          segmentedHost.querySelectorAll(".segBtn").forEach(b => b.classList.remove("active"));
+          btn.classList.add("active");
+          currentTemplateKey = t.key;
+          setEmailView();
+        });
+
+        segmentedHost.appendChild(btn);
+      });
+
+      currentTemplateKey = templates[0].key;
+      setEmailView();
     }
 
     function setEmailView(){
       if (!current) return;
-      const html = (currentMode === "ok")
-        ? (current.emailDeferidoHtml || "")
-        : (current.emailIndeferidoHtml || "");
-      emailBox.innerHTML = html;
+      const templates = current.templates || [];
+      const t = templates.find(x => x.key === currentTemplateKey) || templates[0];
+      emailBox.innerHTML = (t && t.html) ? t.html : "<div><p class='muted'>Sem resposta padrão.</p></div>";
     }
 
     function closeModal(){
       modal.close();
       current = null;
+      currentTemplateKey = null;
       cnpjInput.value = "";
       ieInput.value = "";
     }
@@ -624,23 +708,10 @@
       const rect = modal.getBoundingClientRect();
       const isInDialog = (
         rect.top <= e.clientY && e.clientY <= rect.top + rect.height &&
+        rect.left <= e.clientX && e.clientY <= rect.top + rect.height &&
         rect.left <= e.clientX && e.clientX <= rect.left + rect.width
       );
       if (!isInDialog) closeModal();
-    });
-
-    tabOk.addEventListener("click", () => {
-      currentMode = "ok";
-      tabOk.classList.add("active");
-      tabBad.classList.remove("active");
-      setEmailView();
-    });
-
-    tabBad.addEventListener("click", () => {
-      currentMode = "bad";
-      tabBad.classList.add("active");
-      tabOk.classList.remove("active");
-      setEmailView();
     });
 
     // ======= Copiar / Limpar CNPJ =======
