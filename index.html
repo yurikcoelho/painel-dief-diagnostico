@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <meta name="robots" content="noindex,nofollow" />
-  <title>Diagnóstico de Ocorrências — DIEF/SEFAZ-RR</title>
+  <title>Demandas Recorrentes — DIEF/SEFAZ-RR</title>
 
   <style>
     :root{
@@ -13,14 +13,20 @@
       --card2:#f7faff;
       --text:#0b1b3a;
       --muted:#3c567a;
+
       --line:rgba(11,27,58,.14);
       --chip:rgba(10,98,190,.08);
+
+      --primary:#0a62be;
+      --primary2:rgba(10,98,190,.14);
+
       --ok:#16a34a;
       --warn:#f59e0b;
       --bad:#dc2626;
-      --info:#0a62be;
+
       --shadow:0 10px 28px rgba(11,27,58,.12);
       --radius:18px;
+
       --mono: ui-monospace, Menlo, Consolas, monospace;
       --sans: system-ui, -apple-system, Segoe UI, Roboto, Arial;
     }
@@ -36,18 +42,47 @@
       color:var(--text);
     }
 
+    a{ color: var(--primary); text-decoration: none; }
+    a:hover{ text-decoration: underline; }
+
     .wrap{ max-width:1100px; margin:0 auto; padding:28px 18px 80px; }
 
+    header{
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap:14px;
+      flex-wrap:wrap;
+    }
     h1{ font-size:22px; margin:0 0 6px; }
-    p{ margin:0; }
+    header p{ margin:0; color:var(--muted); font-size:13px; max-width:900px; line-height:1.45; }
 
-    header p{ color:var(--muted); font-size:13px; max-width:900px; }
+    .pill{
+      display:inline-flex; align-items:center; gap:8px;
+      padding:10px 12px;
+      border:1px solid var(--line);
+      border-radius:999px;
+      background:rgba(255,255,255,.7);
+      color:var(--muted);
+      font-size:12px;
+      box-shadow: 0 10px 22px rgba(11,27,58,.08);
+      white-space:nowrap;
+    }
+    .pill b{ color:var(--text); font-weight:700; }
 
-    /* SEARCH */
+    /* SEARCH BAR */
+    .bar{
+      margin-top:16px;
+      border:1px solid var(--line);
+      border-radius:var(--radius);
+      background:rgba(255,255,255,.75);
+      padding:14px;
+      box-shadow: var(--shadow);
+    }
     .search{
       display:flex; align-items:center; gap:10px;
       border:1px solid var(--line);
-      background:#fff;
+      background:#ffffff;               /* fundo branco, como você pediu */
       border-radius:999px;
       padding:10px 14px;
       box-shadow:0 6px 18px rgba(11,27,58,.08);
@@ -55,36 +90,37 @@
     .search input{
       border:none; outline:none; width:100%;
       font-size:14px; color:var(--text);
+      background:transparent;
     }
-    .search input::placeholder{ color:rgba(60,86,122,.7); }
+    .search input::placeholder{ color:rgba(60,86,122,.75); }
     .search:focus-within{
       border-color:rgba(10,98,190,.45);
-      box-shadow:0 0 0 4px rgba(10,98,190,.12);
+      box-shadow:0 0 0 4px rgba(10,98,190,.12), 0 6px 18px rgba(11,27,58,.08);
     }
 
-    /* CHIPS */
-    .chips{ display:flex; gap:8px; flex-wrap:wrap; margin-top:10px; }
-    .chip{
-      padding:8px 12px; border-radius:999px;
-      border:1px solid var(--line);
-      background:#fff;
-      cursor:pointer;
-      font-size:12px;
+    .hint{
+      margin-top:10px;
       color:var(--muted);
-    }
-    .chip.active{
-      background:rgba(10,98,190,.14);
-      border-color:rgba(10,98,190,.4);
-      color:var(--text);
+      font-size:12px;
+      line-height:1.45;
     }
 
     /* CARDS */
+    .sectionTitle{
+      display:flex; align-items:baseline; justify-content:space-between;
+      gap:10px; flex-wrap:wrap;
+      margin:18px 2px 10px;
+    }
+    .sectionTitle h2{ margin:0; font-size:15px; letter-spacing:.2px; }
+    .sectionTitle .count{ color:var(--muted); font-size:12px; }
+
     .cards{
       display:grid;
-      grid-template-columns:repeat(auto-fit,minmax(300px,1fr));
+      grid-template-columns:repeat(auto-fit,minmax(320px,1fr));
       gap:16px;
-      margin-top:20px;
+      margin-top:10px;
     }
+
     .card{
       background:var(--card);
       border:1px solid var(--line);
@@ -92,30 +128,60 @@
       padding:14px;
       box-shadow:var(--shadow);
       cursor:pointer;
+      transition: transform .08s ease, border-color .12s ease;
+      min-height: 140px;
     }
-    .card h3{ margin:0 0 6px; font-size:14px; }
-    .snippet{ font-size:12px; color:var(--muted); margin-top:6px; }
+    .card:hover{ transform: translateY(-2px); border-color: rgba(10,98,190,.35); }
 
-    .badge{
-      display:inline-block;
-      padding:5px 10px;
-      border-radius:999px;
-      font-size:11px;
-      margin:4px 4px 0 0;
-      border:1px solid var(--line);
+    .cardTop{
+      display:flex; align-items:flex-start; justify-content:space-between;
+      gap:12px;
     }
-    .badge.bad{ background:rgba(220,38,38,.12); }
-    .badge.warn{ background:rgba(245,158,11,.14); }
-    .badge.info{ background:rgba(10,98,190,.14); }
+    .card h3{ margin:0; font-size:14px; line-height:1.25; }
+    .tag{
+      display:inline-flex; align-items:center;
+      padding:6px 10px;
+      border-radius:999px;
+      border:1px solid rgba(10,98,190,.30);
+      background: rgba(10,98,190,.10);
+      color: var(--text);
+      font-size:11px;
+      white-space:nowrap;
+    }
+
+    .snippet{
+      font-size:12px;
+      color:var(--muted);
+      margin-top:10px;
+      line-height:1.5;
+    }
+
+    .metaRow{
+      margin-top:12px;
+      display:flex; align-items:center; justify-content:space-between;
+      gap:10px;
+      color:var(--muted);
+      font-size:12px;
+    }
+
+    .btnMini{
+      border:1px solid var(--line);
+      background: rgba(255,255,255,.85);
+      color: var(--text);
+      padding:8px 10px;
+      border-radius:12px;
+      font-size:12px;
+      cursor:pointer;
+    }
 
     /* MODAL */
     dialog{
-      width:min(960px,calc(100% - 24px));
+      width:min(980px,calc(100% - 24px));
       border-radius:22px;
       border:1px solid var(--line);
       background:#fff;
       padding:0;
-      box-shadow:0 30px 80px rgba(11,27,58,.3);
+      box-shadow:0 30px 80px rgba(11,27,58,.30);
     }
     dialog::backdrop{
       background:rgba(11,27,58,.28);
@@ -123,19 +189,29 @@
     }
 
     .modalHead{
-      padding:16px;
+      padding:16px 16px 12px;
       border-bottom:1px solid var(--line);
-      display:flex; justify-content:space-between; align-items:start;
+      display:flex; justify-content:space-between; align-items:flex-start;
+      gap:12px;
+    }
+    .modalHead h3{ margin:0; font-size:15px; line-height:1.25; }
+    .closeBtn{
+      border-radius:999px;
+      padding:8px 12px;
+      border:1px solid var(--line);
+      background:#fff;
+      cursor:pointer;
+      font-size:12px;
     }
 
     .modalBody{
       padding:16px;
       display:grid;
-      grid-template-columns:1fr 1fr;
+      grid-template-columns: 1fr 1fr;
       gap:16px;
     }
-    @media(max-width:800px){
-      .modalBody{ grid-template-columns:1fr; }
+    @media(max-width:880px){
+      .modalBody{ grid-template-columns: 1fr; }
     }
 
     .panel{
@@ -148,22 +224,47 @@
       margin:0 0 8px;
       font-size:12px;
       text-transform:uppercase;
-      color:var(--muted);
+      letter-spacing:.3px;
+      color:rgba(60,86,122,.95);
+    }
+    .panel p{
+      margin:0;
+      font-size:13px;
+      line-height:1.55;
+      color:var(--text);
     }
     .panel ul, .panel ol{
       margin:8px 0 0 18px;
       font-size:13px;
       line-height:1.55;
+      color:var(--text);
+      padding:0;
+    }
+    .panel li{ margin:6px 0; }
+
+    .muted{ color:var(--muted); }
+
+    .linkBox{
+      margin-top:10px;
+      padding:10px 12px;
+      border:1px dashed rgba(10,98,190,.35);
+      border-radius:14px;
+      background: rgba(255,255,255,.65);
+      font-size:12px;
+      line-height:1.5;
+      color:var(--muted);
     }
 
-    .emailBox{
-      background:#fff;
+    .templateBox{
+      background:#ffffff;
       border:1px solid var(--line);
       border-radius:14px;
       padding:12px;
-      white-space:pre-wrap;
       font-size:13px;
       line-height:1.55;
+      white-space:pre-wrap;
+      overflow:auto;
+      max-height: 320px;
     }
 
     .btn{
@@ -175,101 +276,336 @@
       font-size:12px;
     }
     .btn.primary{
-      background:rgba(10,98,190,.14);
+      background:var(--primary2);
       border-color:rgba(10,98,190,.45);
+    }
+
+    .btnRow{
+      display:flex; gap:10px; flex-wrap:wrap;
+      margin-top:10px;
+    }
+
+    .toast{
+      position:fixed;
+      bottom:18px;
+      left:50%;
+      transform:translateX(-50%);
+      background: rgba(11,27,58,.90);
+      color:#fff;
+      border:1px solid rgba(255,255,255,.15);
+      padding:10px 12px;
+      border-radius:999px;
+      font-size:12px;
+      opacity:0;
+      pointer-events:none;
+      transition: opacity .18s ease, transform .18s ease;
+      z-index: 9999;
+    }
+    .toast.show{
+      opacity:1;
+      transform:translateX(-50%) translateY(-2px);
+    }
+
+    .smallCode{
+      font-family: var(--mono);
+      font-size: 11px;
+      color: rgba(60,86,122,.95);
     }
   </style>
 </head>
 
 <body>
-<div class="wrap">
-  <header>
-    <h1>Diagnóstico de Ocorrências Recorrentes — DIEF/SEFAZ-RR</h1>
-    <p>Uso interno. Página para diagnóstico visual e procedimentos padronizados.</p>
-  </header>
+  <div class="wrap">
+    <header>
+      <div>
+        <h1>Demandas Recorrentes — DIEF/SEFAZ-RR</h1>
+        <p>
+          Repositório interno de demandas que chegam por e-mail. Clique em um card para ver <b>procedimentos</b> (quando aplicável)
+          e <b>respostas padrão</b> para copiar e colar no Gmail.
+        </p>
+      </div>
+      <div class="pill"><span>Uso:</span> <b>interno</b> <span>•</span> <span class="smallCode">index.html</span></div>
+    </header>
 
-  <div class="search" style="margin-top:16px;">
-    🔎 <input id="q" placeholder="Buscar (DARE, DSOT, Simples, agrupamento…)" />
+    <section class="bar">
+      <div class="search" title="Buscar por título, tags, texto do procedimento...">
+        🔎 <input id="q" type="text" placeholder="Buscar demanda (ex.: baixa, MEI, alteração cadastral...)" />
+      </div>
+      <div class="hint">
+        Dica: este é um MVP com 1 card. Depois, você vai só duplicando o objeto no array <span class="smallCode">DEMANDS</span>.
+      </div>
+    </section>
+
+    <section>
+      <div class="sectionTitle">
+        <h2>Cards de demandas</h2>
+        <div class="count" id="count"></div>
+      </div>
+      <div class="cards" id="cards"></div>
+    </section>
   </div>
 
-  <div class="chips" id="chips"></div>
-
-  <div class="cards" id="cards"></div>
-</div>
-
-<dialog id="modal">
-  <div class="modalHead">
-    <h3 id="m_title"></h3>
-    <button class="btn" onclick="modal.close()">✕</button>
-  </div>
-
-  <div class="modalBody">
-    <div class="panel">
-      <h4>Procedimento</h4>
-      <ol id="m_steps"></ol>
+  <!-- MODAL -->
+  <dialog id="modal">
+    <div class="modalHead">
+      <div>
+        <h3 id="m_title">—</h3>
+        <div class="muted" id="m_sub" style="margin-top:6px;font-size:12px;line-height:1.4;"></div>
+      </div>
+      <button class="closeBtn" id="m_close">✕</button>
     </div>
 
-    <div class="panel">
-      <h4>Resposta padrão (e-mail)</h4>
-      <div class="emailBox" id="m_email"></div>
-      <div style="margin-top:10px;">
-        <button class="btn primary" onclick="copyEmail()">Copiar resposta padrão</button>
+    <div class="modalBody">
+      <!-- Painel esquerdo: procedimento/documentos -->
+      <div class="panel">
+        <h4>Procedimento</h4>
+        <div class="muted" id="m_proc_note" style="font-size:12px;line-height:1.45;"></div>
+        <ol id="m_steps"></ol>
+
+        <div style="height:10px;"></div>
+
+        <h4>Documentos / verificações</h4>
+        <ul id="m_docs"></ul>
+
+        <div class="linkBox" id="m_links"></div>
+      </div>
+
+      <!-- Painel direito: respostas padrão -->
+      <div class="panel">
+        <h4>Resposta padrão — Deferido</h4>
+        <div class="templateBox" id="m_email_ok"></div>
+        <div class="btnRow">
+          <button class="btn primary" id="copy_ok">Copiar (Deferido)</button>
+        </div>
+
+        <div style="height:14px;"></div>
+
+        <h4>Resposta padrão — Indeferido</h4>
+        <div class="templateBox" id="m_email_bad"></div>
+        <div class="btnRow">
+          <button class="btn primary" id="copy_bad">Copiar (Indeferido)</button>
+        </div>
       </div>
     </div>
-  </div>
-</dialog>
+  </dialog>
 
-<script>
-const PROBLEMS = [
-{
-  title:"DARE Avulso pago, mas débito não baixou automaticamente",
-  snippet:"Pagamento confirmado, mas sistema/DSOT não reflete baixa.",
-  steps:[
-    "Consultar DSOT e identificar débitos em aberto.",
-    "Confirmar pagamento do DARE no sistema.",
-    "Conferir se o valor foi creditado ao Tesouro.",
-    "Anexar comprovantes.",
-    "Encaminhar para baixa/ajuste interno."
-  ],
-  emailTemplate:
-`Prezado(a),
+  <div class="toast" id="toast">Copiado ✅</div>
 
-Verificamos a existência de comprovante de pagamento do DARE informado. No entanto, o sistema ainda não refletiu automaticamente a baixa do(s) débito(s).
+  <script>
+    // ======= DADOS (MVP com 1 card) =======
+    const DEMANDS = [
+      {
+        id: "baixa-mei",
+        title: "Solicitação de Baixa — MEI",
+        categoryTag: "Cadastro / Baixa",
+        summary: "Verificar DSOT (débitos). Se sem pendências, efetivar baixa no SIATE e enviar FIC ao contribuinte.",
+        tags: ["baixa", "mei", "dsot", "siate", "fic", "cnpj"],
+        procedureNote: "Quando houver análise: consultar DSOT para verificar débitos pendentes. Se a demanda não for da DIEF, orientar o contribuinte para a Agência de Rendas.",
+        steps: [
+          "Consultar o DSOT do MEI pelo CNPJ no SIATE Web: Atendimento → Imprimir CND/DSOT.",
+          "Se houver débitos pendentes: orientar o contribuinte a quitar as pendências antes da baixa (Agência de Rendas da jurisdição).",
+          "Se não houver débitos: efetuar a baixa no SIATE: Módulo Atendimento → Informações Econômico-Fiscais → Painel Geral do Contribuinte.",
+          "Número do processo: pode utilizar o último dígito da inscrição estadual e inserir apenas o ano.",
+          "Ao baixar: Efetivar Situação → selecionar a caixa do contribuinte → Confirmar.",
+          "Imprimir a FIC (Ficha de Inscrição Cadastral) → salvar em PDF.",
+          "Anexar a FIC na resposta ao contribuinte."
+        ],
+        docs: [
+          "Certidão de Baixa de Inscrição no CNPJ (RFB).",
+          "DSOT (Demonstrativo de Situação de Obrigações Tributárias Estaduais).",
+          "FIC (Ficha de Inscrição Cadastral) após efetivar a baixa."
+        ],
+        linksHtml:
+          `Se o contribuinte não anexou a certidão da RFB, consultar pelo CNPJ em: <a href="https://solucoes.receita.fazenda.gov.br/servicos/cnpjreva/cnpjreva_solicitacao.asp" target="_blank" rel="noopener noreferrer">Consulta CNPJ — RFB</a>.`,
+        emailDeferidoHtml:
+`<div>
+  <p>Prezado(a),</p>
 
-Foi aberto procedimento interno para regularização da pendência. Orientamos acompanhar a situação após a atualização.
+  <p>Informamos que o pedido de baixa da inscrição estadual foi
+  <strong>analisado e deferido</strong>, não tendo sido identificados
+  débitos ou pendências impeditivas no âmbito das obrigações
+  tributárias estaduais.</p>
 
-Atenciosamente,
+  <p>Dessa forma, a inscrição estadual encontra-se baixada,
+  conforme demonstrado no documento em anexo da Ficha de Inscrição do Contribuinte (FIC).</p>
 
-Divisão de Informações Econômico-Fiscais - DIEF
-Departamento da Receita - DEPAR
-Secretaria de Estado da Fazenda de Roraima - SEFAZ/RR`
-}
-];
+  <p>Permanecemos à disposição para eventuais esclarecimentos.</p>
 
-const cards = document.getElementById("cards");
-const modal = document.getElementById("modal");
-let current = null;
+  <p>Atenciosamente,</p>
 
-PROBLEMS.forEach(p=>{
-  const c=document.createElement("div");
-  c.className="card";
-  c.innerHTML=`<h3>${p.title}</h3><div class="snippet">${p.snippet}</div>`;
-  c.onclick=()=>openModal(p);
-  cards.appendChild(c);
-});
+  <p>Divisão de Informações Econômico-Fiscais - DIEF<br>
+Departamento da Receita - DEPAR<br>
+Secretaria de Estado da Fazenda de Roraima - SEFAZ/RR<br>
+  </p>
+</div>`,
+        emailIndeferidoHtml:
+`<div>
+  <p>Prezado(a),</p>
 
-function openModal(p){
-  current=p;
-  document.getElementById("m_title").textContent=p.title;
-  document.getElementById("m_steps").innerHTML=p.steps.map(s=>`<li>${s}</li>`).join("");
-  document.getElementById("m_email").textContent=p.emailTemplate;
-  modal.showModal();
-}
+  <p>Em análise ao pedido de baixa da inscrição estadual, <strong> verificou-se a existência de débitos pendentes</strong>, conforme consulta ao seu Demonstrativo de Situação de Obrigações Tributárias Estaduais (DSOT).</p>
 
-function copyEmail(){
-  navigator.clipboard.writeText(current.emailTemplate);
-  alert("Resposta copiada!");
-}
-</script>
+  <p>Enquanto houver pendências financeiras em aberto, não é possível efetivar a baixa da inscrição estadual.</p>
+
+  <p>O contribuinte poderá enviar e-mail ou comparecer à Agência de Rendas de sua jurisdição para emissão do DARE e pagamento do débito. Após a regularização, o pedido de baixa poderá ser reapresentado.<p>
+
+  <p>Atenciosamente,</p>
+
+ <p>Divisão de Informações Econômico-Fiscais - DIEF<br>
+Departamento da Receita - DEPAR<br>
+Secretaria de Estado da Fazenda de Roraima - SEFAZ/RR<br>
+  </p>
+</div>`
+      }
+    ];
+
+    // ======= Helpers =======
+    const toast = (msg="Copiado ✅") => {
+      const t = document.getElementById("toast");
+      t.textContent = msg;
+      t.classList.add("show");
+      setTimeout(() => t.classList.remove("show"), 1200);
+    };
+
+    const copyText = async (text) => {
+      try{
+        await navigator.clipboard.writeText(text);
+        toast();
+      }catch(e){
+        const ta = document.createElement("textarea");
+        ta.style.position="fixed";
+        ta.style.left="-9999px";
+        ta.style.top="-9999px";
+        ta.value=text;
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand("copy");
+        ta.remove();
+        toast();
+      }
+    };
+
+    const htmlToText = (html) => {
+      const tmp = document.createElement("div");
+      tmp.innerHTML = html;
+      return tmp.innerText;
+    };
+
+    // ======= Render =======
+    const state = { q: "" };
+    const cardsHost = document.getElementById("cards");
+    const countHost = document.getElementById("count");
+
+    function filterDemands(){
+      const q = state.q.trim().toLowerCase();
+      if (!q) return DEMANDS;
+      return DEMANDS.filter(d => {
+        const hay = [
+          d.title, d.categoryTag, d.summary,
+          ...(d.tags||[]),
+          ...(d.steps||[]),
+          ...(d.docs||[])
+        ].join(" ").toLowerCase();
+        return hay.includes(q);
+      });
+    }
+
+    function render(){
+      const items = filterDemands();
+      cardsHost.innerHTML = "";
+      countHost.textContent = `${items.length} demanda(s)`;
+
+      items.forEach(d => {
+        const card = document.createElement("div");
+        card.className = "card";
+        card.innerHTML = `
+          <div class="cardTop">
+            <h3>${d.title}</h3>
+            <span class="tag">${d.categoryTag}</span>
+          </div>
+          <div class="snippet">${d.summary}</div>
+          <div class="metaRow">
+            <span>Tags: ${(d.tags||[]).slice(0,4).join(", ") || "—"}</span>
+            <button class="btnMini" type="button">Abrir →</button>
+          </div>
+        `;
+        card.addEventListener("click", () => openModal(d));
+        cardsHost.appendChild(card);
+      });
+    }
+
+    // ======= Modal =======
+    const modal = document.getElementById("modal");
+    const mClose = document.getElementById("m_close");
+
+    let current = null;
+
+    function openModal(d){
+      current = d;
+      document.getElementById("m_title").textContent = d.title;
+      document.getElementById("m_sub").textContent = d.summary;
+
+      document.getElementById("m_proc_note").textContent = d.procedureNote || "";
+
+      const steps = document.getElementById("m_steps");
+      steps.innerHTML = "";
+      (d.steps||[]).forEach(s => {
+        const li = document.createElement("li");
+        li.textContent = s;
+        steps.appendChild(li);
+      });
+
+      const docs = document.getElementById("m_docs");
+      docs.innerHTML = "";
+      (d.docs||[]).forEach(s => {
+        const li = document.createElement("li");
+        li.textContent = s;
+        docs.appendChild(li);
+      });
+
+      const links = document.getElementById("m_links");
+      links.innerHTML = d.linksHtml || "";
+
+      // Mostrar HTML no box, mas copiar como TEXTO (Gmail aceita melhor)
+      document.getElementById("m_email_ok").textContent = htmlToText(d.emailDeferidoHtml || "");
+      document.getElementById("m_email_bad").textContent = htmlToText(d.emailIndeferidoHtml || "");
+
+      modal.showModal();
+    }
+
+    function closeModal(){
+      modal.close();
+      current = null;
+    }
+
+    mClose.addEventListener("click", closeModal);
+
+    modal.addEventListener("click", (e) => {
+      const rect = modal.getBoundingClientRect();
+      const isInDialog = (
+        rect.top <= e.clientY && e.clientY <= rect.top + rect.height &&
+        rect.left <= e.clientX && e.clientX <= rect.left + rect.width
+      );
+      if (!isInDialog) closeModal();
+    });
+
+    document.getElementById("copy_ok").addEventListener("click", () => {
+      if (!current) return;
+      copyText(htmlToText(current.emailDeferidoHtml || ""));
+    });
+
+    document.getElementById("copy_bad").addEventListener("click", () => {
+      if (!current) return;
+      copyText(htmlToText(current.emailIndeferidoHtml || ""));
+    });
+
+    // Search
+    document.getElementById("q").addEventListener("input", (e) => {
+      state.q = e.target.value || "";
+      render();
+    });
+
+    // Initial render
+    render();
+  </script>
 </body>
 </html>
