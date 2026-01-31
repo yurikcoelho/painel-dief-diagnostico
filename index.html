@@ -712,10 +712,6 @@
     // ======= Limpar (campo + checklist) =======
     clearAllBtn.addEventListener("click", () => {
       idInput.value = "";
-
-      document.querySelectorAll("#m_steps input[type='checkbox']").forEach(cb => {
-        cb.checked = false;
-        cb.dispatchEvent(new Event("change"));
       });
 
       toast("Limpo ✅");
