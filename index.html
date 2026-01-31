@@ -483,7 +483,14 @@ body[data-theme="dark"] .toast,
 body.dark .toast{
   border-color:rgba(255,255,255,.18);
 }
-
+/* Título do modal no dark (corrige ficar preto) */
+:root[data-theme="dark"] #m_title,
+body[data-theme="dark"] #m_title,
+body.dark #m_title,
+:root[data-theme="dark"] .modalHead h3,
+body[data-theme="dark"] .modalHead h3,
+body.dark .modalHead h3{
+  color: var(--text);
   </style>
 </head>
 
