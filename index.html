@@ -40,41 +40,48 @@
 
     .wrap{ max-width:1100px; margin:0 auto; padding:18px 18px 80px; }
 
-    /* ===== TOP BAR (BOTÕES FLUTUANDO + TÍTULO LARGURA ÚTIL) ===== */
-    .topbar{
-      position:relative;           /* ✅ referência pros absolute */
-      margin-bottom:6px;
-      padding-top:0;
-      min-height:44px;             /* ✅ garante altura mínima pra caber botões */
-    }
+   /* ===== TOP BAR (BOTÕES AFASTADOS + TÍTULO CENTRALIZADO) ===== */
+.topbar {
+  position: relative;
+  margin-bottom: 6px;
+  padding-top: 0;
+  min-height: 44px;
+}
 
-    /* botões “fora do fluxo” */
-    #menuBtn{
-      position:absolute;
-      top:0;
-      left:2;                      /* ✅ encosta no início do .wrap */
-      z-index:2;
-    }
-    #themeToggle{
-      position:absolute;
-      top:0;
-      right:2;                     /* ✅ encosta no fim do .wrap */
-      z-index:2;
-    }
+/* botões com margem maior das bordas */
+#menuBtn {
+  position: absolute;
+  top: 0;
+  left: 30px;                /* Afasta o botão Menu da borda esquerda */
+  z-index: 2;
+}
 
-    /* título ocupa toda a largura útil (mesma área dos cards/barra) */
-    .titleBlock{
-      width:100%;
-      text-align:left;
-      padding:2px 0 0;             /* seu ajuste fino */
-      /* ✅ reserva espaço pra não ficar por baixo dos botões */
-      padding-left:120px;          /* ajuste se quiser mais/menos */
-      padding-right:140px;         /* ajuste se quiser mais/menos */
-    }
+#themeToggle {
+  position: absolute;
+  top: 0;
+  right: 30px;               /* Afasta o botão Modo Escuro da borda direita */
+  z-index: 2;
+}
 
-    h1{ font-size:22px; margin:0 0 6px; }
-    .desc{ margin:0; color:var(--muted); font-size:13px; max-width:900px; line-height:1.45; }
+/* área do título ocupando o centro (o seu "retângulo vermelho") */
+.titleBlock {
+  width: 100%;
+  text-align: left;          /* Mude para 'center' se quiser o título no meio do retângulo */
+  padding: 2px 0 0;
+  /* Margens internas maiores para o texto não bater nos botões afastados */
+  padding-left: 150px;       
+  padding-right: 150px;      
+}
 
+h1 { font-size: 22px; margin: 0 0 6px; }
+
+.desc { 
+  margin: 0; 
+  color: var(--muted); 
+  font-size: 13px; 
+  max-width: 900px; 
+  line-height: 1.45; 
+}
     /* Mobile: empilha e remove absolute */
     @media (max-width: 820px){
       .topbar{
