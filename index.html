@@ -41,17 +41,22 @@
     .wrap{ max-width:1100px; margin:0 auto; padding:18px 18px 80px; }
 
     /* ===== TOP BAR (Menu | Título | Tema) ===== */
-    .topbar{
-      display:grid;
-      grid-template-columns: auto 1fr auto; /* esquerda | centro | direita */
-      align-items:start;
-      gap:14px;
-      margin-bottom:6px;
-    }
-    .titleBlock{
-      padding-top:2px;
-      text-align:center; /* centraliza só na horizontal */
-    }
+   .topbar{
+  display:grid;
+  grid-template-columns: auto minmax(0, 1fr) auto; /* menu | título | tema */
+  align-items:start;
+  gap:14px;
+  margin-bottom:6px;
+}
+
+.titleBlock{
+  padding-top:2px;
+  text-align:left;       /* ✅ título alinhado à esquerda */
+  width:100%;            /* ✅ ocupa toda a coluna central */
+  max-width:100%;        /* ✅ mesma “área útil” do wrap */
+  justify-self:stretch;  /* ✅ garante que estica */
+}
+
     h1{ font-size:22px; margin:0 0 6px; }
     .desc{ margin:0; color:var(--muted); font-size:13px; max-width:900px; line-height:1.45; }
 
