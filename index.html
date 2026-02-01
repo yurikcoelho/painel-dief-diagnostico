@@ -47,23 +47,37 @@
       gap:14px;
       flex-wrap:wrap;
     }
-    .headLeft{
-      display:flex;
-      align-items:flex-start;
-      gap:12px;
-      flex: 1 1 auto;
-      min-width: 260px;
-    }
-    .headRight{
-      display:flex;
-      align-items:center;
-      gap:10px;
-      flex: 0 0 auto;
-      margin-left:auto;
+    h1{ font-size:22px; margin:0 0 6px; }
+    header p{
+      margin:0;
+      color:var(--muted);
+      font-size:13px;
+      max-width:900px;
+      line-height:1.45;
     }
 
-    h1{ font-size:22px; margin:0 0 6px; }
-    header p{ margin:0; color:var(--muted); font-size:13px; max-width:900px; line-height:1.45; }
+    /* ===== TOP BUTTONS (fixos) ===== */
+    .topBtn{
+      position:fixed;
+      top:18px;
+      z-index:9998;
+    }
+    #menuBtn{ left:18px; }
+    #themeToggle{ right:18px; }
+
+    .btn{
+      padding:10px 14px;
+      border-radius:12px;
+      border:1px solid var(--line);
+      background:#fff;
+      cursor:pointer;
+      font-size:12px;
+      white-space:nowrap;
+    }
+    .btn.primary{
+      background:rgba(10,98,190,.14);
+      border-color:rgba(10,98,190,.45);
+    }
 
     /* SEARCH */
     .bar{
@@ -86,6 +100,9 @@
       border:none; outline:none; width:100%;
       font-size:14px; color:var(--text);
       background:transparent;
+
+      /* >>> Ajuste: texto mais “no centro” do retângulo (horizontal) */
+      text-align:center;
     }
     .search input::placeholder{ color:rgba(60,86,122,.75); }
     .search:focus-within{
@@ -116,10 +133,14 @@
       padding:14px;
       box-shadow:var(--shadow);
       cursor:pointer;
-      transition: transform .08s ease, border-color .12s ease;
+      transition: transform .12s ease, border-color .15s ease, box-shadow .15s ease;
       min-height: 150px;
     }
-    .card:hover{ transform: translateY(-2px); border-color: rgba(10,98,190,.35); }
+    .card:hover{
+      transform: translateY(-2px);
+      border-color: rgba(10,98,190,.35);
+      box-shadow:0 14px 36px rgba(11,27,58,.18);
+    }
 
     .cardTop{
       display:flex; align-items:flex-start; justify-content:space-between;
@@ -160,22 +181,9 @@
       border-radius:12px;
       font-size:12px;
       cursor:pointer;
+      transition: transform .08s ease, border-color .15s ease;
     }
-
-    /* BOTÕES */
-    .btn{
-      padding:10px 14px;
-      border-radius:12px;
-      border:1px solid var(--line);
-      background:#fff;
-      cursor:pointer;
-      font-size:12px;
-      white-space:nowrap;
-    }
-    .btn.primary{
-      background:rgba(10,98,190,.14);
-      border-color:rgba(10,98,190,.45);
-    }
+    .btnMini:hover{ transform: translateY(-1px); border-color: rgba(10,98,190,.35); }
 
     /* MODAL (cards) */
     dialog{
@@ -198,6 +206,7 @@
       gap:12px;
     }
     .modalHead h3{ margin:0; font-size:15px; line-height:1.25; }
+
     .closeBtn{
       border-radius:999px;
       padding:8px 12px;
@@ -205,7 +214,9 @@
       background:#fff;
       cursor:pointer;
       font-size:12px;
+      transition: background-color .15s ease, transform .08s ease;
     }
+    .closeBtn:hover{ background: rgba(10,98,190,.12); transform: translateY(-1px); }
 
     .modalBody{
       padding:16px;
@@ -215,7 +226,6 @@
     }
     @media(max-width:920px){
       .modalBody{ grid-template-columns: 1fr; }
-      .headRight{ width:100%; justify-content:flex-end; }
     }
 
     .panel{
@@ -257,7 +267,7 @@
       cursor:pointer;
     }
     .checklist-item span{
-      cursor:pointer; /* mãozinha no texto */
+      cursor:pointer;
     }
     .checklist-item.done span{
       text-decoration:line-through;
@@ -301,7 +311,9 @@
       border-radius:999px;
       font-size:12px;
       cursor:pointer;
+      transition: transform .08s ease, border-color .15s ease;
     }
+    .segBtn:hover{ transform: translateY(-1px); border-color: rgba(10,98,190,.35); }
     .segBtn.active{
       background: rgba(10,98,190,.14);
       border-color: rgba(10,98,190,.45);
@@ -345,56 +357,49 @@
       border:1px solid var(--line);
       font-size:13px;
       background:#fff;
+      color:var(--text);
     }
 
     /* =========================
-       MENU / BIBLIOTECA
+       BIBLIOTECA (Legislação/Documentos)
     ========================= */
-    .menuBtn{
-      border:1px solid var(--line);
-      background: rgba(255,255,255,.85);
-      color: var(--text);
-      padding:10px 12px;
-      border-radius:12px;
-      font-size:12px;
-      cursor:pointer;
-      box-shadow: var(--shadow);
-      white-space:nowrap;
+    #libraryDialog{
+      width:min(860px,calc(100% - 24px));
     }
 
-    #libModal{
-      width:min(780px,calc(100% - 24px));
+    .libHeader{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+      padding:16px;
+      border-bottom:1px solid var(--line);
+    }
+
+    .libTitle{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      font-weight:700;
+    }
+
+    .libTabs{
+      padding:14px 16px 0;
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
     }
 
     .libBody{
       padding:16px;
     }
 
-    .tabsRow{
-      display:flex;
-      gap:8px;
-      flex-wrap:wrap;
-      margin:10px 0 12px;
-    }
-
-    .tabBtn{
-      border:1px solid var(--line);
-      background:#fff;
-      color:var(--text);
-      padding:8px 10px;
-      border-radius:999px;
-      font-size:12px;
-      cursor:pointer;
-    }
-    .tabBtn.active{
-      background: rgba(10,98,190,.14);
-      border-color: rgba(10,98,190,.45);
-    }
-
     .libSearch{
-      display:flex; align-items:center; gap:10px;
+      display:flex;
+      align-items:center;
+      gap:10px;
       border:1px solid var(--line);
-      background:#fff;
+      background:var(--card);
       border-radius:999px;
       padding:10px 14px;
       box-shadow:0 6px 18px rgba(11,27,58,.08);
@@ -402,8 +407,12 @@
     }
     .libSearch input{
       border:none; outline:none; width:100%;
-      font-size:14px; color:var(--text);
+      font-size:14px;
+      color:var(--text);
       background:transparent;
+
+      /* >>> Ajuste: texto mais “no centro” do retângulo (horizontal) */
+      text-align:center;
     }
     .libSearch input::placeholder{ color:rgba(60,86,122,.75); }
 
@@ -414,56 +423,60 @@
     }
 
     .resItem{
-      border:1px solid var(--line);
-      background: var(--card2);
-      border-radius:14px;
-      padding:12px;
       display:flex;
-      align-items:flex-start;
+      align-items:center;
       justify-content:space-between;
       gap:12px;
-      cursor:pointer; /* mãozinha */
-      transition: border-color .15s ease, transform .08s ease, box-shadow .15s ease;
+      padding:12px 12px;
+      border:1px solid var(--line);
+      border-radius:14px;
+      background:var(--card2);
+      cursor:default;
     }
-    .resItem:hover{
-      transform: translateY(-1px);
-      border-color: rgba(10,98,190,.35);
-      box-shadow: 0 10px 22px rgba(11,27,58,.10);
+
+    .resLeft{
+      display:flex;
+      flex-direction:column;
+      gap:4px;
+      min-width:0;
     }
-    .resTitle{
-      margin:0;
+
+    .resName{
       font-size:13px;
-      line-height:1.3;
+      color:var(--text);
+      font-weight:600;
+      line-height:1.35;
     }
     .resNote{
-      margin-top:6px;
       font-size:12px;
       color:var(--muted);
       line-height:1.35;
     }
-    .resRight{
-      flex:0 0 auto;
-      display:flex;
-      gap:8px;
-      align-items:center;
+
+    /* cursor mãozinha em “Abrir PDF” */
+    .resItem .btnMini,
+    .resItem button{
+      cursor:pointer;
     }
 
     /* =========================
-       DARK MODE (apenas cores)
-       Funciona se você usar body.classList.toggle("dark")
+       DARK MODE (cores + legibilidade)
     ========================= */
     body.dark{
       --bg:#07101f;
-      --card:#0d1a30;
-      --card2:#0b162a;
-      --text:#e9f0ff;
-      --muted:#a9b9d6;
 
-      --line:rgba(233,240,255,.14);
+      /* >>> Ajuste p/ legibilidade melhor */
+      --card:#0f213d;
+      --card2:#0c1a31;
+
+      --text:#f3f7ff;
+      --muted:#c7d6f2;
+
+      --line:rgba(243,247,255,.16);
       --primary:#7fb4ff;
-      --primary2:rgba(127,180,255,.14);
+      --primary2:rgba(127,180,255,.18);
 
-      --shadow:0 10px 28px rgba(0,0,0,.35);
+      --shadow:0 10px 28px rgba(0,0,0,.38);
     }
 
     body.dark{
@@ -474,8 +487,10 @@
       color:var(--text);
     }
 
+    body.dark header p{ color:var(--muted); }
+
     body.dark .bar{
-      background:rgba(13,26,48,.55);
+      background:rgba(15,33,61,.55);
       border-color:var(--line);
     }
 
@@ -485,18 +500,26 @@
       border-color:var(--line);
       box-shadow:0 6px 18px rgba(0,0,0,.25);
     }
+
     body.dark .search input,
     body.dark .libSearch input{
       color:var(--text);
     }
+
     body.dark .search input::placeholder,
     body.dark .libSearch input::placeholder{
-      color:rgba(233,240,255,.65);
+      color:rgba(243,247,255,.75);
     }
 
     body.dark .card{
       background:var(--card);
       border-color:var(--line);
+    }
+
+    body.dark .snippet,
+    body.dark .metaRow,
+    body.dark .sectionTitle .count{
+      color:var(--muted);
     }
 
     body.dark .tag{
@@ -514,9 +537,8 @@
       background:var(--card2);
       border-color:var(--line);
     }
-
     body.dark .panel h4{
-      color:rgba(233,240,255,.80);
+      color:rgba(243,247,255,.86);
     }
 
     body.dark .templateBox{
@@ -531,36 +553,19 @@
       color:var(--text);
     }
     body.dark .idRow input::placeholder{
-      color:rgba(233,240,255,.65);
+      color:rgba(243,247,255,.75);
     }
 
     body.dark .btn,
     body.dark .btnMini,
-    body.dark .closeBtn,
-    body.dark .tabBtn,
-    body.dark .segBtn,
-    body.dark .menuBtn{
-      background:rgba(13,26,48,.65);
+    body.dark .closeBtn{
+      background:rgba(15,33,61,.70);
       border-color:var(--line);
       color:var(--text);
     }
 
-    body.dark .btn.primary{
-      background: rgba(127,180,255,.22);
-      border-color: rgba(127,180,255,.45);
-    }
-
-    body.dark .toast{
-      border-color:rgba(255,255,255,.18);
-    }
-
-    body.dark #m_title,
-    body.dark .modalHead h3{
-      color: var(--text);
-    }
-
     body.dark .segBtn:not(.active){
-      background: rgba(13,26,48,.75);
+      background: rgba(15,33,61,.70);
       border-color: var(--line);
       color: var(--muted);
     }
@@ -570,22 +575,12 @@
       color: var(--text);
     }
 
-    body.dark .tabBtn.active{
-      background: rgba(127,180,255,.22);
-      border-color: rgba(127,180,255,.45);
-    }
-
     body.dark .resItem{
-      background: var(--card);
-      border-color: var(--line);
-    }
-    body.dark .resItem:hover{
-      box-shadow: 0 16px 36px rgba(0,0,0,.45);
+      background:rgba(12,26,49,.75);
+      border-color:var(--line);
     }
 
-    /* =========================
-       MICRO-POLISH
-    ========================= */
+    /* MICRO-POLISH: focus visível */
     :focus-visible{
       outline: none;
       box-shadow:
@@ -596,84 +591,28 @@
       outline: none;
       box-shadow: none;
     }
-
-    .btn,
-    .btnMini,
-    .segBtn,
-    .closeBtn,
-    .tabBtn,
-    .menuBtn{
-      transition:
-        background-color .15s ease,
-        border-color .15s ease,
-        box-shadow .15s ease,
-        transform .08s ease;
-    }
-
-    .btn:hover,
-    .btnMini:hover,
-    .segBtn:hover,
-    .closeBtn:hover,
-    .tabBtn:hover,
-    .menuBtn:hover{
-      transform: translateY(-1px);
-    }
-
-    input{
-      transition:
-        border-color .15s ease,
-        box-shadow .15s ease;
-    }
-
-    input:focus-visible{
-      border-color: var(--primary);
-      box-shadow: 0 0 0 3px var(--primary2);
-    }
-
-    a{
-      text-decoration-thickness: .08em;
-      text-underline-offset: 2px;
-    }
-    a:hover{
-      text-decoration-thickness: .12em;
-    }
-    .muted{ opacity:.95; }
-
-    .closeBtn:hover{
-      background: rgba(10,98,190,.12);
-    }
-
-    .segBtn:not(.active):hover{
-      border-color: var(--primary);
-      color: var(--text);
-    }
-
   </style>
 </head>
 
 <body>
+  <!-- Botões fixos topo -->
+  <button class="btn topBtn" id="menuBtn" type="button">☰ Menu</button>
+  <button class="btn topBtn" id="themeToggle" type="button">🌙 Modo escuro</button>
+
   <div class="wrap">
     <header>
-      <div class="headLeft">
-        <button class="menuBtn" id="menuOpen" type="button">☰ Menu</button>
-
-        <div>
-          <h1>Demandas Recorrentes — DIEF/SEFAZ RR</h1>
-          <p>
-            Repositório interno de demandas que chegam por e-mail. Clique em um card para ver <b>procedimentos</b> (quando aplicável)
-            e <b>respostas padrão</b> para copiar e colar no Gmail.
-          </p>
-        </div>
+      <div>
+        <h1>Demandas Recorrentes — DIEF/SEFAZ RR</h1>
+        <p>
+          Repositório interno de demandas que chegam por e-mail. Clique em um card para ver <b>procedimentos</b> (quando aplicável)
+          e <b>respostas padrão</b> para copiar e colar no Gmail.
+        </p>
       </div>
-
-      <!-- MODO ESCURO NO CANTO SUPERIOR DIREITO (como antes) -->
-      <div class="headRight">
-        <button class="btn" id="themeToggle" type="button">🌙 Modo escuro</button>
-      </div>
+      <div style="width:1px;height:1px;"></div>
     </header>
 
     <section class="bar">
-      <div class="search" title="Buscar por tags...">
+      <div class="search" title="Buscar por tags (separe por espaço)">
         🔎 <input id="q" type="text" placeholder="Buscar demanda (ex.: baixa, MEI, simples, regime...)" />
       </div>
     </section>
@@ -687,7 +626,7 @@
     </section>
   </div>
 
-  <!-- MODAL DOS CARDS -->
+  <!-- Modal dos cards -->
   <dialog id="modal">
     <div class="modalHead">
       <div>
@@ -715,7 +654,6 @@
       </div>
 
       <div>
-        <!-- Painel CNPJ + IE -->
         <div class="panel" style="margin-bottom:16px;">
           <h4>Identificadores (colar aqui)</h4>
 
@@ -732,7 +670,6 @@
           </div>
         </div>
 
-        <!-- Painel Resposta Padrão -->
         <div class="panel">
           <h4>Respostas padrão</h4>
           <p class="muted" style="font-size:12px;line-height:1.45;margin-bottom:10px;">
@@ -751,24 +688,21 @@
     </div>
   </dialog>
 
-  <!-- MODAL DA BIBLIOTECA -->
-  <dialog id="libModal">
-    <div class="modalHead">
-      <div style="display:flex;align-items:center;gap:10px;">
-        <div style="font-size:14px;">📚 <b>Biblioteca DIEF</b></div>
-      </div>
+  <!-- Biblioteca -->
+  <dialog id="libraryDialog">
+    <div class="libHeader">
+      <div class="libTitle">📚 Biblioteca DIEF</div>
       <button class="closeBtn" id="libClose">✕</button>
     </div>
 
-    <div class="libBody">
-      <div class="tabsRow">
-        <button class="tabBtn active" id="tabLeg" type="button">Legislação</button>
-        <button class="tabBtn" id="tabDoc" type="button">Documentos</button>
-      </div>
+    <div class="libTabs">
+      <button class="segBtn active" id="tabLeg" type="button">Legislação</button>
+      <button class="segBtn" id="tabDoc" type="button">Documentos</button>
+    </div>
 
-      <!-- BOTÃO/CAMPO DE BUSCA (na biblioteca) -->
-      <div class="libSearch" title="Buscar na biblioteca">
-        🔎 <input id="libQ" type="text" placeholder="Buscar (ex.: instrução normativa, regimento, icms...)" />
+    <div class="libBody">
+      <div class="libSearch" title="Buscar por nome do PDF">
+        🔎 <input id="lib_q" type="text" placeholder="Buscar (ex.: instrução normativa, regimento, icms...)" />
       </div>
 
       <div class="resList" id="resList"></div>
@@ -778,7 +712,34 @@
   <div class="toast" id="toast">Copiado ✅</div>
 
   <script>
-    // ======= DADOS (CARDS) =======
+    // =======================
+    //   MENU: PDFs (EDITAR AQUI)
+    // =======================
+    const RESOURCES = {
+      legislacao: [
+        {
+          title: "Instrução Normativa nº 2/2026 — Retificação Extemporânea EFD e GIM",
+          file: "pdfs/instrucao-normativa-2-2026-retificacao-extemporanea-efd-gim.pdf",
+          note: ""
+        },
+        {
+          title: "Decreto do ICMS — RR (adicione quando tiver)",
+          file: "pdfs/decreto-icms-rr.pdf",
+          note: "Suba o PDF e ajuste o nome."
+        },
+        {
+          title: "Regimento Interno — SEFAZ/RR (adicione quando tiver)",
+          file: "pdfs/regimento-interno-sefaz-rr.pdf",
+          note: "Suba o PDF e ajuste o nome."
+        }
+      ],
+      documentos: [
+        { title: "Modelo de Requerimento (exemplo)", file: "pdfs/modelo-requerimento.pdf", note: "" },
+        { title: "Orientações ao Contribuinte (exemplo)", file: "pdfs/orientacoes-contribuinte.pdf", note: "" }
+      ]
+    };
+
+    // ======= DADOS (cards) =======
     const DEMANDS = [
       {
         id: "baixa-mei",
@@ -870,11 +831,8 @@
             html:
 `<div>
   <p>Prezado(a),</p>
-
   <p>Informamos que o regime de pagamento do contribuinte foi atualizado para o Simples Nacional em nosso cadastro, com efeitos retroativos à data de enquadramento informada no referido regime.</p>
-
   <p>Atenciosamente,</p>
-
   <p>Divisão de Informações Econômico-Fiscais - DIEF<br>
 Departamento da Receita - DEPAR<br>
 Secretaria de Estado da Fazenda de Roraima - SEFAZ/RR<br>
@@ -885,33 +843,6 @@ Secretaria de Estado da Fazenda de Roraima - SEFAZ/RR<br>
       }
     ];
 
-    // ======= BIBLIOTECA (PDFs) =======
-    // IMPORTANTE: aqui você mantém o "file" com o caminho real no repositório,
-    // mas o site NÃO mostra mais "pdfs/..." embaixo do título.
-    const RESOURCES = {
-      legislacao: [
-        {
-          title: "Instrução Normativa n° 2/2026 — Retificação Extemporânea EFD e GIM",
-          file: "pdfs/instrucao-normativa-2-2026-retificacao-extemporanea-efd-gim.pdf",
-          note: ""
-        },
-        {
-          title: "Decreto do ICMS — RR (adicione quando tiver)",
-          file: "pdfs/decreto-icms-rr.pdf",
-          note: "Suba o PDF e ajuste o nome."
-        },
-        {
-          title: "Regimento Interno — SEFAZ/RR (adicione quando tiver)",
-          file: "pdfs/regimento-interno-sefaz-rr.pdf",
-          note: "Suba o PDF e ajuste o nome."
-        }
-      ],
-      documentos: [
-        { title: "Modelo de Requerimento (exemplo)", file: "pdfs/modelo-requerimento.pdf", note: "" },
-        { title: "Orientações ao Contribuinte (exemplo)", file: "pdfs/orientacoes-contribuinte.pdf", note: "" }
-      ]
-    };
-
     // ======= Helpers =======
     const toast = (msg="Copiado ✅") => {
       const t = document.getElementById("toast");
@@ -920,7 +851,7 @@ Secretaria de Estado da Fazenda de Roraima - SEFAZ/RR<br>
       setTimeout(() => t.classList.remove("show"), 1200);
     };
 
-    // ======= Render cards =======
+    // ======= Render Cards =======
     const state = { q: "" };
     const cardsHost = document.getElementById("cards");
     const countHost = document.getElementById("count");
@@ -961,7 +892,7 @@ Secretaria de Estado da Fazenda de Roraima - SEFAZ/RR<br>
       });
     }
 
-    // ======= Modal cards =======
+    // ======= Modal Cards =======
     const modal = document.getElementById("modal");
     const mClose = document.getElementById("m_close");
     const emailBox = document.getElementById("m_email");
@@ -985,7 +916,6 @@ Secretaria de Estado da Fazenda de Roraima - SEFAZ/RR<br>
       document.getElementById("m_sub").textContent = d.summary;
       document.getElementById("m_proc_note").textContent = d.procedureNote || "";
 
-      // checklist
       const steps = document.getElementById("m_steps");
       steps.innerHTML = "";
       (d.steps || []).forEach(s => {
@@ -1028,6 +958,7 @@ Secretaria de Estado da Fazenda de Roraima - SEFAZ/RR<br>
       ieInput.value = "";
 
       buildTemplateButtons(d);
+
       modal.showModal();
     }
 
@@ -1081,48 +1012,35 @@ Secretaria de Estado da Fazenda de Roraima - SEFAZ/RR<br>
 
     modal.addEventListener("click", (e) => {
       const rect = modal.getBoundingClientRect();
-      const isOutside =
-        e.clientX < rect.left || e.clientX > rect.right ||
-        e.clientY < rect.top  || e.clientY > rect.bottom;
-      if (isOutside) closeModal();
+      const isInDialog = (
+        rect.top <= e.clientY && e.clientY <= rect.top + rect.height &&
+        rect.left <= e.clientX && e.clientX <= rect.left + rect.width
+      );
+      if (!isInDialog) closeModal();
     });
 
-    // Copiar/Limpar CNPJ
     copyCnpjBtn.addEventListener("click", async () => {
       const value = (cnpjInput.value || "").trim();
       if (!value) return toast("Cole um CNPJ primeiro");
-      try{
-        await navigator.clipboard.writeText(value);
-        toast("CNPJ copiado ✅");
-      } catch {
-        cnpjInput.select();
-        document.execCommand("copy");
-        toast("CNPJ copiado ✅");
-      }
+      try{ await navigator.clipboard.writeText(value); toast("CNPJ copiado ✅"); }
+      catch { cnpjInput.select(); document.execCommand("copy"); toast("CNPJ copiado ✅"); }
     });
+
     clearCnpjBtn.addEventListener("click", () => { cnpjInput.value = ""; toast("CNPJ limpo ✅"); });
 
-    // Copiar/Limpar IE
     copyIeBtn.addEventListener("click", async () => {
       const value = (ieInput.value || "").trim();
       if (!value) return toast("Cole uma IE primeiro");
-      try{
-        await navigator.clipboard.writeText(value);
-        toast("IE copiada ✅");
-      } catch {
-        ieInput.select();
-        document.execCommand("copy");
-        toast("IE copiada ✅");
-      }
+      try{ await navigator.clipboard.writeText(value); toast("IE copiada ✅"); }
+      catch { ieInput.select(); document.execCommand("copy"); toast("IE copiada ✅"); }
     });
+
     clearIeBtn.addEventListener("click", () => { ieInput.value = ""; toast("IE limpa ✅"); });
 
-    // Copiar e-mail (HTML + texto)
     copyEmailBtn.addEventListener("click", async () => {
       if (!current) return;
 
       const htmlContent = emailBox.innerHTML;
-
       const tempDiv = document.createElement("div");
       tempDiv.style.position = "absolute";
       tempDiv.style.left = "-9999px";
@@ -1138,7 +1056,7 @@ Secretaria de Estado da Fazenda de Roraima - SEFAZ/RR<br>
         const data = [new ClipboardItem({ "text/html": blobHtml, "text/plain": blobText })];
         await navigator.clipboard.write(data);
         toast("Resposta copiada ✅");
-      } catch (err) {
+      } catch {
         const range = document.createRange();
         range.selectNodeContents(tempDiv);
         const sel = window.getSelection();
@@ -1148,7 +1066,6 @@ Secretaria de Estado da Fazenda de Roraima - SEFAZ/RR<br>
         sel.removeAllRanges();
         toast("Resposta copiada ✅");
       }
-
       document.body.removeChild(tempDiv);
     });
 
@@ -1159,14 +1076,12 @@ Secretaria de Estado da Fazenda de Roraima - SEFAZ/RR<br>
 
     render();
 
-    /* ===== DARK MODE ===== */
+    // ===== DARK MODE =====
     const themeToggle = document.getElementById("themeToggle");
-
     function applyTheme(theme){
       document.body.classList.toggle("dark", theme === "dark");
       themeToggle.textContent = theme === "dark" ? "☀️ Modo claro" : "🌙 Modo escuro";
     }
-
     const savedTheme = localStorage.getItem("theme") || "light";
     applyTheme(savedTheme);
 
@@ -1176,68 +1091,35 @@ Secretaria de Estado da Fazenda de Roraima - SEFAZ/RR<br>
       applyTheme(nextTheme);
     });
 
-    /* ===== BIBLIOTECA ===== */
-    const libModal = document.getElementById("libModal");
-    const menuOpen = document.getElementById("menuOpen");
+    // ===== BIBLIOTECA =====
+    const menuBtn = document.getElementById("menuBtn");
+    const libraryDialog = document.getElementById("libraryDialog");
     const libClose = document.getElementById("libClose");
     const tabLeg = document.getElementById("tabLeg");
     const tabDoc = document.getElementById("tabDoc");
+    const libQ = document.getElementById("lib_q");
     const resList = document.getElementById("resList");
-    const libQ = document.getElementById("libQ");
 
-    let libTab = "legislacao"; // 'legislacao' | 'documentos'
+    let libTab = "legislacao";
 
-    function openLib(){
+    function setTab(tab){
+      libTab = tab;
+      tabLeg.classList.toggle("active", tab === "legislacao");
+      tabDoc.classList.toggle("active", tab === "documentos");
       libQ.value = "";
       renderResources();
-      libModal.showModal();
-      libQ.focus();
     }
-    function closeLib(){
-      libModal.close();
-    }
-
-    menuOpen.addEventListener("click", openLib);
-    libClose.addEventListener("click", closeLib);
-
-    libModal.addEventListener("click", (e) => {
-      const rect = libModal.getBoundingClientRect();
-      const isOutside =
-        e.clientX < rect.left || e.clientX > rect.right ||
-        e.clientY < rect.top  || e.clientY > rect.bottom;
-      if (isOutside) closeLib();
-    });
-
-    tabLeg.addEventListener("click", () => {
-      libTab = "legislacao";
-      tabLeg.classList.add("active");
-      tabDoc.classList.remove("active");
-      renderResources();
-    });
-
-    tabDoc.addEventListener("click", () => {
-      libTab = "documentos";
-      tabDoc.classList.add("active");
-      tabLeg.classList.remove("active");
-      renderResources();
-    });
-
-    libQ.addEventListener("input", renderResources);
 
     function renderResources(){
       const q = (libQ.value || "").trim().toLowerCase();
-      const items = (RESOURCES[libTab] || []).filter(x => {
-        if (!q) return true;
-        const hay = `${x.title} ${x.note || ""}`.toLowerCase();
-        return hay.includes(q);
-      });
+      const items = (RESOURCES[libTab] || []).filter(x => !q || (x.title||"").toLowerCase().includes(q));
 
       resList.innerHTML = "";
 
       if (!items.length){
         const empty = document.createElement("div");
         empty.className = "muted";
-        empty.style.fontSize = "13px";
+        empty.style.padding = "8px 2px";
         empty.textContent = "Nenhum item encontrado.";
         resList.appendChild(empty);
         return;
@@ -1248,49 +1130,46 @@ Secretaria de Estado da Fazenda de Roraima - SEFAZ/RR<br>
         row.className = "resItem";
 
         const left = document.createElement("div");
-        const title = document.createElement("p");
-        title.className = "resTitle";
-        title.textContent = item.title;
+        left.className = "resLeft";
+        left.innerHTML = `
+          <div class="resName">${item.title}</div>
+          ${item.note ? `<div class="resNote">${item.note}</div>` : ``}
+        `;
 
-        left.appendChild(title);
-
-        if (item.note && String(item.note).trim()){
-          const note = document.createElement("div");
-          note.className = "resNote";
-          note.textContent = item.note;
-          left.appendChild(note);
-        }
-
-        const right = document.createElement("div");
-        right.className = "resRight";
-
-        const openBtn = document.createElement("button");
-        openBtn.className = "btn primary";
-        openBtn.type = "button";
-        openBtn.textContent = "Abrir PDF";
-
-        // abrir em nova aba
-        const openFile = () => {
-          window.open(item.file, "_blank", "noopener,noreferrer");
-        };
-
-        // clicar em qualquer lugar do item também abre
-        row.addEventListener("click", openFile);
-
-        // evitar duplicar clique quando apertar no botão
-        openBtn.addEventListener("click", (e) => {
+        const btn = document.createElement("button");
+        btn.className = "btnMini";
+        btn.type = "button";
+        btn.textContent = "Abrir PDF";
+        btn.addEventListener("click", (e) => {
           e.stopPropagation();
-          openFile();
+          window.open(item.file, "_blank", "noopener,noreferrer");
         });
 
-        right.appendChild(openBtn);
-
         row.appendChild(left);
-        row.appendChild(right);
-
+        row.appendChild(btn);
         resList.appendChild(row);
       });
     }
+
+    menuBtn.addEventListener("click", () => {
+      setTab("legislacao");
+      libraryDialog.showModal();
+    });
+
+    libClose.addEventListener("click", () => libraryDialog.close());
+
+    libraryDialog.addEventListener("click", (e) => {
+      const rect = libraryDialog.getBoundingClientRect();
+      const isInDialog = (
+        rect.top <= e.clientY && e.clientY <= rect.top + rect.height &&
+        rect.left <= e.clientX && e.clientX <= rect.left + rect.width
+      );
+      if (!isInDialog) libraryDialog.close();
+    });
+
+    tabLeg.addEventListener("click", () => setTab("legislacao"));
+    tabDoc.addEventListener("click", () => setTab("documentos"));
+    libQ.addEventListener("input", renderResources);
   </script>
 </body>
 </html>
