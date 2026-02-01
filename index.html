@@ -73,7 +73,9 @@
       cursor:pointer;
       font-size:12px;
       white-space:nowrap;
+      transition: transform .08s ease, border-color .15s ease, background-color .15s ease;
     }
+    .btn:hover{ transform: translateY(-1px); border-color: rgba(10,98,190,.35); }
     .btn.primary{
       background:rgba(10,98,190,.14);
       border-color:rgba(10,98,190,.45);
@@ -101,8 +103,8 @@
       font-size:14px; color:var(--text);
       background:transparent;
 
-      /* >>> Ajuste: texto mais “no centro” do retângulo (horizontal) */
-      text-align:center;
+      /* >>> voltou pro padrão: alinhado à ESQUERDA */
+      text-align:left;
     }
     .search input::placeholder{ color:rgba(60,86,122,.75); }
     .search:focus-within{
@@ -181,7 +183,7 @@
       border-radius:12px;
       font-size:12px;
       cursor:pointer;
-      transition: transform .08s ease, border-color .15s ease;
+      transition: transform .08s ease, border-color .15s ease, background-color .15s ease;
     }
     .btnMini:hover{ transform: translateY(-1px); border-color: rgba(10,98,190,.35); }
 
@@ -214,9 +216,9 @@
       background:#fff;
       cursor:pointer;
       font-size:12px;
-      transition: background-color .15s ease, transform .08s ease;
+      transition: background-color .15s ease, transform .08s ease, border-color .15s ease;
     }
-    .closeBtn:hover{ background: rgba(10,98,190,.12); transform: translateY(-1px); }
+    .closeBtn:hover{ background: rgba(10,98,190,.12); transform: translateY(-1px); border-color: rgba(10,98,190,.35); }
 
     .modalBody{
       padding:16px;
@@ -311,7 +313,7 @@
       border-radius:999px;
       font-size:12px;
       cursor:pointer;
-      transition: transform .08s ease, border-color .15s ease;
+      transition: transform .08s ease, border-color .15s ease, background-color .15s ease;
     }
     .segBtn:hover{ transform: translateY(-1px); border-color: rgba(10,98,190,.35); }
     .segBtn.active{
@@ -361,7 +363,7 @@
     }
 
     /* =========================
-       BIBLIOTECA (Legislação/Documentos)
+       BIBLIOTECA (Legislação/Documentos) — versão mais clean
     ========================= */
     #libraryDialog{
       width:min(860px,calc(100% - 24px));
@@ -372,7 +374,7 @@
       align-items:center;
       justify-content:space-between;
       gap:12px;
-      padding:16px;
+      padding:14px 16px;
       border-bottom:1px solid var(--line);
     }
 
@@ -380,18 +382,20 @@
       display:flex;
       align-items:center;
       gap:10px;
-      font-weight:700;
+      font-weight:800;
+      letter-spacing:.2px;
+      color:var(--text); /* garante cor correta */
     }
 
     .libTabs{
-      padding:14px 16px 0;
+      padding:12px 16px 0;
       display:flex;
       gap:10px;
       flex-wrap:wrap;
     }
 
     .libBody{
-      padding:16px;
+      padding:14px 16px 16px;
     }
 
     .libSearch{
@@ -411,11 +415,12 @@
       color:var(--text);
       background:transparent;
 
-      /* >>> Ajuste: texto mais “no centro” do retângulo (horizontal) */
-      text-align:center;
+      /* >>> voltou pro padrão: alinhado à ESQUERDA */
+      text-align:left;
     }
     .libSearch input::placeholder{ color:rgba(60,86,122,.75); }
 
+    /* Lista mais clean: 1 linha + subtítulo opcional, ícone PDF, sem path */
     .resList{
       display:flex;
       flex-direction:column;
@@ -426,37 +431,83 @@
       display:flex;
       align-items:center;
       justify-content:space-between;
-      gap:12px;
+      gap:14px;
       padding:12px 12px;
       border:1px solid var(--line);
       border-radius:14px;
       background:var(--card2);
-      cursor:default;
+      cursor:pointer; /* >>> mãozinha no item inteiro */
+      transition: transform .08s ease, border-color .15s ease, background-color .15s ease;
+    }
+    .resItem:hover{
+      transform: translateY(-1px);
+      border-color: rgba(10,98,190,.30);
     }
 
     .resLeft{
       display:flex;
-      flex-direction:column;
-      gap:4px;
+      align-items:flex-start;
+      gap:10px;
+      min-width:0;
+      flex:1;
+    }
+
+    .pdfIcon{
+      width:30px;
+      height:30px;
+      border-radius:10px;
+      border:1px solid var(--line);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      background:rgba(10,98,190,.10);
+      flex:0 0 auto;
+      font-size:14px;
+    }
+
+    .resText{
       min-width:0;
     }
 
     .resName{
       font-size:13px;
       color:var(--text);
-      font-weight:600;
-      line-height:1.35;
-    }
-    .resNote{
-      font-size:12px;
-      color:var(--muted);
-      line-height:1.35;
+      font-weight:700;
+      line-height:1.25;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+      max-width: 560px;
     }
 
-    /* cursor mãozinha em “Abrir PDF” */
-    .resItem .btnMini,
-    .resItem button{
-      cursor:pointer;
+    .resNote{
+      margin-top:4px;
+      font-size:12px;
+      color:var(--muted);
+      line-height:1.3;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+      max-width: 560px;
+    }
+
+    /* Botão minimalista */
+    .openPill{
+      border:1px solid var(--line);
+      background:rgba(255,255,255,.75);
+      color:var(--text);
+      padding:8px 12px;
+      border-radius:999px;
+      font-size:12px;
+      cursor:pointer; /* >>> mãozinha */
+      transition: transform .08s ease, border-color .15s ease, background-color .15s ease;
+      white-space:nowrap;
+      flex:0 0 auto;
+    }
+    .openPill:hover{
+      transform: translateY(-1px);
+      border-color: rgba(10,98,190,.35);
+      background: rgba(10,98,190,.10);
     }
 
     /* =========================
@@ -464,8 +515,6 @@
     ========================= */
     body.dark{
       --bg:#07101f;
-
-      /* >>> Ajuste p/ legibilidade melhor */
       --card:#0f213d;
       --card2:#0c1a31;
 
@@ -578,6 +627,23 @@
     body.dark .resItem{
       background:rgba(12,26,49,.75);
       border-color:var(--line);
+    }
+
+    body.dark .pdfIcon{
+      background: rgba(127,180,255,.14);
+      border-color: var(--line);
+      color: var(--text);
+    }
+
+    body.dark .openPill{
+      background: rgba(15,33,61,.70);
+      border-color: var(--line);
+      color: var(--text);
+    }
+
+    /* >>> fix do “Biblioteca DIEF” no dark: branco */
+    body.dark .libTitle{
+      color: var(--text);
     }
 
     /* MICRO-POLISH: focus visível */
@@ -859,9 +925,7 @@ Secretaria de Estado da Fazenda de Roraima - SEFAZ/RR<br>
     function filterDemands(){
       const q = state.q.trim().toLowerCase();
       if (!q) return DEMANDS;
-
       const terms = q.split(/\s+/).filter(Boolean);
-
       return DEMANDS.filter(d => {
         const tags = (d.tags || []).map(t => String(t).toLowerCase());
         return terms.every(term => tags.some(tag => tag.includes(term)));
@@ -872,7 +936,6 @@ Secretaria de Estado da Fazenda de Roraima - SEFAZ/RR<br>
       const items = filterDemands();
       cardsHost.innerHTML = "";
       countHost.textContent = `${items.length} demanda(s)`;
-
       items.forEach(d => {
         const card = document.createElement("div");
         card.className = "card";
@@ -928,11 +991,8 @@ Secretaria de Estado da Fazenda de Roraima - SEFAZ/RR<br>
         const text = document.createElement("span");
         text.textContent = s;
 
-        checkbox.addEventListener("change", () => {
-          li.classList.toggle("done", checkbox.checked);
-        });
+        checkbox.addEventListener("change", () => li.classList.toggle("done", checkbox.checked));
 
-        // 1 clique no texto marca/desmarca
         text.addEventListener("click", (e) => {
           e.preventDefault();
           checkbox.checked = !checkbox.checked;
@@ -958,7 +1018,6 @@ Secretaria de Estado da Fazenda de Roraima - SEFAZ/RR<br>
       ieInput.value = "";
 
       buildTemplateButtons(d);
-
       modal.showModal();
     }
 
@@ -1110,6 +1169,10 @@ Secretaria de Estado da Fazenda de Roraima - SEFAZ/RR<br>
       renderResources();
     }
 
+    function openPdf(file){
+      window.open(file, "_blank", "noopener,noreferrer");
+    }
+
     function renderResources(){
       const q = (libQ.value || "").trim().toLowerCase();
       const items = (RESOURCES[libTab] || []).filter(x => !q || (x.title||"").toLowerCase().includes(q));
@@ -1128,21 +1191,32 @@ Secretaria de Estado da Fazenda de Roraima - SEFAZ/RR<br>
       items.forEach(item => {
         const row = document.createElement("div");
         row.className = "resItem";
+        row.addEventListener("click", () => openPdf(item.file)); // >>> clicável no item inteiro
 
         const left = document.createElement("div");
         left.className = "resLeft";
-        left.innerHTML = `
-          <div class="resName">${item.title}</div>
-          ${item.note ? `<div class="resNote">${item.note}</div>` : ``}
+
+        const icon = document.createElement("div");
+        icon.className = "pdfIcon";
+        icon.textContent = "PDF";
+
+        const textWrap = document.createElement("div");
+        textWrap.className = "resText";
+        textWrap.innerHTML = `
+          <div class="resName" title="${item.title}">${item.title}</div>
+          ${item.note ? `<div class="resNote" title="${item.note}">${item.note}</div>` : ``}
         `;
 
+        left.appendChild(icon);
+        left.appendChild(textWrap);
+
         const btn = document.createElement("button");
-        btn.className = "btnMini";
+        btn.className = "openPill";
         btn.type = "button";
-        btn.textContent = "Abrir PDF";
+        btn.textContent = "Abrir";
         btn.addEventListener("click", (e) => {
           e.stopPropagation();
-          window.open(item.file, "_blank", "noopener,noreferrer");
+          openPdf(item.file);
         });
 
         row.appendChild(left);
