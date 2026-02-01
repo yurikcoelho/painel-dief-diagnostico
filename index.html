@@ -48,61 +48,21 @@
       flex-wrap:wrap;
     }
 
-    /* ===== MENU (ADICIONADO) ===== */
-    .headerLeft{
+    /* mantém “lado esquerdo” com menu + título/descrição e “lado direito” com botão do tema */
+    .headLeft{
       display:flex;
       align-items:flex-start;
       gap:12px;
-      flex-wrap:wrap;
+      flex:1 1 auto;
+      min-width: 260px;
     }
 
-    .menuWrap{
-      position:relative;
-      display:inline-flex;
-      align-items:flex-start;
-      gap:8px;
-    }
-
-    .menuPanel{
-      position:absolute;
-      top:44px;
-      left:0;
-      min-width:220px;
-      background:var(--card);
-      border:1px solid var(--line);
-      border-radius:14px;
-      box-shadow:var(--shadow);
-      padding:10px;
-      display:none;
-      z-index:999;
-    }
-    .menuPanel.open{ display:block; }
-
-    .menuTitle{
-      font-size:11px;
-      color:var(--muted);
-      margin:2px 2px 8px;
-    }
-
-    .menuBtn{
-      width:100%;
+    .headRight{
       display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap:10px;
-      padding:10px 12px;
-      border-radius:12px;
-      border:1px solid var(--line);
-      background:#fff;
-      cursor:pointer;
-      font-size:12px;
-      color:var(--text);
+      align-items:flex-start;
+      justify-content:flex-end;
+      flex:0 0 auto;
     }
-    .menuBtn:hover{
-      border-color: rgba(10,98,190,.35);
-      background: rgba(10,98,190,.06);
-    }
-    /* ===== /MENU ===== */
 
     h1{ font-size:22px; margin:0 0 6px; }
     header p{ margin:0; color:var(--muted); font-size:13px; max-width:900px; line-height:1.45; }
@@ -286,6 +246,7 @@
       text-decoration:line-through;
       color: rgba(60,86,122,.65);
     }
+    .checklist-item span{ cursor:pointer; } /* mãozinha no texto do checklist */
 
     .muted{ color:var(--muted); }
 
@@ -343,7 +304,7 @@
     }
     .segBtn.active{
       background: rgba(10,98,190,.14);
-      border-color:rgba(10,98,190,.45);
+      border-color: rgba(10,98,190,.45);
     }
 
     .toast{
@@ -367,8 +328,6 @@
       transform:translateX(-50%) translateY(-2px);
     }
 
-    .checklist-item span{ cursor: pointer; }
-
     /* ===== Painel de Identificadores (CNPJ + IE) ===== */
     .idRow{
       display:flex;
@@ -389,16 +348,172 @@
     }
 
     /* =========================
+       MENU (Legislação / Documentos)
+    ========================= */
+    .menuBtn{
+      padding:10px 12px;
+      border-radius:12px;
+      border:1px solid var(--line);
+      background:rgba(255,255,255,.85);
+      cursor:pointer;
+      font-size:12px;
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      box-shadow: var(--shadow);
+      flex:0 0 auto;
+    }
+
+    .drawerBackdrop{
+      position:fixed;
+      inset:0;
+      background:rgba(11,27,58,.28);
+      backdrop-filter: blur(2px);
+      opacity:0;
+      pointer-events:none;
+      transition:opacity .16s ease;
+      z-index:9998;
+    }
+    .drawerBackdrop.show{
+      opacity:1;
+      pointer-events:auto;
+    }
+
+    .drawer{
+      position:fixed;
+      top:14px;
+      left:14px;
+      width:min(420px, calc(100% - 28px));
+      max-height: calc(100% - 28px);
+      border:1px solid var(--line);
+      border-radius: 18px;
+      background: var(--card);
+      box-shadow: 0 30px 90px rgba(11,27,58,.28);
+      z-index:9999;
+      transform: translateX(-10px);
+      opacity:0;
+      pointer-events:none;
+      transition: transform .16s ease, opacity .16s ease;
+      overflow:hidden;
+    }
+    .drawer.show{
+      transform: translateX(0);
+      opacity:1;
+      pointer-events:auto;
+    }
+
+    .drawerHead{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      padding:12px 12px;
+      border-bottom:1px solid var(--line);
+      background: rgba(255,255,255,.65);
+    }
+    .drawerHead strong{ font-size:13px; }
+    .drawerClose{
+      border-radius:999px;
+      padding:8px 10px;
+      border:1px solid var(--line);
+      background:#fff;
+      cursor:pointer;
+      font-size:12px;
+    }
+
+    .drawerTabs{
+      display:flex;
+      gap:8px;
+      padding:12px;
+      border-bottom:1px solid var(--line);
+      background: rgba(255,255,255,.55);
+    }
+    .drawerTab{
+      border:1px solid var(--line);
+      background:#fff;
+      color:var(--text);
+      padding:8px 10px;
+      border-radius:999px;
+      font-size:12px;
+      cursor:pointer;
+      user-select:none;
+    }
+    .drawerTab.active{
+      background: rgba(10,98,190,.14);
+      border-color: rgba(10,98,190,.45);
+    }
+
+    .drawerBody{
+      padding:12px;
+      overflow:auto;
+      max-height: calc(100vh - 170px);
+    }
+
+    .resList{
+      margin:0;
+      padding:0;
+      list-style:none;
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+    }
+
+    .resItem{
+      border:1px solid var(--line);
+      border-radius:14px;
+      background: var(--card2);
+      padding:10px 10px;
+      display:flex;
+      flex-direction:column;
+      gap:6px;
+      cursor:pointer; /* mãozinha no item inteiro */
+    }
+    .resItem:hover{
+      border-color: rgba(10,98,190,.35);
+      transform: translateY(-1px);
+    }
+    .resTitleRow{
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap:10px;
+    }
+    .resTitle{
+      font-size:13px;
+      margin:0;
+      line-height:1.35;
+      color:var(--text);
+    }
+    .resNote{
+      font-size:12px;
+      color:var(--muted);
+      margin:0;
+      line-height:1.35;
+    }
+    .resFile{
+      font-size:11px;
+      color: rgba(60,86,122,.85);
+      margin:0;
+      user-select:none;
+    }
+
+    /* garante mãozinha no texto/links dentro do item */
+    .resItem a,
+    .resItem *{
+      cursor:pointer;
+    }
+
+    /* =========================
        DARK MODE (apenas cores)
     ========================= */
     :root[data-theme="dark"],
     body[data-theme="dark"],
     body.dark{
       --bg:#07101f;
-      --card:#0d1a30;
+      --card:#0d1a30;     /* fundo dos cards/painéis */
       --card2:#0b162a;
-      --text:#e9f0ff;
-      --muted:#a9b9d6;
+      --text:#e9f0ff;     /* texto principal */
+      --muted:#a9b9d6;    /* texto secundário */
 
       --line:rgba(233,240,255,.14);
       --primary:#7fb4ff;
@@ -556,19 +671,36 @@
       color: var(--text);
     }
 
-    /* ===== MENU no dark ===== */
-    body.dark .menuPanel{
+    /* Drawer no dark */
+    body.dark .drawer{
       background: var(--card);
       border-color: var(--line);
     }
-    body.dark .menuBtn{
-      background: var(--card);
+    body.dark .drawerHead,
+    body.dark .drawerTabs{
+      background: rgba(13,26,48,.55);
+      border-color: var(--line);
+    }
+    body.dark .drawerClose{
+      background: rgba(13,26,48,.65);
       border-color: var(--line);
       color: var(--text);
     }
-    body.dark .menuBtn:hover{
-      background: rgba(127,180,255,.10);
-      border-color: rgba(127,180,255,.35);
+    body.dark .drawerTab{
+      background: rgba(13,26,48,.65);
+      border-color: var(--line);
+      color: var(--text);
+    }
+    body.dark .drawerTab.active{
+      background: rgba(127,180,255,.22);
+      border-color: rgba(127,180,255,.45);
+    }
+    body.dark .resItem{
+      background: var(--card2);
+      border-color: var(--line);
+    }
+    body.dark .resFile{
+      color: rgba(233,240,255,.72);
     }
 
     /* =========================
@@ -580,6 +712,7 @@
         0 0 0 2px var(--bg),
         0 0 0 4px var(--primary);
     }
+
     :focus:not(:focus-visible){
       outline: none;
       box-shadow: none;
@@ -588,7 +721,10 @@
     .btn,
     .btnMini,
     .segBtn,
-    .closeBtn{
+    .closeBtn,
+    .menuBtn,
+    .drawerTab,
+    .drawerClose{
       transition:
         background-color .15s ease,
         border-color .15s ease,
@@ -599,7 +735,10 @@
     .btn:hover,
     .btnMini:hover,
     .segBtn:hover,
-    .closeBtn:hover{
+    .closeBtn:hover,
+    .menuBtn:hover,
+    .drawerTab:hover,
+    .drawerClose:hover{
       transform: translateY(-1px);
     }
 
@@ -609,118 +748,69 @@
         box-shadow .15s ease,
         border-color .15s ease;
     }
+
     .card:hover{
-      box-shadow: 0 14px 36px rgba(11,27,58,.18);
+      box-shadow:
+        0 14px 36px rgba(11,27,58,.18);
     }
+
     body.dark .card:hover{
-      box-shadow: 0 16px 36px rgba(0,0,0,.45);
+      box-shadow:
+        0 16px 36px rgba(0,0,0,.45);
     }
 
     input{
-      transition: border-color .15s ease, box-shadow .15s ease;
+      transition:
+        border-color .15s ease,
+        box-shadow .15s ease;
     }
+
     input:focus-visible{
       border-color: var(--primary);
-      box-shadow: 0 0 0 3px var(--primary2);
+      box-shadow:
+        0 0 0 3px var(--primary2);
     }
-    input::placeholder{ opacity: 1; }
 
-    a{
-      text-decoration-thickness: .08em;
-      text-underline-offset: 2px;
-    }
-    a:hover{ text-decoration-thickness: .12em; }
+    input::placeholder{ opacity: 1; }
 
     .muted{ opacity: .95; }
 
-    .checklist-item input[type="checkbox"]:focus-visible{
-      outline: none;
-      box-shadow:
-        0 0 0 2px var(--bg),
-        0 0 0 4px var(--primary);
+    .closeBtn:hover{
+      background: rgba(10,98,190,.12);
     }
-
-    .closeBtn:hover{ background: rgba(10,98,190,.12); }
 
     .segBtn:not(.active):hover{
       border-color: var(--primary);
       color: var(--text);
     }
-
-    /* ===== Modal de Docs (ADICIONADO) ===== */
-    #docsModal .modalBody{ grid-template-columns: 1fr; }
-    .docsList{
-      margin:0;
-      padding:0;
-      list-style:none;
-      display:grid;
-      gap:10px;
-    }
-    .docItem{
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap:10px;
-      padding:10px 12px;
-      border:1px solid var(--line);
-      border-radius:14px;
-      background: var(--card);
-    }
-    .docLeft{
-      display:flex;
-      flex-direction:column;
-      gap:2px;
-      min-width:0;
-    }
-    .docTitle{
-      font-size:13px;
-      color:var(--text);
-      white-space:nowrap;
-      overflow:hidden;
-      text-overflow:ellipsis;
-      max-width: 760px;
-    }
-    .docMeta{
-      font-size:12px;
-      color:var(--muted);
-    }
-    .docOpen{
-      border:1px solid var(--line);
-      background: rgba(255,255,255,.85);
-      color: var(--text);
-      padding:8px 10px;
-      border-radius:12px;
-      font-size:12px;
-      cursor:pointer;
-      white-space:nowrap;
-    }
-    body.dark .docOpen{
-      background: rgba(13,26,48,.65);
-      border-color: var(--line);
-      color: var(--text);
-    }
-    /* ===== /Modal de Docs ===== */
   </style>
 </head>
 
 <body>
+  <!-- Backdrop + Drawer (menu) -->
+  <div class="drawerBackdrop" id="drawerBackdrop"></div>
+
+  <aside class="drawer" id="drawer" aria-hidden="true">
+    <div class="drawerHead">
+      <strong>📚 Biblioteca DIEF</strong>
+      <button class="drawerClose" id="drawerClose" type="button">✕</button>
+    </div>
+
+    <div class="drawerTabs" role="tablist" aria-label="Biblioteca">
+      <button class="drawerTab active" id="tabLeg" type="button" data-tab="legislacao" role="tab" aria-selected="true">Legislação</button>
+      <button class="drawerTab" id="tabDoc" type="button" data-tab="documentos" role="tab" aria-selected="false">Documentos</button>
+    </div>
+
+    <div class="drawerBody">
+      <ul class="resList" id="resList"></ul>
+    </div>
+  </aside>
+
   <div class="wrap">
     <header>
-      <!-- ===== MENU (ADICIONADO) ===== -->
-      <div class="headerLeft">
-        <div class="menuWrap">
-          <button class="btn" id="menuToggle" type="button">☰ Menu</button>
-
-          <div class="menuPanel" id="menuPanel" aria-label="Menu de documentos">
-            <div class="menuTitle">Atalhos</div>
-            <button class="menuBtn" id="openLegBtn" type="button">
-              <span>📚 Legislação</span><span>→</span>
-            </button>
-            <button class="menuBtn" id="openDocsBtn" type="button">
-              <span>📄 Documentos</span><span>→</span>
-            </button>
-          </div>
-        </div>
+      <div class="headLeft">
+        <!-- menu no canto superior esquerdo -->
+        <button class="menuBtn" id="menuBtn" type="button" title="Abrir Legislação/Documentos">☰ Menu</button>
 
         <div>
           <h1>Demandas Recorrentes — DIEF/SEFAZ RR</h1>
@@ -730,14 +820,15 @@
           </p>
         </div>
       </div>
-      <!-- ===== /MENU ===== -->
 
-      <!-- ===== DARK MODE ===== -->
-      <button class="btn" id="themeToggle" type="button">🌙 Modo escuro</button>
+      <!-- mantém o botão no canto superior direito -->
+      <div class="headRight">
+        <button class="btn" id="themeToggle" type="button">🌙 Modo escuro</button>
+      </div>
     </header>
 
     <section class="bar">
-      <div class="search" title="Buscar por título, tags, texto do procedimento...">
+      <div class="search" title="Buscar por tags...">
         🔎 <input id="q" type="text" placeholder="Buscar demanda (ex.: baixa, MEI, simples, regime...)" />
       </div>
     </section>
@@ -757,7 +848,7 @@
         <h3 id="m_title">—</h3>
         <div class="muted" id="m_sub" style="margin-top:6px;font-size:12px;line-height:1.4;"></div>
       </div>
-      <button class="closeBtn" id="m_close">✕</button>
+      <button class="closeBtn" id="m_close" type="button">✕</button>
     </div>
 
     <div class="modalBody">
@@ -814,38 +905,31 @@
     </div>
   </dialog>
 
-  <!-- ===== MODAL: LEGISLAÇÃO / DOCUMENTOS (ADICIONADO) ===== -->
-  <dialog id="docsModal">
-    <div class="modalHead">
-      <div>
-        <h3 id="docs_title">📚 Legislação</h3>
-        <div class="muted" id="docs_sub" style="margin-top:6px;font-size:12px;line-height:1.4;">
-          Clique em um item para abrir o PDF em outra aba.
-        </div>
-      </div>
-      <button class="closeBtn" id="docs_close">✕</button>
-    </div>
-
-    <div class="modalBody">
-      <div class="panel">
-        <div class="segmented" style="margin-bottom:12px;">
-          <button class="segBtn active" id="tab_leg" type="button">📚 Legislação</button>
-          <button class="segBtn" id="tab_docs" type="button">📄 Documentos</button>
-        </div>
-
-        <ul class="docsList" id="docs_list"></ul>
-
-        <div class="btnRow" style="margin-top:14px;">
-          <button class="btn" id="docs_close2" type="button">Fechar</button>
-        </div>
-      </div>
-    </div>
-  </dialog>
-  <!-- ===== /MODAL DOCS ===== -->
-
   <div class="toast" id="toast">Copiado ✅</div>
 
   <script>
+    // ========================
+    // MENU: PDFs (EDITAR AQUI)
+    // ========================
+    // Dica: seus PDFs ficam na pasta "pdfs/" no mesmo nível deste HTML.
+    const RESOURCES = {
+      legislacao: [
+        {
+          title: "Instrução Normativa nº 2/2026 – Retificação Extemporânea EFD e GIM",
+          file: "pdfs/instrucao-normativa-2-2026-retificacao-extemporanea-efd-gim.pdf",
+          note: ""
+        },
+        // exemplos (troque quando tiver):
+        { title: "Decreto do ICMS – RR (adicione quando tiver)", file: "pdfs/decreto-icms-rr.pdf", note: "suba o PDF e ajuste o nome" },
+        { title: "Regimento Interno – SEFAZ/RR (adicione quando tiver)", file: "pdfs/regimento-interno-sefaz-rr.pdf", note: "suba o PDF e ajuste o nome" }
+      ],
+      documentos: [
+        // exemplos (troque quando tiver):
+        { title: "Modelo de Requerimento (exemplo)", file: "pdfs/modelo-requerimento.pdf", note: "" },
+        { title: "Orientações ao Contribuinte (exemplo)", file: "pdfs/orientacoes-contribuinte.pdf", note: "" }
+      ]
+    };
+
     // ======= DADOS =======
     const DEMANDS = [
       {
@@ -861,7 +945,7 @@
           "Caso haja débitos impeditivos: orientar o contribuinte a quitá-los primeiro (Agência de Rendas da jurisdição).",
           "Caso não haja débitos impeditivos: efetuar a baixa no SIATE → Módulo Atendimento → Informações Econômico-Fiscais → Painel Geral do Contribuinte.",
           "Caso tenha algum débito que você não saiba se é impeditivo (ex: parcelamento), emita e consulte a CND dele. Se for Certidão Positiva com Efeito de Negativa, pode dar baixa.",
-          "No SIATE, em Número do Processo, pode utilizar o último dígito da inscrição estadual e informar apenas o ano. ",
+          "No SIATE, em Número do Processo, pode utilizar o último dígito da inscrição estadual e informar apenas o ano.",
           "Quando baixar: Efetivar Situação → selecionar a caixa do contribuinte → Confirmar.",
           "Imprimir FIC (Ficha de Inscrição Cadastral) → salvar como PDF.",
           "Anexar a FIC no e-mail de resposta ao contribuinte."
@@ -909,6 +993,7 @@
           }
         ]
       },
+
       {
         id: "alt-regime-normal-sn",
         title: "Alteração de Regime: Normal → Simples Nacional",
@@ -952,21 +1037,6 @@ Secretaria de Estado da Fazenda de Roraima - SEFAZ/RR<br>
         ]
       }
     ];
-
-    // ======= MENU: PDFs (EDITAR AQUI) =======
-    // Dica: coloque seus PDFs numa pasta "pdfs/" no mesmo nível deste HTML.
-    // Ex.: pdfs/decreto-icms-rr.pdf
-    const RESOURCES = {
-      legislacao: [
-        {title: "Instrução Normativa nº 2/2026 – Retificação Extemporânea EFD e GIM", file: "pdfs/instrucao-normativa-2-2026-retificacao-extemporanea-efd-gim.pdf",, note: "" },
-        { title: "Regimento Interno — SEFAZ/RR", file: "pdfs/regimento-interno-sefaz-rr.pdf", note: "" },
-        { title: "Instrução Normativa — DIEF", file: "pdfs/instrucao-normativa-dief.pdf", note: "" }
-      ],
-      documentos: [
-        { title: "Modelo de Requerimento (exemplo)", file: "pdfs/modelo-requerimento.pdf", note: "" },
-        { title: "Orientações ao Contribuinte (exemplo)", file: "pdfs/orientacoes-contribuinte.pdf", note: "" }
-      ]
-    };
 
     // ======= Helpers =======
     const toast = (msg="Copiado ✅") => {
@@ -1039,7 +1109,6 @@ Secretaria de Estado da Fazenda de Roraima - SEFAZ/RR<br>
 
       document.getElementById("m_title").textContent = d.title;
       document.getElementById("m_sub").textContent = d.summary;
-
       document.getElementById("m_proc_note").textContent = d.procedureNote || "";
 
       const steps = document.getElementById("m_steps");
@@ -1058,13 +1127,12 @@ Secretaria de Estado da Fazenda de Roraima - SEFAZ/RR<br>
           li.classList.toggle("done", checkbox.checked);
         });
 
-        // ======= CHECKLIST (1 clique no texto também marca/desmarca) =======
+        // 1 clique no texto também marca/desmarca
         text.addEventListener("click", (e) => {
           e.preventDefault();
           checkbox.checked = !checkbox.checked;
           li.classList.toggle("done", checkbox.checked);
         });
-        // ======= /CHECKLIST =======
 
         li.appendChild(checkbox);
         li.appendChild(text);
@@ -1085,6 +1153,7 @@ Secretaria de Estado da Fazenda de Roraima - SEFAZ/RR<br>
       ieInput.value = "";
 
       buildTemplateButtons(d);
+
       modal.showModal();
     }
 
@@ -1140,7 +1209,6 @@ Secretaria de Estado da Fazenda de Roraima - SEFAZ/RR<br>
       const rect = modal.getBoundingClientRect();
       const isInDialog = (
         rect.top <= e.clientY && e.clientY <= rect.top + rect.height &&
-        rect.left <= e.clientX && e.clientX <= rect.top + rect.height &&
         rect.left <= e.clientX && e.clientX <= rect.left + rect.width
       );
       if (!isInDialog) closeModal();
@@ -1232,7 +1300,7 @@ Secretaria de Estado da Fazenda de Roraima - SEFAZ/RR<br>
 
     render();
 
-    /* ===== DARK MODE ===== */
+    // ===== DARK MODE =====
     const themeToggle = document.getElementById("themeToggle");
 
     function applyTheme(theme){
@@ -1249,126 +1317,89 @@ Secretaria de Estado da Fazenda de Roraima - SEFAZ/RR<br>
       applyTheme(nextTheme);
     });
 
-    /* ===== MENU (ADICIONADO) ===== */
-    const menuToggle = document.getElementById("menuToggle");
-    const menuPanel = document.getElementById("menuPanel");
-    const openLegBtn = document.getElementById("openLegBtn");
-    const openDocsBtn = document.getElementById("openDocsBtn");
+    // =====================
+    // MENU / DRAWER
+    // =====================
+    const drawer = document.getElementById("drawer");
+    const drawerBackdrop = document.getElementById("drawerBackdrop");
+    const menuBtn = document.getElementById("menuBtn");
+    const drawerClose = document.getElementById("drawerClose");
+    const resList = document.getElementById("resList");
+    const tabButtons = Array.from(document.querySelectorAll(".drawerTab"));
 
-    function toggleMenu(force){
-      const next = (typeof force === "boolean") ? force : !menuPanel.classList.contains("open");
-      menuPanel.classList.toggle("open", next);
+    let activeTab = "legislacao";
+
+    function openDrawer(){
+      drawer.classList.add("show");
+      drawerBackdrop.classList.add("show");
+      drawer.setAttribute("aria-hidden","false");
+      renderResources();
     }
 
-    menuToggle.addEventListener("click", (e) => {
-      e.stopPropagation();
-      toggleMenu();
-    });
-
-    document.addEventListener("click", (e) => {
-      if (!menuPanel.classList.contains("open")) return;
-      const clickedInside = menuPanel.contains(e.target) || menuToggle.contains(e.target);
-      if (!clickedInside) toggleMenu(false);
-    });
-    /* ===== /MENU ===== */
-
-    /* ===== MODAL: DOCS (ADICIONADO) ===== */
-    const docsModal = document.getElementById("docsModal");
-    const docsClose = document.getElementById("docs_close");
-    const docsClose2 = document.getElementById("docs_close2");
-    const docsTitle = document.getElementById("docs_title");
-    const docsList = document.getElementById("docs_list");
-
-    const tabLeg = document.getElementById("tab_leg");
-    const tabDocs = document.getElementById("tab_docs");
-
-    let docsMode = "legislacao";
-
-    function setDocsTab(mode){
-      docsMode = mode;
-
-      const isLeg = mode === "legislacao";
-      tabLeg.classList.toggle("active", isLeg);
-      tabDocs.classList.toggle("active", !isLeg);
-
-      docsTitle.textContent = isLeg ? "📚 Legislação" : "📄 Documentos";
-      renderDocsList();
+    function closeDrawer(){
+      drawer.classList.remove("show");
+      drawerBackdrop.classList.remove("show");
+      drawer.setAttribute("aria-hidden","true");
     }
 
-    function renderDocsList(){
-      const items = (RESOURCES[docsMode] || []);
-      docsList.innerHTML = "";
+    function setTab(tab){
+      activeTab = tab;
+      tabButtons.forEach(btn=>{
+        const isActive = btn.dataset.tab === tab;
+        btn.classList.toggle("active", isActive);
+        btn.setAttribute("aria-selected", String(isActive));
+      });
+      renderResources();
+    }
+
+    function renderResources(){
+      const items = (RESOURCES[activeTab] || []);
+      resList.innerHTML = "";
 
       if (!items.length){
         const li = document.createElement("li");
-        li.className = "docItem";
-        li.innerHTML = `
-          <div class="docLeft">
-            <div class="docTitle">Nenhum item cadastrado ainda.</div>
-            <div class="docMeta">Edite RESOURCES no JS para adicionar PDFs.</div>
-          </div>
-        `;
-        docsList.appendChild(li);
+        li.className = "resItem";
+        li.innerHTML = `<p class="resTitle">Nenhum PDF cadastrado aqui ainda.</p>`;
+        resList.appendChild(li);
         return;
       }
 
-      items.forEach((d) => {
+      items.forEach(r=>{
         const li = document.createElement("li");
-        li.className = "docItem";
+        li.className = "resItem";
+        li.title = "Clique para abrir em outra aba";
 
-        const note = (d.note || "").trim();
         li.innerHTML = `
-          <div class="docLeft">
-            <div class="docTitle">${d.title}</div>
-            <div class="docMeta">${note ? note : "PDF"}</div>
+          <div class="resTitleRow">
+            <p class="resTitle">${r.title || "Sem título"}</p>
           </div>
-          <button class="docOpen" type="button">Abrir ↗</button>
+          ${r.note ? `<p class="resNote">${r.note}</p>` : ``}
+          <p class="resFile">${r.file}</p>
         `;
 
-        li.querySelector(".docOpen").addEventListener("click", () => {
-          window.open(d.file, "_blank", "noopener,noreferrer");
+        li.addEventListener("click", () => {
+          // abre em outra aba
+          window.open(r.file, "_blank", "noopener,noreferrer");
         });
 
-        // clique no item também abre (sem precisar mirar no botão)
-        li.addEventListener("click", (e) => {
-          // evita abrir duas vezes se clicar no botão
-          if (e.target && e.target.classList && e.target.classList.contains("docOpen")) return;
-          window.open(d.file, "_blank", "noopener,noreferrer");
-        });
-
-        docsList.appendChild(li);
+        resList.appendChild(li);
       });
     }
 
-    function openDocsModal(mode){
-      toggleMenu(false);
-      setDocsTab(mode);
-      docsModal.showModal();
-    }
+    menuBtn.addEventListener("click", openDrawer);
+    drawerClose.addEventListener("click", closeDrawer);
+    drawerBackdrop.addEventListener("click", closeDrawer);
 
-    tabLeg.addEventListener("click", () => setDocsTab("legislacao"));
-    tabDocs.addEventListener("click", () => setDocsTab("documentos"));
-
-    openLegBtn.addEventListener("click", () => openDocsModal("legislacao"));
-    openDocsBtn.addEventListener("click", () => openDocsModal("documentos"));
-
-    function closeDocsModal(){
-      docsModal.close();
-    }
-
-    docsClose.addEventListener("click", closeDocsModal);
-    docsClose2.addEventListener("click", closeDocsModal);
-
-    docsModal.addEventListener("click", (e) => {
-      const rect = docsModal.getBoundingClientRect();
-      const isInDialog = (
-        rect.top <= e.clientY && e.clientY <= rect.top + rect.height &&
-        rect.left <= e.clientX && e.clientX <= rect.top + rect.height &&
-        rect.left <= e.clientX && e.clientX <= rect.left + rect.width
-      );
-      if (!isInDialog) closeDocsModal();
+    tabButtons.forEach(btn=>{
+      btn.addEventListener("click", ()=> setTab(btn.dataset.tab));
     });
-    /* ===== /MODAL DOCS ===== */
+
+    // fecha com ESC
+    window.addEventListener("keydown", (e)=>{
+      if (e.key === "Escape"){
+        if (drawer.classList.contains("show")) closeDrawer();
+      }
+    });
   </script>
 </body>
 </html>
