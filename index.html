@@ -39,66 +39,58 @@
     a:hover{ text-decoration:underline; }
 
     .wrap{ max-width:1100px; margin:0 auto; padding:18px 18px 80px; }
-
-   /* ===== TOP BAR (BOTÕES AFASTADOS + TÍTULO CENTRALIZADO) ===== */
+/* ===== TOP BAR (BOTÕES NAS EXTREMIDADES DA TELA + TÍTULO NO CENTRO) ===== */
 .topbar {
   position: relative;
   margin-bottom: 6px;
-  padding-top: 0;
   min-height: 44px;
 }
 
-/* botões com margem maior das bordas */
+/* Move o botão Menu para fora do wrap, à esquerda */
 #menuBtn {
   position: absolute;
   top: 0;
-  left: 30px;                /* Afasta o botão Menu da borda esquerda */
+  left: -80px;        /* ⬅️ Valor negativo para sair do limite do wrap */
   z-index: 2;
 }
 
+/* Move o botão Modo Escuro para fora do wrap, à direita */
 #themeToggle {
   position: absolute;
   top: 0;
-  right: 30px;               /* Afasta o botão Modo Escuro da borda direita */
+  right: -80px;       /* ➡️ Valor negativo para sair do limite do wrap */
   z-index: 2;
 }
 
-/* área do título ocupando o centro (o seu "retângulo vermelho") */
+/* O título agora pode usar toda a largura útil do wrap */
 .titleBlock {
   width: 100%;
-  text-align: left;          /* Mude para 'center' se quiser o título no meio do retângulo */
+  text-align: left;
   padding: 2px 0 0;
-  /* Margens internas maiores para o texto não bater nos botões afastados */
-  padding-left: 150px;       
-  padding-right: 150px;      
+  /* Removemos os paddings laterais grandes porque os botões não estão mais sobre o texto */
+  padding-left: 0;    
+  padding-right: 0;
 }
 
 h1 { font-size: 22px; margin: 0 0 6px; }
 
-.desc { 
-  margin: 0; 
-  color: var(--muted); 
-  font-size: 13px; 
-  max-width: 900px; 
-  line-height: 1.45; 
+/* Garante que o site não crie barra de rolagem horizontal se a tela for pequena */
+body {
+  overflow-x: hidden;
 }
-    /* Mobile: empilha e remove absolute */
-    @media (max-width: 820px){
-      .topbar{
-        min-height:unset;
-        display:flex;
-        flex-direction:column;
-        gap:10px;
-      }
-      #menuBtn, #themeToggle{
-        position:static;           /* ✅ volta pro fluxo */
-        width:fit-content;
-      }
-      .titleBlock{
-        padding-left:0;
-        padding-right:0;
-      }
-    }
+
+/* Ajuste Mobile: mantém o padrão empilhado para não quebrar em telas pequenas */
+@media (max-width: 1260px) { /* Ajustado para 1260px para acomodar os botões externos */
+  #menuBtn, #themeToggle {
+    position: static;
+    margin-bottom: 10px;
+  }
+  .topbar {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
 
     /* Botões padrão */
     .btn{
