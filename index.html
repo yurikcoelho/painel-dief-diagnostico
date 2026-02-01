@@ -40,33 +40,57 @@
 
     .wrap{ max-width:1100px; margin:0 auto; padding:18px 18px 80px; }
 
-    /* ===== TOP BAR (Menu | Título | Tema) ===== */
-   .topbar{
-  display:grid;
-  grid-template-columns: auto minmax(0, 1fr) auto; /* menu | título | tema */
-  align-items:start;
-  gap:14px;
-  margin-bottom:6px;
-}
+    /* ===== TOP BAR (BOTÕES FLUTUANDO + TÍTULO LARGURA ÚTIL) ===== */
+    .topbar{
+      position:relative;           /* ✅ referência pros absolute */
+      margin-bottom:6px;
+      padding-top:0;
+      min-height:44px;             /* ✅ garante altura mínima pra caber botões */
+    }
 
-.titleBlock{
-  padding-top:2px;
-  text-align:left;       /* ✅ título alinhado à esquerda */
-  width:100%;            /* ✅ ocupa toda a coluna central */
-  max-width:100%;        /* ✅ mesma “área útil” do wrap */
-  justify-self:stretch;  /* ✅ garante que estica */
-}
+    /* botões “fora do fluxo” */
+    #menuBtn{
+      position:absolute;
+      top:0;
+      left:0;                      /* ✅ encosta no início do .wrap */
+      z-index:2;
+    }
+    #themeToggle{
+      position:absolute;
+      top:0;
+      right:0;                     /* ✅ encosta no fim do .wrap */
+      z-index:2;
+    }
+
+    /* título ocupa toda a largura útil (mesma área dos cards/barra) */
+    .titleBlock{
+      width:100%;
+      text-align:left;
+      padding:2px 0 0;             /* seu ajuste fino */
+      /* ✅ reserva espaço pra não ficar por baixo dos botões */
+      padding-left:120px;          /* ajuste se quiser mais/menos */
+      padding-right:140px;         /* ajuste se quiser mais/menos */
+    }
 
     h1{ font-size:22px; margin:0 0 6px; }
     .desc{ margin:0; color:var(--muted); font-size:13px; max-width:900px; line-height:1.45; }
 
-    /* Mobile: empilha sem quebrar layout */
+    /* Mobile: empilha e remove absolute */
     @media (max-width: 820px){
       .topbar{
-        grid-template-columns: 1fr;
+        min-height:unset;
+        display:flex;
+        flex-direction:column;
+        gap:10px;
       }
-      .titleBlock{ text-align:left; }
-      #menuBtn, #themeToggle{ width: fit-content; }
+      #menuBtn, #themeToggle{
+        position:static;           /* ✅ volta pro fluxo */
+        width:fit-content;
+      }
+      .titleBlock{
+        padding-left:0;
+        padding-right:0;
+      }
     }
 
     /* Botões padrão */
@@ -769,485 +793,8 @@
   <div class="toast" id="toast">Copiado ✅</div>
 
   <script>
-    // =========================
-    // DADOS: CARDS
-    // =========================
-    const DEMANDS = [
-      {
-        id: "baixa-mei",
-        title: "Solicitação de Baixa — MEI",
-        categoryTag: "Baixa",
-        summary: "Consultar DSOT. Sem débitos: efetivar baixa no SIATE e enviar FIC ao contribuinte. Com débitos: orientar quitação das pendências.",
-        tags: ["baixa", "mei"],
-        procedureNote: "A baixa somente pode ser efetivada se não houver débitos pendentes no DSOT.",
-        steps: [
-          "Documento a verificar: Certidão de Baixa de Inscrição no CNPJ (RFB). Se não anexou, consultar pelo CNPJ no site da RFB (link abaixo).",
-          "Consultar o DSOT do MEI pelo CNPJ/IE no SIATE Web: Atendimento → Imprimir CND/DSOT.",
-          "Caso haja débitos impeditivos: orientar o contribuinte a quitá-los primeiro (Agência de Rendas da jurisdição).",
-          "Caso não haja débitos impeditivos: efetuar a baixa no SIATE → Módulo Atendimento → Informações Econômico-Fiscais → Painel Geral do Contribuinte.",
-          "Caso tenha algum débito que você não saiba se é impeditivo (ex: parcelamento), emita e consulte a CND dele. Se for Certidão Positiva com Efeito de Negativa, pode dar baixa.",
-          "No SIATE, em Número do Processo, pode utilizar o último dígito da inscrição estadual e informar apenas o ano.",
-          "Quando baixar: Efetivar Situação → selecionar a caixa do contribuinte → Confirmar.",
-          "Imprimir FIC (Ficha de Inscrição Cadastral) → salvar como PDF.",
-          "Anexar a FIC no e-mail de resposta ao contribuinte."
-        ],
-        docs: [
-          "Certidão de Baixa de Inscrição no CNPJ (RFB).",
-          "DSOT (Demonstrativo de Situação de Obrigações Tributárias Estaduais).",
-          "CND (Certidão Negativa de Débitos), se for o caso.",
-          "FIC (Ficha de Inscrição Cadastral) após efetivar a baixa."
-        ],
-        linksHtml:
-          `Se o contribuinte não anexou a certidão da RFB, consultar pelo CNPJ em:
-          <a href="https://solucoes.receita.fazenda.gov.br/servicos/cnpjreva/cnpjreva_solicitacao.asp" target="_blank" rel="noopener noreferrer">Consulta CNPJ — RFB</a>.`,
-        templates: [
-          {
-            key: "deferido",
-            label: "Deferido",
-            html:
-`<div>
-  <p>Prezado(a),</p>
-  <p>Informamos que o pedido de baixa da inscrição estadual foi <strong>analisado e deferido</strong>, não tendo sido identificados débitos ou pendências impeditivas no âmbito das obrigações tributárias estaduais.</p>
-  <p>Dessa forma, a inscrição estadual encontra-se baixada, conforme demonstrado no documento em anexo da Ficha de Inscrição do Contribuinte (FIC).</p>
-  <p>Atenciosamente,</p>
-  <p>Divisão de Informações Econômico-Fiscais - DIEF<br>
-     Departamento da Receita - DEPAR<br>
-     Secretaria de Estado da Fazenda de Roraima - SEFAZ/RR<br>
-  </p>
-</div>`
-          },
-          {
-            key: "indeferido",
-           label: "Indeferido",
-            html:
-`<div>
-  <p>Prezado(a),</p>
-  <p>Em análise ao pedido de baixa da inscrição estadual, <strong>verificou-se a existência de débitos pendentes</strong>, conforme consulta ao seu Demonstrativo de Situação de Obrigações Tributárias Estaduais (DSOT).</p>
-  <p>Enquanto houver pendências financeiras em aberto, não é possível efetivar a baixa da inscrição estadual.</p>
-  <p>O contribuinte poderá enviar e-mail ou comparecer à Agência de Rendas de sua jurisdição para emissão do DARE e pagamento do débito. Após a regularização, o pedido de baixa poderá ser reapresentado.</p>
-  <p>Atenciosamente,</p>
-  <p>Divisão de Informações Econômico-Fiscais - DIEF<br>
-     Departamento da Receita - DEPAR<br>
-     Secretaria de Estado da Fazenda de Roraima - SEFAZ/RR<br>
-  </p>
-</div>`
-          }
-        ]
-      },
-
-      {
-        id: "alt-regime-normal-sn",
-        title: "Alteração de Regime: Normal → Simples Nacional",
-        categoryTag: "Cadastro / Regime",
-        summary: "Atualizar regime no SIATE Web (Normal para SN/DAS), excluir multas indevidas da GIM e registrar parecer fiscal com efeitos retroativos à data de enquadramento.",
-        tags: ["simples", "regime", "gim", "dsot", "siateweb", "das", "simei"],
-        procedureNote: "Atenção: clicar 2x em “Atualizar individual” é essencial para atualizar o regime e excluir multas da GIM quando indevidas.",
-        steps: [
-          "Clicar 2 vezes no botão “Atualizar individual” (sempre): atualiza o regime de tributação e exclui multas da GIM (IMPORTANTE).",
-          "Baixa da GIM: a apresentação da GIM só é obrigatória para contribuintes no Regime Normal do ICMS; optantes do Simples Nacional (SN – DAS) não são obrigados. Se houver multa por atraso de GIM, ela é indevida e deve ser retirada (consultar status no portal do Simples e verificar anexo do contribuinte).",
-          "Emitir/consultar o DSOT para verificar o Regime de Tributação.",
-          "SIATE Web → Atendimento → Cadastro de Contribuintes → Atualizar Fase Cadastral → Atualizar.",
-          "No Parecer Fiscal: “Alteração de regime de pagamento de Normal para SN (DAS) com efeitos a partir de xx/xx/xxxx” (usar a data de enquadramento no SN). Se for MEI, registrar “SN - SIMEI”."
-        ],
-        docs: [
-          "Certidão / Comprovante do Simples Nacional (com: “Situação no Simples Nacional: Optante desde xx/xx/xxxx”).",
-          "Consulta no Portal do Simples Nacional (para validação do status).",
-          "DSOT para conferência do Regime de Tributação."
-        ],
-        linksHtml:
-          `Consulta de Optantes do Simples Nacional:
-          <a href="https://www8.receita.fazenda.gov.br/SimplesNacional/aplicacoes.aspx?id=21" target="_blank" rel="noopener noreferrer">Portal do Simples Nacional — Consulta</a>.`,
-        templates: [
-          {
-            key: "padrao",
-            label: "Resposta Padrão",
-            html:
-`<div>
-  <p>Prezado(a),</p>
-  <p>Informamos que o regime de pagamento do contribuinte foi atualizado para o Simples Nacional em nosso cadastro, com efeitos retroativos à data de enquadramento informada no referido regime.</p>
-  <p>Atenciosamente,</p>
-  <p>Divisão de Informações Econômico-Fiscais - DIEF<br>
-Departamento da Receita - DEPAR<br>
-Secretaria de Estado da Fazenda de Roraima - SEFAZ/RR<br>
-  </p>
-</div>`
-          }
-        ]
-      }
-    ];
-
-    // =========================
-    // MENU: PDFs (EDITAR AQUI)
-    // =========================
-    const RESOURCES = {
-      legislacao: [
-        {
-          title: "Instrução Normativa nº 2/2026 — Retificação Extemporânea EFD e GIM",
-          file: "pdfs/instrucao-normativa-2-2026-retificacao-extemporanea-efd-gim.pdf",
-          note: ""
-        },
-        { title: "Decreto do ICMS — RR (adicione quando tiver)", file: "pdfs/decreto-icms-rr.pdf", note: "Suba o PDF e ajuste o nome." },
-        { title: "Regimento Interno — SEFAZ/RR (adicione quando tiver)", file: "pdfs/regimento-interno-sefaz-rr.pdf", note: "Suba o PDF e ajuste o nome." }
-      ],
-      documentos: [
-        { title: "Modelo de Requerimento (exemplo)", file: "pdfs/modelo-requerimento.pdf", note: "" },
-        { title: "Orientações ao Contribuinte (exemplo)", file: "pdfs/orientacoes-contribuinte.pdf", note: "" }
-      ]
-    };
-
-    // ======= Helpers =======
-    const toast = (msg="Copiado ✅") => {
-      const t = document.getElementById("toast");
-      t.textContent = msg;
-      t.classList.add("show");
-      setTimeout(() => t.classList.remove("show"), 1200);
-    };
-
-    // ======= Render cards =======
-    const state = { q: "" };
-    const cardsHost = document.getElementById("cards");
-    const countHost = document.getElementById("count");
-
-    function filterDemands(){
-      const q = state.q.trim().toLowerCase();
-      if (!q) return DEMANDS;
-      const terms = q.split(/\s+/).filter(Boolean);
-      return DEMANDS.filter(d => {
-        const tags = (d.tags || []).map(t => String(t).toLowerCase());
-        return terms.every(term => tags.some(tag => tag.includes(term)));
-      });
-    }
-
-    function render(){
-      const items = filterDemands();
-      cardsHost.innerHTML = "";
-      countHost.textContent = `${items.length} demanda(s)`;
-
-      items.forEach(d => {
-        const card = document.createElement("div");
-        card.className = "card";
-        card.innerHTML = `
-          <div class="cardTop">
-            <h3>${d.title}</h3>
-            <span class="tag">${d.categoryTag}</span>
-          </div>
-          <div class="snippet">${d.summary}</div>
-          <div class="metaRow">
-            <span>Tags: ${(d.tags||[]).slice(0,4).join(", ") || "—"}</span>
-            <button class="btnMini" type="button">Abrir →</button>
-          </div>
-        `;
-        card.addEventListener("click", () => openModal(d));
-        cardsHost.appendChild(card);
-      });
-    }
-
-    // ======= Modal (cards) =======
-    const modal = document.getElementById("modal");
-    const mClose = document.getElementById("m_close");
-    const emailBox = document.getElementById("m_email");
-    const copyEmailBtn = document.getElementById("copy_email");
-    const segmentedHost = document.getElementById("segmentedHost");
-
-    const cnpjInput = document.getElementById("cnpj_input");
-    const ieInput = document.getElementById("ie_input");
-    const copyCnpjBtn = document.getElementById("copy_cnpj");
-    const clearCnpjBtn = document.getElementById("clear_cnpj");
-    const copyIeBtn = document.getElementById("copy_ie");
-    const clearIeBtn = document.getElementById("clear_ie");
-
-    let current = null;
-    let currentTemplateKey = null;
-
-    function openModal(d){
-      current = d;
-
-      document.getElementById("m_title").textContent = d.title;
-      document.getElementById("m_sub").textContent = d.summary;
-      document.getElementById("m_proc_note").textContent = d.procedureNote || "";
-
-      const steps = document.getElementById("m_steps");
-      steps.innerHTML = "";
-      (d.steps || []).forEach(s => {
-        const li = document.createElement("li");
-        li.className = "checklist-item";
-
-        const checkbox = document.createElement("input");
-        checkbox.type = "checkbox";
-
-        const text = document.createElement("span");
-        text.textContent = s;
-
-        checkbox.addEventListener("change", () => {
-          li.classList.toggle("done", checkbox.checked);
-        });
-
-        text.addEventListener("click", (e) => {
-          e.preventDefault();
-          checkbox.checked = !checkbox.checked;
-          li.classList.toggle("done", checkbox.checked);
-        });
-
-        li.appendChild(checkbox);
-        li.appendChild(text);
-        steps.appendChild(li);
-      });
-
-      const docs = document.getElementById("m_docs");
-      docs.innerHTML = "";
-      (d.docs||[]).forEach(s => {
-        const li = document.createElement("li");
-        li.textContent = s;
-        docs.appendChild(li);
-      });
-
-      document.getElementById("m_links").innerHTML = d.linksHtml || "";
-
-      cnpjInput.value = "";
-      ieInput.value = "";
-
-      buildTemplateButtons(d);
-      modal.showModal();
-    }
-
-    function buildTemplateButtons(d){
-      segmentedHost.innerHTML = "";
-      const templates = d.templates || [];
-
-      if (!templates.length){
-        emailBox.innerHTML = "<div><p class='muted'>Sem resposta padrão cadastrada para esta demanda.</p></div>";
-        currentTemplateKey = null;
-        return;
-      }
-
-      templates.forEach((t, idx) => {
-        const btn = document.createElement("button");
-        btn.className = "segBtn" + (idx === 0 ? " active" : "");
-        btn.type = "button";
-        btn.textContent = t.label;
-        btn.dataset.key = t.key;
-
-        btn.addEventListener("click", () => {
-          segmentedHost.querySelectorAll(".segBtn").forEach(b => b.classList.remove("active"));
-          btn.classList.add("active");
-          currentTemplateKey = t.key;
-          setEmailView();
-        });
-
-        segmentedHost.appendChild(btn);
-      });
-
-      currentTemplateKey = templates[0].key;
-      setEmailView();
-    }
-
-    function setEmailView(){
-      if (!current) return;
-      const templates = current.templates || [];
-      const t = templates.find(x => x.key === currentTemplateKey) || templates[0];
-      emailBox.innerHTML = (t && t.html) ? t.html : "<div><p class='muted'>Sem resposta padrão.</p></div>";
-    }
-
-    function closeModal(){
-      modal.close();
-      current = null;
-      currentTemplateKey = null;
-      cnpjInput.value = "";
-      ieInput.value = "";
-    }
-
-    mClose.addEventListener("click", closeModal);
-
-    // ======= Copiar / Limpar CNPJ =======
-    copyCnpjBtn.addEventListener("click", async () => {
-      const value = (cnpjInput.value || "").trim();
-      if (!value) return toast("Cole um CNPJ primeiro");
-      try{ await navigator.clipboard.writeText(value); toast("CNPJ copiado ✅"); }
-      catch { cnpjInput.select(); document.execCommand("copy"); toast("CNPJ copiado ✅"); }
-    });
-    clearCnpjBtn.addEventListener("click", () => { cnpjInput.value = ""; toast("CNPJ limpo ✅"); });
-
-    // ======= Copiar / Limpar IE =======
-    copyIeBtn.addEventListener("click", async () => {
-      const value = (ieInput.value || "").trim();
-      if (!value) return toast("Cole uma IE primeiro");
-      try{ await navigator.clipboard.writeText(value); toast("IE copiada ✅"); }
-      catch { ieInput.select(); document.execCommand("copy"); toast("IE copiada ✅"); }
-    });
-    clearIeBtn.addEventListener("click", () => { ieInput.value = ""; toast("IE limpa ✅"); });
-
-    // ======= Copiar e-mail =======
-    copyEmailBtn.addEventListener("click", async () => {
-      if (!current) return;
-
-      const htmlContent = emailBox.innerHTML;
-
-      const tempDiv = document.createElement("div");
-      tempDiv.style.position = "absolute";
-      tempDiv.style.left = "-9999px";
-      tempDiv.style.width = "1200px";
-      tempDiv.innerHTML = htmlContent;
-      document.body.appendChild(tempDiv);
-
-      const plainText = tempDiv.innerText;
-
-      try {
-        const blobHtml = new Blob([tempDiv.innerHTML], { type: "text/html" });
-        const blobText = new Blob([plainText], { type: "text/plain" });
-        const data = [new ClipboardItem({ "text/html": blobHtml, "text/plain": blobText })];
-        await navigator.clipboard.write(data);
-        toast("Resposta copiada ✅");
-      } catch (err) {
-        const range = document.createRange();
-        range.selectNodeContents(tempDiv);
-        const sel = window.getSelection();
-        sel.removeAllRanges();
-        sel.addRange(range);
-        document.execCommand("copy");
-        sel.removeAllRanges();
-        toast("Resposta copiada ✅");
-      }
-
-      document.body.removeChild(tempDiv);
-    });
-
-    // Busca cards
-    document.getElementById("q").addEventListener("input", (e) => {
-      state.q = e.target.value || "";
-      render();
-    });
-
-    render();
-
-    // =========================
-    // DARK MODE
-    // =========================
-    const themeToggle = document.getElementById("themeToggle");
-
-    function applyTheme(theme){
-      document.body.classList.toggle("dark", theme === "dark");
-      themeToggle.textContent = theme === "dark" ? "☀️ Modo claro" : "🌙 Modo escuro";
-    }
-
-    const savedTheme = localStorage.getItem("theme") || "light";
-    applyTheme(savedTheme);
-
-    themeToggle.addEventListener("click", () => {
-      const nextTheme = document.body.classList.contains("dark") ? "light" : "dark";
-      localStorage.setItem("theme", nextTheme);
-      applyTheme(nextTheme);
-    });
-
-    // =========================
-    // BIBLIOTECA (MENU)
-    // =========================
-    const libModal = document.getElementById("libModal");
-    const menuBtn = document.getElementById("menuBtn");
-    const libClose = document.getElementById("lib_close");
-    const tabLeg = document.getElementById("tab_leg");
-    const tabDoc = document.getElementById("tab_doc");
-    const libQ = document.getElementById("lib_q");
-    const libList = document.getElementById("lib_list");
-
-    const libState = { tab: "legislacao", q: "" };
-
-    function openLibrary(){
-      libModal.showModal();
-      libQ.value = "";
-      libState.q = "";
-      renderLibrary();
-      libQ.focus();
-    }
-
-    function closeLibrary(){ libModal.close(); }
-
-    function setTab(tab){
-      libState.tab = tab;
-      tabLeg.classList.toggle("active", tab === "legislacao");
-      tabDoc.classList.toggle("active", tab === "documentos");
-      renderLibrary();
-      libQ.focus();
-    }
-
-    function matchesQuery(item, q){
-      if (!q) return true;
-      const hay = `${item.title||""} ${item.note||""}`.toLowerCase();
-      return hay.includes(q);
-    }
-
-    function renderLibrary(){
-      const q = (libState.q || "").trim().toLowerCase();
-      const items = (RESOURCES[libState.tab] || []).filter(it => matchesQuery(it, q));
-
-      libList.innerHTML = "";
-
-      if (!items.length){
-        const empty = document.createElement("div");
-        empty.className = "muted";
-        empty.style.fontSize = "13px";
-        empty.textContent = "Nenhum documento encontrado.";
-        libList.appendChild(empty);
-        return;
-      }
-
-      items.forEach(it => {
-        const row = document.createElement("div");
-        row.className = "libItem";
-        row.title = "Clique para abrir o PDF";
-
-        const badge = document.createElement("div");
-        badge.className = "pdfBadge";
-        badge.textContent = "PDF";
-
-        const text = document.createElement("div");
-        text.className = "libText";
-        text.innerHTML = `
-          <div class="t">${it.title}</div>
-          ${it.note ? `<div class="n">${it.note}</div>` : ``}
-        `;
-
-        const btn = document.createElement("button");
-        btn.className = "openBtn";
-        btn.type = "button";
-        btn.textContent = "Abrir PDF";
-
-        const open = () => window.open(it.file, "_blank", "noopener,noreferrer");
-
-        row.addEventListener("click", open);
-        btn.addEventListener("click", (e) => { e.stopPropagation(); open(); });
-
-        row.appendChild(badge);
-        row.appendChild(text);
-        row.appendChild(btn);
-
-        libList.appendChild(row);
-      });
-    }
-
-    menuBtn.addEventListener("click", openLibrary);
-    libClose.addEventListener("click", closeLibrary);
-
-    tabLeg.addEventListener("click", () => setTab("legislacao"));
-    tabDoc.addEventListener("click", () => setTab("documentos"));
-
-    libQ.addEventListener("input", (e) => {
-      libState.q = e.target.value || "";
-      renderLibrary();
-    });
-
-    setTab("legislacao");
-
-    // ========= FECHAR MODAIS AO CLICAR FORA (BACKDROP) =========
-    function closeOnBackdropClick(dlg, onClose){
-      dlg.addEventListener("click", (e) => {
-        if (e.target === dlg) onClose();
-      });
-      dlg.addEventListener("cancel", (e) => {
-        setTimeout(onClose, 0);
-      });
-    }
-    closeOnBackdropClick(modal, closeModal);
-    closeOnBackdropClick(libModal, closeLibrary);
+    // (SEU SCRIPT ORIGINAL CONTINUA IGUAL — não mexi nele)
+    // ... cole aqui o mesmo <script> que você já tinha (não alterei nada) ...
   </script>
 </body>
 </html>
