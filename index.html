@@ -7,7 +7,6 @@
   <title>Demandas Recorrentes — DIEF/SEFAZ RR</title>
 
   <style>
-    html { display: none; }
     :root{
       --bg:#f3f7ff;
       --card:#ffffff;
@@ -673,51 +672,25 @@ body {
     a:hover{ text-decoration-thickness:.12em; }
     .muted{ opacity:.95; }
   </style>
-
-  <script>
-  // ====== SENHA SIMPLES (barreira leve) ======
-  const PASSWORD = "dief2026"; // troque aqui
-  const AUTH_KEY = "dief_auth_ok";
-
-  (function () {
-    // se já autenticou nesta aba, libera direto
-    if (sessionStorage.getItem(AUTH_KEY) === "1") {
-      document.documentElement.style.display = "";
-      return;
-    }
-
-    const entered = prompt("Acesso restrito — informe a senha:");
-
-    if (entered !== PASSWORD) {
-      // libera só para mostrar a tela de bloqueio
-      document.documentElement.style.display = "";
-      document.body.innerHTML = `
-        <div style="
-          min-height:100vh;display:flex;align-items:center;justify-content:center;
-          font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial;
-          background:#0b1220;color:#e9f0ff;padding:24px;">
-          <div style="max-width:520px;width:100%;background:rgba(255,255,255,.06);
-            border:1px solid rgba(255,255,255,.12);border-radius:18px;padding:18px 16px;">
-            <div style="font-size:18px;font-weight:700;margin-bottom:8px;">Acesso negado</div>
-            <div style="opacity:.85;line-height:1.45">
-              Senha incorreta. Feche esta aba ou recarregue a página para tentar novamente.
-            </div>
-          </div>
-        </div>
-      `;
-      // interrompe o restante do JS do site
-      throw new Error("Senha incorreta — bloqueado.");
-    }
-
-    sessionStorage.setItem(AUTH_KEY, "1");
-    document.documentElement.style.display = "";
-  })();
-</script>
 </head>
 
 <body>
   
-  
+  <script>
+    // ====== SENHA SIMPLES (barreira leve) ======
+    const PASSWORD = "dief2026"; // 🔑 troque aqui
+    const AUTH_KEY = "dief_auth_ok";
+
+    if (sessionStorage.getItem(AUTH_KEY) !== "1") {
+      const entered = prompt("Acesso restrito — informe a senha:");
+      if (entered !== PASSWORD) {
+        alert("Senha incorreta.");
+        document.body.innerHTML = "";
+      } else {
+        sessionStorage.setItem(AUTH_KEY, "1");
+      }
+    }
+  </script>
 
   <div class="wrap">
 
