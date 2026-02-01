@@ -1293,6 +1293,31 @@ Secretaria de Estado da Fazenda de Roraima - SEFAZ/RR<br>
 
     // inicia com legislação
     setTab("legislacao");
+
+    <script>
+  // ========= FECHAR MODAIS AO CLICAR FORA (BACKDROP) =========
+
+  function closeOnBackdropClick(dlg, onClose){
+    dlg.addEventListener("click", (e) => {
+      // Se clicou no backdrop (fora do retângulo do dialog), o alvo do click é o próprio dialog
+      if (e.target === dlg) onClose();
+    });
+
+    // Opcional: ESC já fecha por padrão, mas garantimos limpar estado se precisar
+    dlg.addEventListener("cancel", (e) => {
+      // deixa o dialog fechar e executa o onClose
+      // (não chamar preventDefault)
+      setTimeout(onClose, 0);
+    });
+  }
+
+  // 1) Modal do CARD (já tem closeModal())
+  closeOnBackdropClick(modal, closeModal);
+
+  // 2) Modal da BIBLIOTECA (já tem closeLibrary())
+  closeOnBackdropClick(libModal, closeLibrary);
+</script>
+
   </script>
 </body>
 </html>
