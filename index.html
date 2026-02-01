@@ -675,6 +675,23 @@ body {
 </head>
 
 <body>
+  
+  <script>
+    // ====== SENHA SIMPLES (barreira leve) ======
+    const PASSWORD = "dief2026"; // 🔑 troque aqui
+    const AUTH_KEY = "dief_auth_ok";
+
+    if (sessionStorage.getItem(AUTH_KEY) !== "1") {
+      const entered = prompt("Acesso restrito — informe a senha:");
+      if (entered !== PASSWORD) {
+        alert("Senha incorreta.");
+        document.body.innerHTML = "";
+      } else {
+        sessionStorage.setItem(AUTH_KEY, "1");
+      }
+    }
+  </script>
+
   <div class="wrap">
 
     <div class="topbar">
