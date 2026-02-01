@@ -309,9 +309,10 @@
       opacity:1;
       transform:translateX(-50%) translateY(-2px);
     }
-.checklist-item span{
-  cursor: pointer;
-}
+
+    .checklist-item span{
+      cursor: pointer;
+    }
 
     /* ===== Painel de Identificadores (CNPJ + IE) ===== */
     .idRow{
@@ -333,303 +334,345 @@
     }
 
     /* =========================
-   DARK MODE (apenas cores)
-   Funciona se você usar:
-   - body.classList.toggle("dark")  OU
-   - document.documentElement.dataset.theme="dark" OU
-   - body.dataset.theme="dark"
-========================= */
-:root[data-theme="dark"],
-body[data-theme="dark"],
-body.dark{
-  --bg:#07101f;
-  --card:#0d1a30;     /* fundo dos cards/painéis */
-  --card2:#0b162a;
-  --text:#e9f0ff;     /* texto principal */
-  --muted:#a9b9d6;    /* texto secundário */
+       DARK MODE (apenas cores)
+    ========================= */
+    :root[data-theme="dark"],
+    body[data-theme="dark"],
+    body.dark{
+      --bg:#07101f;
+      --card:#0d1a30;
+      --card2:#0b162a;
+      --text:#e9f0ff;
+      --muted:#a9b9d6;
 
-  --line:rgba(233,240,255,.14);
-  --primary:#7fb4ff;
-  --primary2:rgba(127,180,255,.14);
+      --line:rgba(233,240,255,.14);
+      --primary:#7fb4ff;
+      --primary2:rgba(127,180,255,.14);
 
-  --shadow:0 10px 28px rgba(0,0,0,.35);
-}
+      --shadow:0 10px 28px rgba(0,0,0,.35);
+    }
 
-/* Fundo do body no dark (mantém o seu layout) */
-:root[data-theme="dark"] body,
-body[data-theme="dark"],
-body.dark{
-  background:
-    radial-gradient(1100px 700px at 15% -10%, rgba(127,180,255,.16), transparent 60%),
-    radial-gradient(900px 600px at 90% 0%, rgba(127,180,255,.10), transparent 60%),
-    var(--bg);
-  color:var(--text);
-}
+    :root[data-theme="dark"] body,
+    body[data-theme="dark"],
+    body.dark{
+      background:
+        radial-gradient(1100px 700px at 15% -10%, rgba(127,180,255,.16), transparent 60%),
+        radial-gradient(900px 600px at 90% 0%, rgba(127,180,255,.10), transparent 60%),
+        var(--bg);
+      color:var(--text);
+    }
 
-/* Barra e busca (evita fundo branco estourado) */
-:root[data-theme="dark"] .bar,
-body[data-theme="dark"] .bar,
-body.dark .bar{
-  background:rgba(13,26,48,.55);
-  border-color:var(--line);
-}
+    :root[data-theme="dark"] .bar,
+    body[data-theme="dark"] .bar,
+    body.dark .bar{
+      background:rgba(13,26,48,.55);
+      border-color:var(--line);
+    }
 
-/* Campo de busca (corrige contraste do texto digitado) */
-:root[data-theme="dark"] .search,
-body[data-theme="dark"] .search,
-body.dark .search{
-  background:var(--card);
-  border-color:var(--line);
-  box-shadow:0 6px 18px rgba(0,0,0,.25);
-}
+    :root[data-theme="dark"] .search,
+    body[data-theme="dark"] .search,
+    body.dark .search{
+      background:var(--card);
+      border-color:var(--line);
+      box-shadow:0 6px 18px rgba(0,0,0,.25);
+    }
 
-:root[data-theme="dark"] .search input,
-body[data-theme="dark"] .search input,
-body.dark .search input{
-  color:var(--text);
-}
+    :root[data-theme="dark"] .search input,
+    body[data-theme="dark"] .search input,
+    body.dark .search input{
+      color:var(--text);
+    }
 
-:root[data-theme="dark"] .search input::placeholder,
-body[data-theme="dark"] .search input::placeholder,
-body.dark .search input::placeholder{
-  color:rgba(233,240,255,.65);
-}
+    :root[data-theme="dark"] .search input::placeholder,
+    body[data-theme="dark"] .search input::placeholder,
+    body.dark .search input::placeholder{
+      color:rgba(233,240,255,.65);
+    }
 
-/* Cards/pílulas/botões (garante que tudo acompanhe as vars) */
-:root[data-theme="dark"] .card,
-body[data-theme="dark"] .card,
-body.dark .card{
-  background:var(--card);
-  border-color:var(--line);
-}
+    :root[data-theme="dark"] .card,
+    body[data-theme="dark"] .card,
+    body.dark .card{
+      background:var(--card);
+      border-color:var(--line);
+    }
 
-:root[data-theme="dark"] .tag,
-body[data-theme="dark"] .tag,
-body.dark .tag{
-  color:var(--text);
-  border-color:rgba(127,180,255,.30);
-  background:rgba(127,180,255,.12);
-}
+    :root[data-theme="dark"] .tag,
+    body[data-theme="dark"] .tag,
+    body.dark .tag{
+      color:var(--text);
+      border-color:rgba(127,180,255,.30);
+      background:rgba(127,180,255,.12);
+    }
 
-/* Modal e painéis */
-:root[data-theme="dark"] dialog,
-body[data-theme="dark"] dialog,
-body.dark dialog{
-  background:var(--card);
-  border-color:var(--line);
-}
+    :root[data-theme="dark"] dialog,
+    body[data-theme="dark"] dialog,
+    body.dark dialog{
+      background:var(--card);
+      border-color:var(--line);
+    }
 
-:root[data-theme="dark"] .panel,
-body[data-theme="dark"] .panel,
-body.dark .panel{
-  background:var(--card2);
-  border-color:var(--line);
-}
+    :root[data-theme="dark"] .panel,
+    body[data-theme="dark"] .panel,
+    body.dark .panel{
+      background:var(--card2);
+      border-color:var(--line);
+    }
 
-:root[data-theme="dark"] .panel h4,
-body[data-theme="dark"] .panel h4,
-body.dark .panel h4{
-  color:rgba(233,240,255,.80);
-}
+    :root[data-theme="dark"] .panel h4,
+    body[data-theme="dark"] .panel h4,
+    body.dark .panel h4{
+      color:rgba(233,240,255,.80);
+    }
 
-:root[data-theme="dark"] .templateBox,
-body[data-theme="dark"] .templateBox,
-body.dark .templateBox{
-  background:var(--card);
-  border-color:var(--line);
-  color:var(--text);
-}
+    :root[data-theme="dark"] .templateBox,
+    body[data-theme="dark"] .templateBox,
+    body.dark .templateBox{
+      background:var(--card);
+      border-color:var(--line);
+      color:var(--text);
+    }
 
-/* Inputs CNPJ/IE */
-:root[data-theme="dark"] .idRow input,
-body[data-theme="dark"] .idRow input,
-body.dark .idRow input{
-  background:var(--card);
-  border-color:var(--line);
-  color:var(--text);
-}
+    :root[data-theme="dark"] .idRow input,
+    body[data-theme="dark"] .idRow input,
+    body.dark .idRow input{
+      background:var(--card);
+      border-color:var(--line);
+      color:var(--text);
+    }
 
-:root[data-theme="dark"] .idRow input::placeholder,
-body[data-theme="dark"] .idRow input::placeholder,
-body.dark .idRow input::placeholder{
-  color:rgba(233,240,255,.65);
-}
+    :root[data-theme="dark"] .idRow input::placeholder,
+    body[data-theme="dark"] .idRow input::placeholder,
+    body.dark .idRow input::placeholder{
+      color:rgba(233,240,255,.65);
+    }
 
-/* Botões */
-:root[data-theme="dark"] .btn,
-body[data-theme="dark"] .btn,
-body.dark .btn{
-  background:var(--card);
-  border-color:var(--line);
-  color:var(--text);
-}
+    :root[data-theme="dark"] .btn,
+    body[data-theme="dark"] .btn,
+    body.dark .btn{
+      background:var(--card);
+      border-color:var(--line);
+      color:var(--text);
+    }
 
-:root[data-theme="dark"] .btnMini,
-body[data-theme="dark"] .btnMini,
-body.dark .btnMini{
-  background:rgba(13,26,48,.65);
-  border-color:var(--line);
-  color:var(--text);
-}
+    :root[data-theme="dark"] .btnMini,
+    body[data-theme="dark"] .btnMini,
+    body.dark .btnMini{
+      background:rgba(13,26,48,.65);
+      border-color:var(--line);
+      color:var(--text);
+    }
 
-:root[data-theme="dark"] .closeBtn,
-body[data-theme="dark"] .closeBtn,
-body.dark .closeBtn{
-  background:rgba(13,26,48,.65);
-  border-color:var(--line);
-  color:var(--text);
-}
+    :root[data-theme="dark"] .closeBtn,
+    body[data-theme="dark"] .closeBtn,
+    body.dark .closeBtn{
+      background:rgba(13,26,48,.65);
+      border-color:var(--line);
+      color:var(--text);
+    }
 
-/* Toast ok no dark (só reforça borda) */
-:root[data-theme="dark"] .toast,
-body[data-theme="dark"] .toast,
-body.dark .toast{
-  border-color:rgba(255,255,255,.18);
-}
-/* Título do modal no dark (corrige ficar preto) */
-:root[data-theme="dark"] #m_title,
-body[data-theme="dark"] #m_title,
-body.dark #m_title,
-:root[data-theme="dark"] .modalHead h3,
-body[data-theme="dark"] .modalHead h3,
-body.dark .modalHead h3{
-  color: var(--text);
-}
+    :root[data-theme="dark"] .toast,
+    body[data-theme="dark"] .toast,
+    body.dark .toast{
+      border-color:rgba(255,255,255,.18);
+    }
 
-/* Segmented buttons (Respostas padrão) — estado NÃO ativo no dark */
-:root[data-theme="dark"] .segBtn:not(.active),
-body[data-theme="dark"] .segBtn:not(.active),
-body.dark .segBtn:not(.active){
-  background: rgba(13,26,48,.75);
-  border-color: var(--line);
-  color: var(--muted);
-}
+    :root[data-theme="dark"] #m_title,
+    body[data-theme="dark"] #m_title,
+    body.dark #m_title,
+    :root[data-theme="dark"] .modalHead h3,
+    body[data-theme="dark"] .modalHead h3,
+    body.dark .modalHead h3{
+      color: var(--text);
+    }
 
-/* Mantém o ativo com destaque correto */
-:root[data-theme="dark"] .segBtn.active,
-body[data-theme="dark"] .segBtn.active,
-body.dark .segBtn.active{
-  background: rgba(127,180,255,.22);
-  border-color: rgba(127,180,255,.45);
-  color: var(--text);
-}
+    :root[data-theme="dark"] .segBtn:not(.active),
+    body[data-theme="dark"] .segBtn:not(.active),
+    body.dark .segBtn:not(.active){
+      background: rgba(13,26,48,.75);
+      border-color: var(--line);
+      color: var(--muted);
+    }
 
-/* =========================
-   MICRO-POLISH
-   Hover • Focus • Acessibilidade AA
-========================= */
+    :root[data-theme="dark"] .segBtn.active,
+    body[data-theme="dark"] .segBtn.active,
+    body.dark .segBtn.active{
+      background: rgba(127,180,255,.22);
+      border-color: rgba(127,180,255,.45);
+      color: var(--text);
+    }
 
-/* ---------- Focus ring (teclado / acessibilidade) ---------- */
-:focus-visible{
-  outline: none;
-  box-shadow:
-    0 0 0 2px var(--bg),
-    0 0 0 4px var(--primary);
-}
+    /* =========================
+       MICRO-POLISH
+    ========================= */
+    :focus-visible{
+      outline: none;
+      box-shadow:
+        0 0 0 2px var(--bg),
+        0 0 0 4px var(--primary);
+    }
 
-/* Remove focus feio do mouse, mantém do teclado */
-:focus:not(:focus-visible){
-  outline: none;
-  box-shadow: none;
-}
+    :focus:not(:focus-visible){
+      outline: none;
+      box-shadow: none;
+    }
 
-/* ---------- Botões ---------- */
-.btn,
-.btnMini,
-.segBtn,
-.closeBtn{
-  transition:
-    background-color .15s ease,
-    border-color .15s ease,
-    box-shadow .15s ease,
-    transform .08s ease;
-}
+    .btn,
+    .btnMini,
+    .segBtn,
+    .closeBtn{
+      transition:
+        background-color .15s ease,
+        border-color .15s ease,
+        box-shadow .15s ease,
+        transform .08s ease;
+    }
 
-.btn:hover,
-.btnMini:hover,
-.segBtn:hover,
-.closeBtn:hover{
-  transform: translateY(-1px);
-}
+    .btn:hover,
+    .btnMini:hover,
+    .segBtn:hover,
+    .closeBtn:hover{
+      transform: translateY(-1px);
+    }
 
-/* ---------- Cards ---------- */
-.card{
-  transition:
-    transform .12s ease,
-    box-shadow .15s ease,
-    border-color .15s ease;
-}
+    .card{
+      transition:
+        transform .12s ease,
+        box-shadow .15s ease,
+        border-color .15s ease;
+    }
 
-.card:hover{
-  box-shadow:
-    0 14px 36px rgba(11,27,58,.18);
-}
+    .card:hover{
+      box-shadow:
+        0 14px 36px rgba(11,27,58,.18);
+    }
 
-/* Dark: sombra mais suave */
-body.dark .card:hover{
-  box-shadow:
-    0 16px 36px rgba(0,0,0,.45);
-}
+    body.dark .card:hover{
+      box-shadow:
+        0 16px 36px rgba(0,0,0,.45);
+    }
 
-/* ---------- Inputs (busca, CNPJ, IE) ---------- */
-input{
-  transition:
-    border-color .15s ease,
-    box-shadow .15s ease;
-}
+    input{
+      transition:
+        border-color .15s ease,
+        box-shadow .15s ease;
+    }
 
-input:focus-visible{
-  border-color: var(--primary);
-  box-shadow:
-    0 0 0 3px var(--primary2);
-}
+    input:focus-visible{
+      border-color: var(--primary);
+      box-shadow:
+        0 0 0 3px var(--primary2);
+    }
 
-/* Placeholder com contraste AA */
-input::placeholder{
-  opacity: 1; /* evita placeholder “apagado” */
-}
+    input::placeholder{
+      opacity: 1;
+    }
 
-/* ---------- Links ---------- */
-a{
-  text-decoration-thickness: .08em;
-  text-underline-offset: 2px;
-}
+    a{
+      text-decoration-thickness: .08em;
+      text-underline-offset: 2px;
+    }
 
-a:hover{
-  text-decoration-thickness: .12em;
-}
+    a:hover{
+      text-decoration-thickness: .12em;
+    }
 
-/* ---------- Texto muted (garante legibilidade AA) ---------- */
-.muted{
-  opacity: .95;
-}
+    .muted{
+      opacity: .95;
+    }
 
-/* ---------- Checklist ---------- */
-.checklist-item input[type="checkbox"]:focus-visible{
-  outline: none;
-  box-shadow:
-    0 0 0 2px var(--bg),
-    0 0 0 4px var(--primary);
-}
+    .checklist-item input[type="checkbox"]:focus-visible{
+      outline: none;
+      box-shadow:
+        0 0 0 2px var(--bg),
+        0 0 0 4px var(--primary);
+    }
 
-/* ---------- Modal: botão fechar ---------- */
-.closeBtn:hover{
-  background: rgba(10,98,190,.12);
-}
+    .closeBtn:hover{
+      background: rgba(10,98,190,.12);
+    }
 
-/* ---------- Segmented buttons (hover neutro) ---------- */
-.segBtn:not(.active):hover{
-  border-color: var(--primary);
-  color: var(--text);
-}
+    .segBtn:not(.active):hover{
+      border-color: var(--primary);
+      color: var(--text);
+    }
 
+    /* =========================
+       MENU (ADICIONADO)
+    ========================= */
+    .menuWrap{
+      position: relative;
+      margin-right: 8px;
+    }
+
+    .menuPanel{
+      position:absolute;
+      top: 44px;
+      left: 0;
+      width: 280px;
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      box-shadow: var(--shadow);
+      padding: 12px;
+      display: none;
+      z-index: 1500;
+    }
+
+    .menuPanel.open{ display:block; }
+
+    .menuSection{ margin-bottom: 12px; }
+    .menuSection:last-child{ margin-bottom:0; }
+
+    .menuSection h4{
+      margin: 0 0 6px;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: .3px;
+      color: var(--muted);
+    }
+
+    .menuSection a{
+      display:block;
+      padding: 6px 8px;
+      border-radius: 10px;
+      font-size: 13px;
+      color: var(--text);
+    }
+
+    .menuSection a:hover{
+      background: var(--primary2);
+      text-decoration:none;
+    }
   </style>
 </head>
 
 <body>
   <div class="wrap">
     <header>
-      <div>
+      <!-- ===== MENU (ADICIONADO) ===== -->
+      <div class="menuWrap">
+        <button class="btn" id="menuToggle" type="button" aria-label="Abrir menu">☰</button>
+
+        <div class="menuPanel" id="menuPanel">
+          <div class="menuSection">
+            <h4>📚 Legislação</h4>
+            <!-- troque os href para seus PDFs/links reais -->
+            <a href="pdfs/decreto-icms-rr.pdf" target="_blank" rel="noopener noreferrer">Decreto do ICMS – RR</a>
+            <a href="pdfs/regimento-interno-sefaz.pdf" target="_blank" rel="noopener noreferrer">Regimento Interno SEFAZ</a>
+            <a href="pdfs/in-dief.pdf" target="_blank" rel="noopener noreferrer">Instrução Normativa – DIEF</a>
+          </div>
+
+          <div class="menuSection">
+            <h4>📄 Documentos</h4>
+            <!-- troque os href para seus PDFs/links reais -->
+            <a href="pdfs/orientacoes-contribuinte.pdf" target="_blank" rel="noopener noreferrer">Orientações ao Contribuinte</a>
+            <a href="pdfs/modelo-requerimento.pdf" target="_blank" rel="noopener noreferrer">Modelo de Requerimento</a>
+          </div>
+        </div>
+      </div>
+      <!-- ===== /MENU ===== -->
+
+      <div style="flex:1; min-width: 320px;">
         <h1>Demandas Recorrentes — DIEF/SEFAZ RR</h1>
         <p>
           Repositório interno de demandas que chegam por e-mail. Clique em um card para ver <b>procedimentos</b> (quando aplicável)
@@ -637,7 +680,7 @@ a:hover{
         </p>
       </div>
 
-      <!-- ===== DARK MODE (ADICIONADO) ===== -->
+      <!-- ===== DARK MODE (JÁ EXISTIA) ===== -->
       <button class="btn" id="themeToggle" type="button">🌙 Modo escuro</button>
     </header>
 
@@ -848,21 +891,16 @@ Secretaria de Estado da Fazenda de Roraima - SEFAZ/RR<br>
     const countHost = document.getElementById("count");
 
     function filterDemands(){
-  const q = state.q.trim().toLowerCase();
-  if (!q) return DEMANDS;
+      const q = state.q.trim().toLowerCase();
+      if (!q) return DEMANDS;
 
-  // permite buscar várias tags separadas por espaço:
-  // ex.: "simples gim" -> precisa bater nas duas
-  const terms = q.split(/\s+/).filter(Boolean);
+      const terms = q.split(/\s+/).filter(Boolean);
 
-  return DEMANDS.filter(d => {
-    const tags = (d.tags || []).map(t => String(t).toLowerCase());
-
-    // cada termo precisa existir em alguma tag
-    return terms.every(term => tags.some(tag => tag.includes(term)));
-  });
-}
-
+      return DEMANDS.filter(d => {
+        const tags = (d.tags || []).map(t => String(t).toLowerCase());
+        return terms.every(term => tags.some(tag => tag.includes(term)));
+      });
+    }
 
     function render(){
       const items = filterDemands();
@@ -894,10 +932,8 @@ Secretaria de Estado da Fazenda de Roraima - SEFAZ/RR<br>
     const emailBox = document.getElementById("m_email");
     const copyEmailBtn = document.getElementById("copy_email");
 
-    // Segmento de respostas (dinâmico)
     const segmentedHost = document.getElementById("segmentedHost");
 
-    // Identificadores
     const cnpjInput = document.getElementById("cnpj_input");
     const ieInput = document.getElementById("ie_input");
     const copyCnpjBtn = document.getElementById("copy_cnpj");
@@ -916,7 +952,6 @@ Secretaria de Estado da Fazenda de Roraima - SEFAZ/RR<br>
 
       document.getElementById("m_proc_note").textContent = d.procedureNote || "";
 
-      // checklist
       const steps = document.getElementById("m_steps");
       steps.innerHTML = "";
       (d.steps || []).forEach(s => {
@@ -933,13 +968,12 @@ Secretaria de Estado da Fazenda de Roraima - SEFAZ/RR<br>
           li.classList.toggle("done", checkbox.checked);
         });
 
-        // ======= CHECKLIST (1 clique no texto também marca/desmarca) =======
+        // 1 clique no texto marca/desmarca
         text.addEventListener("click", (e) => {
           e.preventDefault();
           checkbox.checked = !checkbox.checked;
           li.classList.toggle("done", checkbox.checked);
         });
-        // ======= /CHECKLIST =======
 
         li.appendChild(checkbox);
         li.appendChild(text);
@@ -956,11 +990,9 @@ Secretaria de Estado da Fazenda de Roraima - SEFAZ/RR<br>
 
       document.getElementById("m_links").innerHTML = d.linksHtml || "";
 
-      // reset campos
       cnpjInput.value = "";
       ieInput.value = "";
 
-      // montar botões de template
       buildTemplateButtons(d);
 
       modal.showModal();
@@ -971,7 +1003,6 @@ Secretaria de Estado da Fazenda de Roraima - SEFAZ/RR<br>
       const templates = d.templates || [];
 
       if (!templates.length){
-        // fallback: sem templates
         emailBox.innerHTML = "<div><p class='muted'>Sem resposta padrão cadastrada para esta demanda.</p></div>";
         currentTemplateKey = null;
         return;
@@ -1025,7 +1056,6 @@ Secretaria de Estado da Fazenda de Roraima - SEFAZ/RR<br>
       if (!isInDialog) closeModal();
     });
 
-    // ======= Copiar / Limpar CNPJ =======
     copyCnpjBtn.addEventListener("click", async () => {
       const value = (cnpjInput.value || "").trim();
       if (!value) return toast("Cole um CNPJ primeiro");
@@ -1045,7 +1075,6 @@ Secretaria de Estado da Fazenda de Roraima - SEFAZ/RR<br>
       toast("CNPJ limpo ✅");
     });
 
-    // ======= Copiar / Limpar IE =======
     copyIeBtn.addEventListener("click", async () => {
       const value = (ieInput.value || "").trim();
       if (!value) return toast("Cole uma IE primeiro");
@@ -1065,7 +1094,6 @@ Secretaria de Estado da Fazenda de Roraima - SEFAZ/RR<br>
       toast("IE limpa ✅");
     });
 
-    // ======= Copiar e-mail (HTML + texto) =======
     copyEmailBtn.addEventListener("click", async () => {
       if (!current) return;
 
@@ -1111,7 +1139,7 @@ Secretaria de Estado da Fazenda de Roraima - SEFAZ/RR<br>
 
     render();
 
-    /* ===== DARK MODE (ADICIONADO) ===== */
+    /* ===== DARK MODE ===== */
     const themeToggle = document.getElementById("themeToggle");
 
     function applyTheme(theme){
@@ -1126,6 +1154,25 @@ Secretaria de Estado da Fazenda de Roraima - SEFAZ/RR<br>
       const nextTheme = document.body.classList.contains("dark") ? "light" : "dark";
       localStorage.setItem("theme", nextTheme);
       applyTheme(nextTheme);
+    });
+
+    /* =========================
+       MENU (ADICIONADO)
+    ========================= */
+    const menuToggle = document.getElementById("menuToggle");
+    const menuPanel = document.getElementById("menuPanel");
+
+    menuToggle.addEventListener("click", (e) => {
+      e.stopPropagation();
+      menuPanel.classList.toggle("open");
+    });
+
+    menuPanel.addEventListener("click", (e) => {
+      e.stopPropagation(); // clicar dentro não fecha
+    });
+
+    document.addEventListener("click", () => {
+      menuPanel.classList.remove("open");
     });
   </script>
 </body>
