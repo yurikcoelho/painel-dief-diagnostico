@@ -47,6 +47,63 @@
       gap:14px;
       flex-wrap:wrap;
     }
+
+    /* ===== MENU (ADICIONADO) ===== */
+    .headerLeft{
+      display:flex;
+      align-items:flex-start;
+      gap:12px;
+      flex-wrap:wrap;
+    }
+
+    .menuWrap{
+      position:relative;
+      display:inline-flex;
+      align-items:flex-start;
+      gap:8px;
+    }
+
+    .menuPanel{
+      position:absolute;
+      top:44px;
+      left:0;
+      min-width:220px;
+      background:var(--card);
+      border:1px solid var(--line);
+      border-radius:14px;
+      box-shadow:var(--shadow);
+      padding:10px;
+      display:none;
+      z-index:999;
+    }
+    .menuPanel.open{ display:block; }
+
+    .menuTitle{
+      font-size:11px;
+      color:var(--muted);
+      margin:2px 2px 8px;
+    }
+
+    .menuBtn{
+      width:100%;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      padding:10px 12px;
+      border-radius:12px;
+      border:1px solid var(--line);
+      background:#fff;
+      cursor:pointer;
+      font-size:12px;
+      color:var(--text);
+    }
+    .menuBtn:hover{
+      border-color: rgba(10,98,190,.35);
+      background: rgba(10,98,190,.06);
+    }
+    /* ===== /MENU ===== */
+
     h1{ font-size:22px; margin:0 0 6px; }
     header p{ margin:0; color:var(--muted); font-size:13px; max-width:900px; line-height:1.45; }
 
@@ -286,7 +343,7 @@
     }
     .segBtn.active{
       background: rgba(10,98,190,.14);
-      border-color: rgba(10,98,190,.45);
+      border-color:rgba(10,98,190,.45);
     }
 
     .toast{
@@ -310,9 +367,7 @@
       transform:translateX(-50%) translateY(-2px);
     }
 
-    .checklist-item span{
-      cursor: pointer;
-    }
+    .checklist-item span{ cursor: pointer; }
 
     /* ===== Painel de Identificadores (CNPJ + IE) ===== */
     .idRow{
@@ -501,6 +556,21 @@
       color: var(--text);
     }
 
+    /* ===== MENU no dark ===== */
+    body.dark .menuPanel{
+      background: var(--card);
+      border-color: var(--line);
+    }
+    body.dark .menuBtn{
+      background: var(--card);
+      border-color: var(--line);
+      color: var(--text);
+    }
+    body.dark .menuBtn:hover{
+      background: rgba(127,180,255,.10);
+      border-color: rgba(127,180,255,.35);
+    }
+
     /* =========================
        MICRO-POLISH
     ========================= */
@@ -510,7 +580,6 @@
         0 0 0 2px var(--bg),
         0 0 0 4px var(--primary);
     }
-
     :focus:not(:focus-visible){
       outline: none;
       box-shadow: none;
@@ -540,45 +609,29 @@
         box-shadow .15s ease,
         border-color .15s ease;
     }
-
     .card:hover{
-      box-shadow:
-        0 14px 36px rgba(11,27,58,.18);
+      box-shadow: 0 14px 36px rgba(11,27,58,.18);
     }
-
     body.dark .card:hover{
-      box-shadow:
-        0 16px 36px rgba(0,0,0,.45);
+      box-shadow: 0 16px 36px rgba(0,0,0,.45);
     }
 
     input{
-      transition:
-        border-color .15s ease,
-        box-shadow .15s ease;
+      transition: border-color .15s ease, box-shadow .15s ease;
     }
-
     input:focus-visible{
       border-color: var(--primary);
-      box-shadow:
-        0 0 0 3px var(--primary2);
+      box-shadow: 0 0 0 3px var(--primary2);
     }
-
-    input::placeholder{
-      opacity: 1;
-    }
+    input::placeholder{ opacity: 1; }
 
     a{
       text-decoration-thickness: .08em;
       text-underline-offset: 2px;
     }
+    a:hover{ text-decoration-thickness: .12em; }
 
-    a:hover{
-      text-decoration-thickness: .12em;
-    }
-
-    .muted{
-      opacity: .95;
-    }
+    .muted{ opacity: .95; }
 
     .checklist-item input[type="checkbox"]:focus-visible{
       outline: none;
@@ -587,62 +640,66 @@
         0 0 0 4px var(--primary);
     }
 
-    .closeBtn:hover{
-      background: rgba(10,98,190,.12);
-    }
+    .closeBtn:hover{ background: rgba(10,98,190,.12); }
 
     .segBtn:not(.active):hover{
       border-color: var(--primary);
       color: var(--text);
     }
 
-    /* =========================
-       MENU (ADICIONADO)
-    ========================= */
-    .menuWrap{
-      position: relative;
-      margin-right: 8px;
+    /* ===== Modal de Docs (ADICIONADO) ===== */
+    #docsModal .modalBody{ grid-template-columns: 1fr; }
+    .docsList{
+      margin:0;
+      padding:0;
+      list-style:none;
+      display:grid;
+      gap:10px;
     }
-
-    .menuPanel{
-      position:absolute;
-      top: 44px;
-      left: 0;
-      width: 280px;
+    .docItem{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      padding:10px 12px;
+      border:1px solid var(--line);
+      border-radius:14px;
       background: var(--card);
-      border: 1px solid var(--line);
-      border-radius: 14px;
-      box-shadow: var(--shadow);
-      padding: 12px;
-      display: none;
-      z-index: 1500;
     }
-
-    .menuPanel.open{ display:block; }
-
-    .menuSection{ margin-bottom: 12px; }
-    .menuSection:last-child{ margin-bottom:0; }
-
-    .menuSection h4{
-      margin: 0 0 6px;
-      font-size: 12px;
-      text-transform: uppercase;
-      letter-spacing: .3px;
-      color: var(--muted);
+    .docLeft{
+      display:flex;
+      flex-direction:column;
+      gap:2px;
+      min-width:0;
     }
-
-    .menuSection a{
-      display:block;
-      padding: 6px 8px;
-      border-radius: 10px;
-      font-size: 13px;
+    .docTitle{
+      font-size:13px;
+      color:var(--text);
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+      max-width: 760px;
+    }
+    .docMeta{
+      font-size:12px;
+      color:var(--muted);
+    }
+    .docOpen{
+      border:1px solid var(--line);
+      background: rgba(255,255,255,.85);
+      color: var(--text);
+      padding:8px 10px;
+      border-radius:12px;
+      font-size:12px;
+      cursor:pointer;
+      white-space:nowrap;
+    }
+    body.dark .docOpen{
+      background: rgba(13,26,48,.65);
+      border-color: var(--line);
       color: var(--text);
     }
-
-    .menuSection a:hover{
-      background: var(--primary2);
-      text-decoration:none;
-    }
+    /* ===== /Modal de Docs ===== */
   </style>
 </head>
 
@@ -650,37 +707,32 @@
   <div class="wrap">
     <header>
       <!-- ===== MENU (ADICIONADO) ===== -->
-      <div class="menuWrap">
-        <button class="btn" id="menuToggle" type="button" aria-label="Abrir menu">☰</button>
+      <div class="headerLeft">
+        <div class="menuWrap">
+          <button class="btn" id="menuToggle" type="button">☰ Menu</button>
 
-        <div class="menuPanel" id="menuPanel">
-          <div class="menuSection">
-            <h4>📚 Legislação</h4>
-            <!-- troque os href para seus PDFs/links reais -->
-            <a href="pdfs/decreto-icms-rr.pdf" target="_blank" rel="noopener noreferrer">Decreto do ICMS – RR</a>
-            <a href="pdfs/regimento-interno-sefaz.pdf" target="_blank" rel="noopener noreferrer">Regimento Interno SEFAZ</a>
-            <a href="pdfs/in-dief.pdf" target="_blank" rel="noopener noreferrer">Instrução Normativa – DIEF</a>
+          <div class="menuPanel" id="menuPanel" aria-label="Menu de documentos">
+            <div class="menuTitle">Atalhos</div>
+            <button class="menuBtn" id="openLegBtn" type="button">
+              <span>📚 Legislação</span><span>→</span>
+            </button>
+            <button class="menuBtn" id="openDocsBtn" type="button">
+              <span>📄 Documentos</span><span>→</span>
+            </button>
           </div>
+        </div>
 
-          <div class="menuSection">
-            <h4>📄 Documentos</h4>
-            <!-- troque os href para seus PDFs/links reais -->
-            <a href="pdfs/orientacoes-contribuinte.pdf" target="_blank" rel="noopener noreferrer">Orientações ao Contribuinte</a>
-            <a href="pdfs/modelo-requerimento.pdf" target="_blank" rel="noopener noreferrer">Modelo de Requerimento</a>
-          </div>
+        <div>
+          <h1>Demandas Recorrentes — DIEF/SEFAZ RR</h1>
+          <p>
+            Repositório interno de demandas que chegam por e-mail. Clique em um card para ver <b>procedimentos</b> (quando aplicável)
+            e <b>respostas padrão</b> para copiar e colar no Gmail.
+          </p>
         </div>
       </div>
       <!-- ===== /MENU ===== -->
 
-      <div style="flex:1; min-width: 320px;">
-        <h1>Demandas Recorrentes — DIEF/SEFAZ RR</h1>
-        <p>
-          Repositório interno de demandas que chegam por e-mail. Clique em um card para ver <b>procedimentos</b> (quando aplicável)
-          e <b>respostas padrão</b> para copiar e colar no Gmail.
-        </p>
-      </div>
-
-      <!-- ===== DARK MODE (JÁ EXISTIA) ===== -->
+      <!-- ===== DARK MODE ===== -->
       <button class="btn" id="themeToggle" type="button">🌙 Modo escuro</button>
     </header>
 
@@ -750,9 +802,7 @@
             Selecione a opção e copie para colar no Gmail.
           </p>
 
-          <div class="segmented" id="segmentedHost">
-            <!-- botões são montados via JS (conforme card) -->
-          </div>
+          <div class="segmented" id="segmentedHost"></div>
 
           <div class="templateBox" id="m_email"></div>
 
@@ -764,12 +814,40 @@
     </div>
   </dialog>
 
+  <!-- ===== MODAL: LEGISLAÇÃO / DOCUMENTOS (ADICIONADO) ===== -->
+  <dialog id="docsModal">
+    <div class="modalHead">
+      <div>
+        <h3 id="docs_title">📚 Legislação</h3>
+        <div class="muted" id="docs_sub" style="margin-top:6px;font-size:12px;line-height:1.4;">
+          Clique em um item para abrir o PDF em outra aba.
+        </div>
+      </div>
+      <button class="closeBtn" id="docs_close">✕</button>
+    </div>
+
+    <div class="modalBody">
+      <div class="panel">
+        <div class="segmented" style="margin-bottom:12px;">
+          <button class="segBtn active" id="tab_leg" type="button">📚 Legislação</button>
+          <button class="segBtn" id="tab_docs" type="button">📄 Documentos</button>
+        </div>
+
+        <ul class="docsList" id="docs_list"></ul>
+
+        <div class="btnRow" style="margin-top:14px;">
+          <button class="btn" id="docs_close2" type="button">Fechar</button>
+        </div>
+      </div>
+    </div>
+  </dialog>
+  <!-- ===== /MODAL DOCS ===== -->
+
   <div class="toast" id="toast">Copiado ✅</div>
 
   <script>
     // ======= DADOS =======
     const DEMANDS = [
-      // 1) Baixa MEI (mantém 2 respostas)
       {
         id: "baixa-mei",
         title: "Solicitação de Baixa — MEI",
@@ -831,8 +909,6 @@
           }
         ]
       },
-
-      // 2) Alteração de Regime: Normal -> Simples (1 resposta)
       {
         id: "alt-regime-normal-sn",
         title: "Alteração de Regime: Normal → Simples Nacional",
@@ -876,6 +952,21 @@ Secretaria de Estado da Fazenda de Roraima - SEFAZ/RR<br>
         ]
       }
     ];
+
+    // ======= MENU: PDFs (EDITAR AQUI) =======
+    // Dica: coloque seus PDFs numa pasta "pdfs/" no mesmo nível deste HTML.
+    // Ex.: pdfs/decreto-icms-rr.pdf
+    const RESOURCES = {
+      legislacao: [
+        { title: "Decreto do ICMS — RR", file: "pdfs/decreto-icms-rr.pdf", note: "Atualize o arquivo/caminho conforme seu repositório" },
+        { title: "Regimento Interno — SEFAZ/RR", file: "pdfs/regimento-interno-sefaz-rr.pdf", note: "" },
+        { title: "Instrução Normativa — DIEF", file: "pdfs/instrucao-normativa-dief.pdf", note: "" }
+      ],
+      documentos: [
+        { title: "Modelo de Requerimento (exemplo)", file: "pdfs/modelo-requerimento.pdf", note: "" },
+        { title: "Orientações ao Contribuinte (exemplo)", file: "pdfs/orientacoes-contribuinte.pdf", note: "" }
+      ]
+    };
 
     // ======= Helpers =======
     const toast = (msg="Copiado ✅") => {
@@ -931,7 +1022,6 @@ Secretaria de Estado da Fazenda de Roraima - SEFAZ/RR<br>
     const mClose = document.getElementById("m_close");
     const emailBox = document.getElementById("m_email");
     const copyEmailBtn = document.getElementById("copy_email");
-
     const segmentedHost = document.getElementById("segmentedHost");
 
     const cnpjInput = document.getElementById("cnpj_input");
@@ -968,12 +1058,13 @@ Secretaria de Estado da Fazenda de Roraima - SEFAZ/RR<br>
           li.classList.toggle("done", checkbox.checked);
         });
 
-        // 1 clique no texto marca/desmarca
+        // ======= CHECKLIST (1 clique no texto também marca/desmarca) =======
         text.addEventListener("click", (e) => {
           e.preventDefault();
           checkbox.checked = !checkbox.checked;
           li.classList.toggle("done", checkbox.checked);
         });
+        // ======= /CHECKLIST =======
 
         li.appendChild(checkbox);
         li.appendChild(text);
@@ -994,7 +1085,6 @@ Secretaria de Estado da Fazenda de Roraima - SEFAZ/RR<br>
       ieInput.value = "";
 
       buildTemplateButtons(d);
-
       modal.showModal();
     }
 
@@ -1050,12 +1140,13 @@ Secretaria de Estado da Fazenda de Roraima - SEFAZ/RR<br>
       const rect = modal.getBoundingClientRect();
       const isInDialog = (
         rect.top <= e.clientY && e.clientY <= rect.top + rect.height &&
-        rect.left <= e.clientX && e.clientY <= rect.top + rect.height &&
+        rect.left <= e.clientX && e.clientX <= rect.top + rect.height &&
         rect.left <= e.clientX && e.clientX <= rect.left + rect.width
       );
       if (!isInDialog) closeModal();
     });
 
+    // ======= Copiar / Limpar CNPJ =======
     copyCnpjBtn.addEventListener("click", async () => {
       const value = (cnpjInput.value || "").trim();
       if (!value) return toast("Cole um CNPJ primeiro");
@@ -1075,6 +1166,7 @@ Secretaria de Estado da Fazenda de Roraima - SEFAZ/RR<br>
       toast("CNPJ limpo ✅");
     });
 
+    // ======= Copiar / Limpar IE =======
     copyIeBtn.addEventListener("click", async () => {
       const value = (ieInput.value || "").trim();
       if (!value) return toast("Cole uma IE primeiro");
@@ -1094,6 +1186,7 @@ Secretaria de Estado da Fazenda de Roraima - SEFAZ/RR<br>
       toast("IE limpa ✅");
     });
 
+    // ======= Copiar e-mail (HTML + texto) =======
     copyEmailBtn.addEventListener("click", async () => {
       if (!current) return;
 
@@ -1156,24 +1249,126 @@ Secretaria de Estado da Fazenda de Roraima - SEFAZ/RR<br>
       applyTheme(nextTheme);
     });
 
-    /* =========================
-       MENU (ADICIONADO)
-    ========================= */
+    /* ===== MENU (ADICIONADO) ===== */
     const menuToggle = document.getElementById("menuToggle");
     const menuPanel = document.getElementById("menuPanel");
+    const openLegBtn = document.getElementById("openLegBtn");
+    const openDocsBtn = document.getElementById("openDocsBtn");
+
+    function toggleMenu(force){
+      const next = (typeof force === "boolean") ? force : !menuPanel.classList.contains("open");
+      menuPanel.classList.toggle("open", next);
+    }
 
     menuToggle.addEventListener("click", (e) => {
       e.stopPropagation();
-      menuPanel.classList.toggle("open");
+      toggleMenu();
     });
 
-    menuPanel.addEventListener("click", (e) => {
-      e.stopPropagation(); // clicar dentro não fecha
+    document.addEventListener("click", (e) => {
+      if (!menuPanel.classList.contains("open")) return;
+      const clickedInside = menuPanel.contains(e.target) || menuToggle.contains(e.target);
+      if (!clickedInside) toggleMenu(false);
     });
+    /* ===== /MENU ===== */
 
-    document.addEventListener("click", () => {
-      menuPanel.classList.remove("open");
+    /* ===== MODAL: DOCS (ADICIONADO) ===== */
+    const docsModal = document.getElementById("docsModal");
+    const docsClose = document.getElementById("docs_close");
+    const docsClose2 = document.getElementById("docs_close2");
+    const docsTitle = document.getElementById("docs_title");
+    const docsList = document.getElementById("docs_list");
+
+    const tabLeg = document.getElementById("tab_leg");
+    const tabDocs = document.getElementById("tab_docs");
+
+    let docsMode = "legislacao";
+
+    function setDocsTab(mode){
+      docsMode = mode;
+
+      const isLeg = mode === "legislacao";
+      tabLeg.classList.toggle("active", isLeg);
+      tabDocs.classList.toggle("active", !isLeg);
+
+      docsTitle.textContent = isLeg ? "📚 Legislação" : "📄 Documentos";
+      renderDocsList();
+    }
+
+    function renderDocsList(){
+      const items = (RESOURCES[docsMode] || []);
+      docsList.innerHTML = "";
+
+      if (!items.length){
+        const li = document.createElement("li");
+        li.className = "docItem";
+        li.innerHTML = `
+          <div class="docLeft">
+            <div class="docTitle">Nenhum item cadastrado ainda.</div>
+            <div class="docMeta">Edite RESOURCES no JS para adicionar PDFs.</div>
+          </div>
+        `;
+        docsList.appendChild(li);
+        return;
+      }
+
+      items.forEach((d) => {
+        const li = document.createElement("li");
+        li.className = "docItem";
+
+        const note = (d.note || "").trim();
+        li.innerHTML = `
+          <div class="docLeft">
+            <div class="docTitle">${d.title}</div>
+            <div class="docMeta">${note ? note : "PDF"}</div>
+          </div>
+          <button class="docOpen" type="button">Abrir ↗</button>
+        `;
+
+        li.querySelector(".docOpen").addEventListener("click", () => {
+          window.open(d.file, "_blank", "noopener,noreferrer");
+        });
+
+        // clique no item também abre (sem precisar mirar no botão)
+        li.addEventListener("click", (e) => {
+          // evita abrir duas vezes se clicar no botão
+          if (e.target && e.target.classList && e.target.classList.contains("docOpen")) return;
+          window.open(d.file, "_blank", "noopener,noreferrer");
+        });
+
+        docsList.appendChild(li);
+      });
+    }
+
+    function openDocsModal(mode){
+      toggleMenu(false);
+      setDocsTab(mode);
+      docsModal.showModal();
+    }
+
+    tabLeg.addEventListener("click", () => setDocsTab("legislacao"));
+    tabDocs.addEventListener("click", () => setDocsTab("documentos"));
+
+    openLegBtn.addEventListener("click", () => openDocsModal("legislacao"));
+    openDocsBtn.addEventListener("click", () => openDocsModal("documentos"));
+
+    function closeDocsModal(){
+      docsModal.close();
+    }
+
+    docsClose.addEventListener("click", closeDocsModal);
+    docsClose2.addEventListener("click", closeDocsModal);
+
+    docsModal.addEventListener("click", (e) => {
+      const rect = docsModal.getBoundingClientRect();
+      const isInDialog = (
+        rect.top <= e.clientY && e.clientY <= rect.top + rect.height &&
+        rect.left <= e.clientX && e.clientX <= rect.top + rect.height &&
+        rect.left <= e.clientX && e.clientX <= rect.left + rect.width
+      );
+      if (!isInDialog) closeDocsModal();
     });
+    /* ===== /MODAL DOCS ===== */
   </script>
 </body>
 </html>
