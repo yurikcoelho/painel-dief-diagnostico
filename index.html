@@ -1104,11 +1104,19 @@ Secretaria de Estado da Fazenda de Roraima - SEFAZ/RR<br>
     "FAC – Ficha de Atualização Cadastral."
   ],
   linksHtml: `
-    Para mais orientações sobre o procedimento, o contribuinte poderá consultar:
-    <a href="https://www.sefaz.rr.gov.br/arbv/substituto-tributario" target="_blank" rel="noopener noreferrer">
-      Cadastro/Alteração de Substituto Tributário
-    </a>.
-  `,
+  Para mais orientações sobre o procedimento, o contribuinte poderá consultar:
+  <a href="https://www.sefaz.rr.gov.br/arbv/substituto-tributario"
+     target="_blank" rel="noopener noreferrer">
+    Cadastro/Alteração de Substituto Tributário
+  </a>.
+  <br><br>
+  📎 Documentos necessários (download):
+  <a href="anexos/relacao-documentos-substituto-tributario-ec-87-alteracao.zip"
+     target="_blank" rel="noopener noreferrer">
+    Relação de Documentos – Substituto Tributário (EC 87)
+  </a>.
+`,
+
   templates: [
     {
       key: "padrao",
@@ -1153,8 +1161,9 @@ Secretaria de Estado da Fazenda de Roraima - SEFAZ/RR<br>
         { title: "Código Tributário Estadual de Roraima (atualizado até Maio/2025)", file: "pdfs/lei-059-1993-codigo-tributario-estadual-atualizado-maio-2025.pdf", note:""}
       ],
       documentos: [
-        { title: "Modelo de Requerimento (exemplo)", file: "pdfs/modelo-requerimento.pdf", note: "" },
-        { title: "Orientações ao Contribuinte (exemplo)", file: "pdfs/orientacoes-contribuinte.pdf", note: "" }
+        { title: "Relação de Documentos – Substituto Tributário (EC 87) – Alteração",
+          file: "anexos/relacao-documentos-substituto-tributario-ec-87-alteracao.zip",
+          note: "Download dos documentos para cadastro/alteração de ST"}   
       ]
     };
 
@@ -1460,7 +1469,8 @@ Secretaria de Estado da Fazenda de Roraima - SEFAZ/RR<br>
 
         const badge = document.createElement("div");
         badge.className = "pdfBadge";
-        badge.textContent = "PDF";
+        badge.textContent = it.file.endsWith(".zip") ? "ZIP" : "PDF";
+
 
         const text = document.createElement("div");
         text.className = "libText";
