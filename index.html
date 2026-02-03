@@ -123,6 +123,9 @@ body {
       font-size:12px;
       cursor:pointer;
       transition: transform .08s ease, border-color .15s ease, background-color .15s ease;
+      min-width:80px;
+  text-align:center;
+  align-self:flex-end; /* 👈 garante alinhamento mesmo se o texto crescer */
     }
     .btnMini:hover{ transform: translateY(-1px); }
 
@@ -212,13 +215,14 @@ body {
       line-height:1.5;
     }
 
-    .metaRow{
-      margin-top:12px;
-      display:flex; align-items:center; justify-content:space-between;
-      gap:10px;
-      color:var(--muted);
-      font-size:12px;
-    }
+   .metaRow{
+  margin-top:12px;
+  display:flex;
+  justify-content:space-between;
+  gap:10px;
+  align-items:flex-end; /* 👈 chave */
+}
+
 
     /* MODAL (cards) */
     dialog{
