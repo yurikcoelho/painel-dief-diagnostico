@@ -958,6 +958,49 @@ Secretaria de Estado da Fazenda de Roraima - SEFAZ/RR<br>
 </div>`
     }
   ]
+},
+
+      {
+  id: "habilitacao-sped-efd",
+  title: "Habilitação / Liberação no SPED — EFD ICMS-IPI",
+  categoryTag: "SPED / EFD",
+  summary: "Habilitar o contribuinte no SPED (EFD ICMS-IPI), definir/ajustar perfil e confirmar se o regime está correto antes de orientar a entrega.",
+  tags: ["sped", "efd", "icms-ipi", "habilitacao", "liberacao", "perfil", "acesso", "siateweb", "dief"],
+  procedureNote: "Antes de habilitar/liberar, confirme o regime de tributação e se a obrigatoriedade de EFD se aplica ao caso (ex.: Simples/MEI geralmente não entrega EFD ICMS-IPI).",
+  steps: [
+    "Confirmar o CNPJ/IE do contribuinte e a situação cadastral no sistema.",
+    "Consultar o regime de tributação no DSOT (ex.: Normal x Simples/MEI) para validar a obrigatoriedade da EFD ICMS-IPI.",
+    "Acessar o módulo/rotina de SPED/EFD no sistema interno (conforme procedimento da DIEF/CETIF).",
+    "Localizar o contribuinte (CNPJ/IE) e verificar se já existe habilitação anterior.",
+    "Realizar a habilitação/liberação para EFD ICMS-IPI (quando aplicável).",
+    "Selecionar/ajustar o perfil do contribuinte conforme regra interna (ex.: perfil de entrega/validação) e salvar.",
+    "Registrar em observação/parecer interno: data da habilitação, perfil selecionado e motivo (solicitação do contribuinte).",
+    "Orientar o contribuinte a aguardar a propagação da atualização (se houver) e realizar teste de transmissão/validação no PVA.",
+    "Se persistir erro de acesso/transmissão, coletar print/log e acionar suporte/CETIF."
+  ],
+  docs: [
+    "DSOT (para confirmar regime/obrigatoriedade).",
+    "Dados do contribuinte (CNPJ/IE).",
+    "Print/erro do PVA (se houver problema após habilitar)."
+  ],
+  linksHtml: `Se necessário, orientar validação pelo PVA da EFD ICMS-IPI e conferir credenciais/certificado digital.`,
+  templates: [
+    {
+      key: "padrao",
+      label: "Resposta Padrão",
+      html:
+`<div>
+  <p>Prezado(a),</p>
+  <p>Informamos que foi realizada a habilitação/liberação do contribuinte para fins de acesso/entrega da <strong>EFD ICMS-IPI</strong>, com o respectivo ajuste de perfil no sistema.</p>
+  <p>Caso ainda ocorra impedimento na transmissão/validação, solicitamos o envio do print/descrição do erro apresentado para análise e encaminhamento ao suporte técnico, se necessário.</p>
+  <p>Atenciosamente,</p>
+  <p>Divisão de Informações Econômico-Fiscais - DIEF<br>
+     Departamento da Receita - DEPAR<br>
+     Secretaria de Estado da Fazenda de Roraima - SEFAZ/RR<br>
+  </p>
+</div>`
+    }
+  ]
 }
 
     ];
