@@ -1001,6 +1001,80 @@ Secretaria de Estado da Fazenda de Roraima - SEFAZ/RR<br>
 </div>`
     }
   ]
+},
+
+      {
+  id: "retificacao-extemporanea-efd-gim",
+  title: "Retificação extemporânea — EFD-ICMS/IPI e/ou GIM",
+  categoryTag: "EFD / GIM",
+  summary: "Orientar abertura de processo no SEI, conferência documental e análise pela DIEF para autorização de retificação extemporânea (fora do prazo).",
+  tags: ["retificacao", "extemporanea", "efd", "efd-icms-ipi", "gim", "sei", "dief", "dare", "taxa", "8010", "108"],
+  procedureNote: "📌 Retificação extemporânea é a transmitida após o último dia do 3º mês subsequente ao período de apuração. Somente produz efeitos após autorização. (IN nº 2/2026)",
+  steps: [
+    "Confirmar se é caso de **retificação extemporânea** (fora do prazo do 3º mês subsequente ao período).",
+    "Orientar o contribuinte a **abrir processo eletrônico no SEI** (usuário externo): Peticionamento → Processo Novo → Órgão: **SEFAZ-RR** → Processo: **“Solicitação de Autorização para Retificação da EFD ICMS/IPI e/ou GIM”**.",
+    "Conferir a documentação obrigatória no processo: requerimento (Anexo I da IN), documento oficial com foto do responsável/procurador, DARE da taxa de expediente (DARE Avulso – **Cód. Receita 8010 / Cód. Tributo 108**), comprovante de pagamento do DARE, recibo(s) de entrega do(s) período(s) a retificar e procuração (se houver).",
+    "Checar se o pedido **demonstra objetivamente erro de fato** e a impossibilidade/inconveniência de correção por lançamentos corretivos.",
+    "Se faltar documento/precisar complementar: cientificar o contribuinte para saneamento em **10 dias úteis**. Sem manifestação: **arquivar**.",
+    "Após arquivamento por pendência: **não aceitar juntada posterior** no mesmo processo — se insistir, orientar **novo processo + nova taxa + novos documentos**.",
+    "Analisar vedações/restrições: não produzirá efeitos se o período estiver sob ação fiscal, se o crédito estiver inscrito em dívida ativa, se houver vedação legal ou se as regras da IN não forem observadas.",
+    "Se deferir: **viabilizar a transmissão do arquivo retificador** (retificação por substituição integral; vedado arquivo complementar).",
+    "Informar que a autorização fica vigente por **30 dias** (EFD) e **30 dias** (GIM). Se não transmitir no prazo: arquivar.",
+    "Após transmitir o arquivo retificador: orientar o contribuinte a **anexar o novo recibo de entrega** ao processo SEI para registro/controle."
+  ],
+  docs: [
+    "Requerimento (modelo do Anexo I da IN nº 2/2026) preenchido e assinado.",
+    "Documento oficial com foto do responsável legal ou procurador.",
+    "DARE da taxa de expediente (DARE Avulso – Cód. Receita 8010 / Cód. Tributo 108).",
+    "Comprovante de pagamento do DARE.",
+    "Recibo de entrega da EFD-ICMS/IPI e/ou GIM do(s) período(s) a retificar.",
+    "Procuração (se aplicável).",
+    "Novo recibo de entrega do arquivo retificador (após transmissão)."
+  ],
+  linksHtml: `
+    <div>
+      <b>Referência normativa:</b> IN nº 2/2026/SEFAZ/DEPAR/DITRI (Retificação extemporânea EFD/GIM).<br>
+      <span class="muted">Obs.: O pedido deve ser aberto no SEI pelo usuário externo, no processo “Solicitação de Autorização para Retificação da EFD ICMS/IPI e/ou GIM”.</span>
+    </div>
+  `,
+  templates: [
+    {
+      key: "orientacao-protocolo",
+      label: "Orientação (Protocolo no SEI)",
+      html:
+`<div>
+  <p>Prezado(a),</p>
+  <p>Conforme a Instrução Normativa nº 2/2026, a <strong>retificação extemporânea</strong> da EFD-ICMS/IPI e/ou da GIM (fora do prazo regulamentar) <strong>depende de autorização</strong> e deve ser solicitada por meio de <strong>processo eletrônico no SEI</strong>, direcionado à DIEF.</p>
+
+  <p>Para protocolar, acesse o SEI (usuário externo) e abra: <strong>Peticionamento → Processo Novo</strong>, selecione o órgão <strong>SEFAZ-RR</strong> e o processo <strong>“Solicitação de Autorização para Retificação da EFD ICMS/IPI e/ou GIM”</strong>.</p>
+
+  <p>O pedido deve ser instruído com, no mínimo: requerimento (modelo do Anexo I), documento com foto do responsável/procurador, DARE da taxa de expediente (DARE Avulso – Cód. Receita 8010 / Cód. Tributo 108), comprovante de pagamento do DARE e recibo(s) de entrega do(s) período(s) a retificar (e procuração, se houver).</p>
+
+  <p>Atenciosamente,</p>
+  <p>Divisão de Informações Econômico-Fiscais - DIEF<br>
+     Departamento da Receita - DEPAR<br>
+     Secretaria de Estado da Fazenda de Roraima - SEFAZ/RR<br>
+  </p>
+</div>`
+    },
+    {
+      key: "pendencia-documental",
+      label: "Pendência documental",
+      html:
+`<div>
+  <p>Prezado(a),</p>
+  <p>Em análise ao seu pedido de <strong>retificação extemporânea</strong> da EFD-ICMS/IPI e/ou GIM, verificou-se a necessidade de <strong>complementação documental</strong> para prosseguimento da instrução do processo.</p>
+
+  <p>Solicitamos a juntada dos documentos pendentes no processo SEI, no prazo de <strong>10 (dez) dias úteis</strong>, conforme previsto na Instrução Normativa nº 2/2026.</p>
+
+  <p>Atenciosamente,</p>
+  <p>Divisão de Informações Econômico-Fiscais - DIEF<br>
+     Departamento da Receita - DEPAR<br>
+     Secretaria de Estado da Fazenda de Roraima - SEFAZ/RR<br>
+  </p>
+</div>`
+    }
+  ]
 }
 
     ];
