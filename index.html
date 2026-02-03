@@ -124,6 +124,9 @@ body {
       font-size:12px;
       cursor:pointer;
       transition: transform .08s ease, border-color .15s ease, background-color .15s ease;
+      min-width:78px;                  /* ✅ padroniza largura */
+      text-align:center;               /* ✅ “Abrir →” sempre centralizado */
+      align-self:flex-end;             /* ✅ garante alinhado embaixo */
     }
     .btnMini:hover{ transform: translateY(-1px); }
 
@@ -215,7 +218,9 @@ body {
 
     .metaRow{
       margin-top:12px;
-      display:flex; align-items:center; justify-content:space-between;
+      display:flex; 
+      align-items:flex-end; 
+      justify-content:space-between;
       gap:10px;
       color:var(--muted);
       font-size:12px;
