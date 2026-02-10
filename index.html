@@ -1427,7 +1427,64 @@ Emitir DARE Avulso
       `
     }
   ]
+},
+
+      {
+  id: "impossibilidade-emissao-cnd",
+  title: "Impossibilidade de emitir a CND",
+  categoryTag: "Certidões / Débitos",
+  summary: "Orientações quando a Certidão Negativa de Débitos (CND) não pode ser emitida em razão de débitos pendentes no cadastro estadual.",
+  tags: ["cnd", "certidao", "debito", "dsot", "pendencia", "regularizacao"],
+  procedureNote: "A emissão da CND está condicionada à inexistência de débitos ou pendências no cadastro estadual do contribuinte.",
+  steps: [
+    "Verificar se o contribuinte possui débitos ou pendências registrados no cadastro estadual.",
+    "Orientar a consulta ao DSOT (Demonstrativo de Situação de Obrigações Tributárias Estaduais).",
+    "Informar que a regularização dos débitos é condição necessária para a emissão da CND.",
+    "Após a regularização das pendências, a CND poderá ser emitida normalmente pela internet."
+  ],
+  docs: [],
+  linksHtml: `
+    🔗 Consulta ao DSOT – Central de Serviços do Contribuinte:
+    <span class="muted">Disponível no portal da SEFAZ/RR, mediante acesso com login do contribuinte.</span>
+  `,
+  templates: [
+    {
+      key: "padrao",
+      label: "Resposta Padrão",
+      html: `
+<div>
+  <p>Prezado(a),</p>
+
+  <p>
+    Em atenção ao seu contato, informamos que a impossibilidade de emissão da
+    <strong>Certidão Negativa de Débitos (CND)</strong> ocorre em razão da existência
+    de débitos pendentes registrados no cadastro estadual.
+  </p>
+
+  <p>
+    Para verificar os débitos e adotar as providências necessárias à regularização,
+    orientamos a consulta ao <strong>DSOT (Demonstrativo de Situação de Obrigações Tributárias Estaduais)</strong>,
+    disponível na Central de Serviços do Contribuinte.
+  </p>
+
+  <p>
+    Após a regularização das pendências indicadas no DSOT, a CND poderá ser emitida
+    normalmente pela internet.
+  </p>
+
+  <p>Atenciosamente,</p>
+
+  <p>
+    Divisão de Informações Econômico-Fiscais – DIEF<br>
+    Departamento da Receita – DEPAR<br>
+    Secretaria de Estado da Fazenda de Roraima – SEFAZ/RR
+  </p>
+</div>
+      `
+    }
+  ]
 }
+
 
 
     ];
