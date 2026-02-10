@@ -1375,7 +1375,68 @@ Emitir DARE Avulso
 `
     }
   ]
+},
+
+      {
+  id: "habilitacao-nfe",
+  title: "Habilitação para emitir NF-e",
+  categoryTag: "Cadastro / NF-e",
+  summary: "Verificação e habilitação da Inscrição Estadual para emissão e recepção de NF-e no Cadastro Centralizado de Contribuintes (CCC).",
+  tags: ["nfe", "habilitacao", "ccc", "cadastro", "emissao", "recepcao"],
+  procedureNote: "A habilitação é realizada diretamente no Cadastro Centralizado de Contribuintes (CCC).",
+  steps: [
+    "Consultar se a Inscrição Estadual encontra-se habilitada no Cadastro Centralizado de Contribuintes (CCC).",
+    "A consulta deve ser realizada no portal do CCC.",
+    "Caso a IE não esteja habilitada, acessar o sistema de gestão do CCC da SEFAZ Roraima.",
+    "Clicar no botão “Atualizar” tanto em Produção quanto em Homologação.",
+    "Após a atualização, orientar o contribuinte a aguardar a propagação da base cadastral."
+  ],
+  docs: [],
+  linksHtml: `
+    🔗 Consulta no Cadastro Centralizado de Contribuintes (CCC):
+    <a href="https://dfe-portal.svrs.rs.gov.br/Cte/Ccc"
+       target="_blank" rel="noopener noreferrer">
+      Acessar CCC
+    </a>
+    <br><br>
+    🔗 Gestão do CCC – SEFAZ Roraima:
+    <a href="https://gestaoccc.sefaz.rr.gov.br/"
+       target="_blank" rel="noopener noreferrer">
+      Atualizar Produção e Homologação
+    </a>
+  `,
+  templates: [
+    {
+      key: "padrao",
+      label: "Resposta Padrão",
+      html: `
+<div>
+  <p>Prezado(a),</p>
+
+  <p>
+    Informamos que foi realizado ajuste no Cadastro Centralizado de Contribuintes de Roraima,
+    habilitando a Inscrição Estadual para <strong>emissão e recepção de NF-e</strong>.
+    No momento, o cadastro encontra-se regular e ativo.
+  </p>
+
+  <p>
+    Caso persista alguma dificuldade pontual, orientamos a atualização da base cadastral
+    do estabelecimento emissor.
+  </p>
+
+  <p>Atenciosamente,</p>
+
+  <p>
+    Divisão de Informações Econômico-Fiscais – DIEF<br>
+    Departamento da Receita – DEPAR<br>
+    Secretaria de Estado da Fazenda de Roraima – SEFAZ/RR
+  </p>
+</div>
+      `
+    }
+  ]
 }
+
 
     ];
 
