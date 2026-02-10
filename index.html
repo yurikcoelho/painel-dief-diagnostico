@@ -1435,18 +1435,15 @@ Emitir DARE Avulso
   categoryTag: "Certidões / Débitos",
   summary: "Orientações quando a Certidão Negativa de Débitos (CND) não pode ser emitida em razão de débitos pendentes no cadastro estadual.",
   tags: ["cnd", "certidao", "debito", "dsot", "pendencia", "regularizacao"],
-  procedureNote: "A emissão da CND está condicionada à inexistência de débitos ou pendências no cadastro estadual do contribuinte.",
+  procedureNote: "A emissão da CND está condicionada à inexistência de débitos ou pendências no cadastro estadual do contribuinte. Por motivo de sigilo fiscal, não é possível a emissão da Certidão Positiva de Débitos pelo contribuinte na internet.",
   steps: [
-    "Verificar se o contribuinte possui débitos ou pendências registrados no cadastro estadual.",
-    "Orientar a consulta ao DSOT (Demonstrativo de Situação de Obrigações Tributárias Estaduais).",
+    "Verificar o DSOT do contribuinte no SiateWeb para saber se ele possui débitos pendentes.",
+    "Se ele possuir débitos no DSOT, não será possível a emissão da CND pela internet.",
     "Informar que a regularização dos débitos é condição necessária para a emissão da CND.",
     "Após a regularização das pendências, a CND poderá ser emitida normalmente pela internet."
   ],
   docs: [],
-  linksHtml: `
-    🔗 Consulta ao DSOT – Central de Serviços do Contribuinte:
-    <span class="muted">Disponível no portal da SEFAZ/RR, mediante acesso com login do contribuinte.</span>
-  `,
+  linksHtml: ``,
   templates: [
     {
       key: "padrao",
