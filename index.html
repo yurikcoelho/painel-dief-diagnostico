@@ -1838,33 +1838,35 @@ Emitir DARE Avulso
         return;
       }
 
-      items.forEach(it => {
-        const row = document.createElement("div");
-        row.className = "libItem";
-        row.title = "Clique para abrir o PDF";
+     items.forEach(it => {
+    const row = document.createElement("div");
+    row.className = "libItem";
 
-        function getBadgeLabel(filename) {
+    function getBadgeLabel(filename) {
         if (filename.endsWith(".zip"))  return "ZIP";
         if (filename.endsWith(".doc") || filename.endsWith(".docx")) return "DOC";
         return "PDF";
-                }
+    }
 
-        const badge = document.createElement("div");
-        badge.className = "pdfBadge";
-        badge.textContent = getBadgeLabel(it.file);
+    const label = getBadgeLabel(it.file); // ← guarda numa variável
 
+    row.title = `Clique para abrir o ${label}`; // "Clique para abrir o ZIP/DOC/PDF"
 
-        const text = document.createElement("div");
-        text.className = "libText";
-        text.innerHTML = `
-          <div class="t">${it.title}</div>
-          ${it.note ? `<div class="n">${it.note}</div>` : ``}
-        `;
+    const badge = document.createElement("div");
+    badge.className = "pdfBadge";
+    badge.textContent = label;
 
-        const btn = document.createElement("button");
-        btn.className = "openBtn";
-        btn.type = "button";
-        btn.textContent = "Abrir PDF";
+    const text = document.createElement("div");
+    text.className = "libText";
+    text.innerHTML = `
+        <div class="t">${it.title}</div>
+        ${it.note ? `<div class="n">${it.note}</div>` : ``}
+    `;
+
+    const btn = document.createElement("button");
+    btn.className = "openBtn";
+    btn.type = "button";
+    btn.textContent = `Abrir ${label}`; // "Abrir ZIP/DOC/PDF"
 
         const open = () => window.open(it.file, "_blank", "noopener,noreferrer");
 
