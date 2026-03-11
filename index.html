@@ -1533,7 +1533,7 @@ Emitir DARE Avulso
           file: "anexos/relacao-documentos-substituto-tributario-ec-87-alteracao.zip",
           note: "Download dos documentos para cadastro/alteração de ST"},
         { title: "FAC (Ficha de Atualização Cadastral)",
-          file: "anexos/FAC.doc",
+          file: "pdfs/FAC.doc",
           note: ""},
         {
     title: "Manual do Contribuinte – Reanálise",
@@ -1843,9 +1843,15 @@ Emitir DARE Avulso
         row.className = "libItem";
         row.title = "Clique para abrir o PDF";
 
+        function getBadgeLabel(filename) {
+        if (filename.endsWith(".zip"))  return "ZIP";
+        if (filename.endsWith(".doc") || filename.endsWith(".docx")) return "DOC";
+        return "PDF";
+                }
+
         const badge = document.createElement("div");
         badge.className = "pdfBadge";
-        badge.textContent = it.file.endsWith(".zip") ? "ZIP" : "PDF";
+        badge.textContent = getBadgeLabel(it.file);
 
 
         const text = document.createElement("div");
