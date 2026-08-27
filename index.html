@@ -787,7 +787,7 @@ body {
       <div class="tabsRow">
         <button class="tabBtn active" id="tab_leg" type="button">Legislação</button>
         <button class="tabBtn" id="tab_doc" type="button">Documentos</button>
-        <button class="tabBtn" id="tab_doc" type="button">Consultas</button>
+        <button class="tabBtn" id="tab_cons" type="button">Consultas</button>
       </div>
 
       <div class="libSearch">
@@ -1545,7 +1545,7 @@ Emitir DARE Avulso
         { title: "Manual Nota Fiscal Fácil", file: "pdfs/manual-nota-fiscal-facil.pdf", note: ""}
       ],
       consultas: [
-        { title: "Consulta Solução Tributária 01/2026", file: "consulta-tributaria-01-2026.pdf", note: ""}
+        { title: "Consulta Solução Tributária 01/2026", file: "pdfs/consulta-tributaria-01-2026.pdf", note: ""}
        ]
     };
 
@@ -1800,6 +1800,7 @@ Emitir DARE Avulso
     const libClose = document.getElementById("lib_close");
     const tabLeg = document.getElementById("tab_leg");
     const tabDoc = document.getElementById("tab_doc");
+    const tabCons = document.getElementById("tab_cons");
     const libQ = document.getElementById("lib_q");
     const libList = document.getElementById("lib_list");
 
@@ -1816,12 +1817,13 @@ Emitir DARE Avulso
     function closeLibrary(){ libModal.close(); }
 
     function setTab(tab){
-      libState.tab = tab;
-      tabLeg.classList.toggle("active", tab === "legislacao");
-      tabDoc.classList.toggle("active", tab === "documentos");
-      renderLibrary();
-      libQ.focus();
-    }
+  libState.tab = tab;
+  tabLeg.classList.toggle("active", tab === "legislacao");
+  tabDoc.classList.toggle("active", tab === "documentos");
+  tabCons.classList.toggle("active", tab === "consultas");
+  renderLibrary();
+  libQ.focus();
+}
 
     function matchesQuery(item, q){
       if (!q) return true;
@@ -1892,6 +1894,7 @@ Emitir DARE Avulso
 
     tabLeg.addEventListener("click", () => setTab("legislacao"));
     tabDoc.addEventListener("click", () => setTab("documentos"));
+    tabCons.addEventListener("click", () => setTab("consultas"));
 
     libQ.addEventListener("input", (e) => {
       libState.q = e.target.value || "";
