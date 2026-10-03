@@ -1,0 +1,525 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Triagem de NF-e no trânsito</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600&family=Barlow+Semi+Condensed:wght@600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#EDF1EE; --surface:#FFFFFF; --ink:#15222A; --muted:#52616A; --line:#C5CEC9;
+  --sign:#0E6A3D; --sign-ink:#FFFFFF; --amber:#E0A200; --amber-ink:#1D1500;
+  --red:#B3201E; --red-ink:#FFFFFF; --info:#2A5B89; --formal:#6A7680; --chip:#E1E8E4;
+  --font:"Barlow", system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+  --display:"Barlow Semi Condensed", "Arial Narrow", system-ui, sans-serif;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0E1418; --surface:#162027; --ink:#E5ECE9; --muted:#9BA9A4; --line:#2A3840;
+    --sign:#14834D; --amber:#F0B429; --amber-ink:#1D1500; --red:#D9413F; --info:#74A9DB; --formal:#8F9AA3; --chip:#1F2B32;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0E1418; --surface:#162027; --ink:#E5ECE9; --muted:#9BA9A4; --line:#2A3840;
+  --sign:#14834D; --amber:#F0B429; --amber-ink:#1D1500; --red:#D9413F; --info:#74A9DB; --formal:#8F9AA3; --chip:#1F2B32;
+}
+*,*::before,*::after{box-sizing:inherit}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);font-size:17px;line-height:1.45;-webkit-text-size-adjust:100%}
+main{max-width:720px;margin:0 auto;padding:18px 16px 48px}
+h1,h2,h3{font-family:var(--display);line-height:1.1;margin:0}
+h1{font-size:1.75rem;font-weight:700;letter-spacing:.005em}
+h2{font-size:1.3rem;font-weight:700;margin:28px 0 10px}
+h3{font-size:1.08rem;font-weight:600}
+p{margin:.35em 0}
+small,.muted{color:var(--muted)}
+a{color:var(--info)}
+button,input,select{font:inherit;color:inherit}
+:focus-visible{outline:3px solid var(--info);outline-offset:2px}
+.top{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:10px 16px;border-bottom:4px solid var(--sign);padding-bottom:10px}
+.top > div{flex:1 1 280px}
+.top p{margin:4px 0 0;color:var(--muted);font-size:.95rem}
+.posto{display:flex;align-items:center;gap:6px;font-size:.92rem;color:var(--muted)}
+.posto input{width:9.5em;padding:6px 8px;border:1px solid var(--line);border-radius:8px;background:var(--surface)}
+.field{display:block;margin:16px 0 4px;font-weight:600}
+.field small{display:block;font-weight:400}
+input[type=datetime-local],input.chave,textarea.chave{width:100%;padding:12px;border:1px solid var(--line);border-radius:10px;background:var(--surface);font-size:1rem}
+.actions{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:16px}
+.actions .wide{grid-column:1/-1}
+.btn{display:flex;align-items:center;justify-content:center;gap:8px;min-height:54px;padding:10px 14px;border-radius:12px;border:2px solid var(--ink);background:var(--surface);font-weight:600;cursor:pointer;text-align:center;text-decoration:none;color:var(--ink)}
+.btn.primary{background:var(--sign);border-color:var(--sign);color:var(--sign-ink)}
+.btn.small{min-height:42px;font-size:.95rem;border-width:1.5px}
+.row{display:flex;gap:8px;margin-top:8px}
+.row .chave{flex:1}
+.hidden{display:none!important}
+.scanner{position:fixed;inset:0;z-index:20;background:#000;display:flex;flex-direction:column}
+.scanner video,.scanner #h5q{flex:1;width:100%;object-fit:cover}
+.scanner .bar{padding:14px 16px calc(14px + env(safe-area-inset-bottom,0px));background:#0b1114;color:#fff;display:flex;gap:10px;align-items:center;justify-content:space-between}
+.scanner .aim{position:absolute;left:8%;right:8%;top:38%;height:22%;border:3px solid rgba(255,255,255,.85);border-radius:12px;pointer-events:none}
+.msg{margin-top:12px;padding:12px 14px;border-left:6px solid var(--amber);background:var(--surface);border-radius:6px;font-weight:500}
+.hint{margin-top:8px;font-size:.95rem;color:var(--muted)}
+.chavebox{margin-top:18px;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px}
+.kv{display:grid;grid-template-columns:auto 1fr;gap:4px 14px;margin:8px 0 0}
+.kv dt{color:var(--muted)}
+.kv dd{margin:0;font-weight:500;overflow-wrap:anywhere}
+.digits{font-variant-numeric:tabular-nums;letter-spacing:.02em;overflow-wrap:anywhere}
+.nf{margin-top:26px}
+.plate{border-radius:16px;padding:18px 18px 16px;box-shadow:inset 0 0 0 4px rgba(255,255,255,.9);margin-bottom:14px}
+.plate h2{margin:0;font-size:2.1rem}
+.plate p{margin:6px 0 0;font-size:1rem}
+.plate.para{background:var(--red);color:var(--red-ink)}
+.plate.confere{background:var(--amber);color:var(--amber-ink);box-shadow:inset 0 0 0 4px rgba(29,21,0,.85)}
+.plate.libera{background:var(--sign);color:var(--sign-ink)}
+.plate .ident{font-family:var(--display);font-weight:600;font-size:1.05rem;opacity:.95;margin-bottom:6px}
+.resumo{font-size:1.02rem}
+.section{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px;margin-top:12px}
+.section > h3{margin-bottom:6px}
+.alert{border-left:6px solid var(--formal);padding:8px 10px 8px 12px;margin:10px 0;background:var(--bg);border-radius:4px}
+.alert.para{border-color:var(--red)} .alert.confere{border-color:var(--amber)} .alert.info{border-color:var(--info)} .alert.registrar{border-color:var(--formal)}
+.alert b{display:block}
+.alert .base{font-size:.88rem;color:var(--muted);margin-top:3px}
+.group-t{font-family:var(--display);font-weight:600;font-size:1.02rem;margin:14px 0 2px}
+.tag{display:inline-block;padding:1px 8px;border-radius:999px;background:var(--chip);font-size:.85rem;margin:2px 4px 2px 0}
+.tag.st{background:var(--amber);color:var(--amber-ink)}
+details{margin-top:12px;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:10px 14px}
+details summary{cursor:pointer;font-family:var(--display);font-weight:600;font-size:1.08rem;padding:4px 0}
+.item{border-top:1px solid var(--line);padding:10px 0}
+.item:first-of-type{border-top:0}
+.item .t{font-weight:600}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:2px 14px;font-size:.93rem;margin-top:4px}
+.pre{white-space:pre-wrap;overflow-wrap:anywhere;font-size:.95rem;background:var(--bg);padding:10px;border-radius:8px}
+.footer{margin-top:36px;font-size:.88rem;color:var(--muted);border-top:1px solid var(--line);padding-top:12px}
+.empty{margin-top:26px;padding:16px;border:2px dashed var(--line);border-radius:12px;color:var(--muted)}
+@media (max-width:420px){ .actions{grid-template-columns:1fr} .grid2{grid-template-columns:1fr} h1{font-size:1.55rem} }
+@media (prefers-reduced-motion: no-preference){ .nf{animation:in .25s ease-out} @keyframes in{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}} }
+</style>
+</head>
+<body>
+<main>
+  <header class="top">
+    <div>
+      <h1>Triagem de NF-e no trânsito</h1>
+      <p>Leia o código do DANFE, abra o XML e veja os sinais de alerta.</p>
+    </div>
+    <label class="posto">Posto <input id="posto" value="Pacaraima" aria-label="Município do posto fiscal"></label>
+  </header>
+
+  <label class="field" for="abordagem">Início da abordagem<small>Hora de Roraima. Usada para conferir se a nota foi autorizada antes.</small></label>
+  <input type="datetime-local" id="abordagem">
+
+  <div class="actions">
+    <button class="btn primary" id="bScan">Ler código com a câmera</button>
+    <label class="btn" for="fCam" id="bCam">Fotografar o código</label>
+    <input type="file" id="fCam" accept="image/*" capture="environment" class="hidden">
+    <label class="btn" for="fFoto" id="bFoto">Escolher foto do código</label>
+    <input type="file" id="fFoto" accept="image/*" class="hidden">
+    <label class="btn" for="fXml" id="bXml">Abrir XML da nota</label>
+    <input type="file" id="fXml" accept=".xml,text/xml,application/xml" multiple class="hidden">
+  </div>
+  <div class="row">
+    <input class="chave" id="chaveManual" inputmode="numeric" placeholder="Ou digite/cole a chave ou o link do QR Code" aria-label="Chave de acesso">
+    <button class="btn small" id="bChave">Ler chave</button>
+  </div>
+  <div id="aviso" class="msg hidden" role="status"></div>
+
+  <section id="chaveOut"></section>
+  <section id="out"><div class="empty">Nenhuma nota analisada. Leia o código do DANFE para obter a chave e baixar o XML (por exemplo, no Meu Danfe), depois abra o XML aqui.</div></section>
+
+  <p class="footer">Ferramenta de apoio à triagem. As regras seguem o RICMS/RR (Decreto nº 4.335-E/2001, cópia de referência até jan/2026), o CTE (Lei nº 59/93) e a prática do posto; listas de NCM são iniciais e precisam de calibragem. Não substitui a análise do auditor. A busca automática envia a chave de acesso ao serviço privado consultadanfe.com; o XML aberto manualmente é lido só neste aparelho.</p>
+</main>
+
+<div class="scanner hidden" id="scanner" role="dialog" aria-label="Leitura do código">
+  <video id="vid" playsinline muted></video>
+  <div id="h5q" class="hidden"></div>
+  <div class="aim" aria-hidden="true"></div>
+  <div class="bar"><span id="scanMsg">Aponte para o código de barras ou QR Code</span><button class="btn small" id="bStop" style="color:#fff;border-color:#fff;background:transparent">Cancelar</button></div>
+</div>
+
+<script>
+"use strict";
+/* Endpoint de consulta do XML pela chave. Para usar um intermediário (proxy), troque o endereço abaixo. */
+const API_URL="https://consultadanfe.com/api/v1/consulta";
+/* ---------- utilidades ---------- */
+const $=s=>document.querySelector(s);
+const esc=s=>String(s==null?"":s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const num=v=>{const n=parseFloat(String(v||"0").replace(",","."));return isNaN(n)?0:n};
+const brl=v=>num(v).toLocaleString("pt-BR",{style:"currency",currency:"BRL"});
+const pct=v=>num(v).toLocaleString("pt-BR",{maximumFractionDigits:2})+"%";
+const onlyDig=s=>String(s||"").replace(/\D/g,"");
+const norm=s=>String(s||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().trim();
+function fmtDoc(d){d=onlyDig(d);if(d.length===14)return d.replace(/^(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})$/,"$1.$2.$3/$4-$5");if(d.length===11)return d.replace(/^(\d{3})(\d{3})(\d{3})(\d{2})$/,"$1.$2.$3-$4");return d}
+function fmtDate(dt){if(!dt||isNaN(dt))return "—";return dt.toLocaleString("pt-BR",{timeZone:"America/Boa_Vista",day:"2-digit",month:"2-digit",year:"numeric",hour:"2-digit",minute:"2-digit"})}
+function store(k,v){try{localStorage.setItem(k,v)}catch(e){}}
+function load(k){try{return localStorage.getItem(k)}catch(e){return null}}
+
+/* ---------- tabelas ---------- */
+const UF={11:"RO",12:"AC",13:"AM",14:"RR",15:"PA",16:"AP",17:"TO",21:"MA",22:"PI",23:"CE",24:"RN",25:"PB",26:"PE",27:"AL",28:"SE",29:"BA",31:"MG",32:"ES",33:"RJ",35:"SP",41:"PR",42:"SC",43:"RS",50:"MS",51:"MT",52:"GO",53:"DF"};
+const SULSUDESTE=["MG","RJ","SP","PR","SC","RS"];
+const MODELO={"55":"NF-e","65":"NFC-e","57":"CT-e","58":"MDF-e","59":"CF-e SAT","99":"DC-e"};
+const TPEMIS={"1":"Normal","2":"Contingência FS-IA","3":"Contingência SCAN","4":"Contingência EPEC","5":"Contingência FS-DA","6":"Contingência SVC-AN","7":"Contingência SVC-RS","9":"Contingência off-line (NFC-e)"};
+const INDIE={"1":"contribuinte do ICMS","2":"contribuinte isento de inscrição","9":"não contribuinte"};
+const MODFRETE={"0":"por conta do emitente","1":"por conta do destinatário","2":"por conta de terceiros","3":"transporte próprio do remetente","4":"transporte próprio do destinatário","9":"sem ocorrência de transporte"};
+const TPAG={"01":"dinheiro","02":"cheque","03":"cartão de crédito","04":"cartão de débito","05":"crédito loja","10":"vale-alimentação","11":"vale-refeição","12":"vale-presente","13":"vale-combustível","15":"boleto","16":"depósito","17":"PIX","18":"transferência/carteira digital","19":"fidelidade/cashback","90":"sem pagamento","99":"outros"};
+const CRT={"1":"Simples Nacional","2":"Simples Nacional com excesso de sublimite","3":"Regime normal","4":"Simples Nacional – MEI"};
+const CST={"00":"Tributada integralmente","02":"Monofásica própria (combustíveis)","10":"Tributada e com cobrança de ST","15":"Monofásica própria e com retenção (combustíveis)","20":"Com redução de base de cálculo","30":"Isenta ou não tributada, com cobrança de ST","40":"Isenta","41":"Não tributada","50":"Suspensão","51":"Diferimento","53":"Monofásica com recolhimento diferido","60":"ICMS cobrado anteriormente por ST","61":"Monofásica cobrada anteriormente (combustíveis)","70":"Redução de base e cobrança de ST","90":"Outras"};
+const CSOSN={"101":"Simples: tributada com permissão de crédito","102":"Simples: tributada sem permissão de crédito","103":"Simples: isenção para faixa de receita","201":"Simples: com permissão de crédito e com ST","202":"Simples: sem permissão de crédito e com ST","203":"Simples: isenção por faixa e com ST","300":"Simples: imune","400":"Simples: não tributada","500":"Simples: ICMS cobrado anteriormente por ST ou antecipação","900":"Simples: outros"};
+const ORIG={"0":"nacional","1":"estrangeira, importação direta","2":"estrangeira, mercado interno","3":"nacional, conteúdo importado >40% e ≤70%","4":"nacional, processo produtivo básico","5":"nacional, conteúdo importado ≤40%","6":"estrangeira direta, sem similar","7":"estrangeira mercado interno, sem similar","8":"nacional, conteúdo importado >70%"};
+const CFOPD={
+"1102":"Compra para comercialização","1202":"Devolução de venda de mercadoria de terceiros","1403":"Compra para comercialização com ST","1904":"Retorno de remessa para venda fora do estabelecimento","1949":"Outra entrada não especificada","2102":"Compra para comercialização (interestadual)","2403":"Compra para comercialização com ST (interestadual)",
+"5101":"Venda de produção do estabelecimento","5102":"Venda de mercadoria adquirida de terceiros","5103":"Venda de produção, efetuada fora do estabelecimento","5104":"Venda de mercadoria de terceiros, efetuada fora do estabelecimento","5115":"Venda de mercadoria recebida em consignação mercantil","5116":"Venda de produção originada de encomenda para entrega futura","5117":"Venda de mercadoria de terceiros originada de encomenda para entrega futura","5118":"Venda de produção entregue ao destinatário por conta e ordem do adquirente","5119":"Venda de mercadoria de terceiros entregue por conta e ordem do adquirente","5120":"Venda de mercadoria adquirida e entregue ao destinatário pelo vendedor remetente (venda à ordem)","5151":"Transferência de produção do estabelecimento","5152":"Transferência de mercadoria adquirida de terceiros","5155":"Transferência de produção que não deva transitar pelo estabelecimento","5156":"Transferência de mercadoria de terceiros que não deva transitar pelo estabelecimento","5201":"Devolução de compra para industrialização","5202":"Devolução de compra para comercialização","5401":"Venda de produção com ST, na condição de substituto","5403":"Venda de mercadoria de terceiros com ST, na condição de substituto","5405":"Venda de mercadoria de terceiros com ST já retida (substituído)","5408":"Transferência de produção sujeita a ST","5409":"Transferência de mercadoria de terceiros sujeita a ST","5411":"Devolução de compra para comercialização com ST","5551":"Venda de bem do ativo imobilizado","5552":"Transferência de bem do ativo imobilizado","5556":"Devolução de compra de material de uso ou consumo","5557":"Transferência de material de uso ou consumo","5655":"Venda de combustível de terceiros destinado à comercialização","5656":"Venda de combustível de terceiros destinado a consumidor final","5901":"Remessa para industrialização por encomenda","5902":"Retorno de mercadoria usada na industrialização por encomenda","5904":"Remessa para venda fora do estabelecimento","5905":"Remessa para depósito fechado ou armazém geral","5906":"Retorno de mercadoria depositada","5908":"Remessa de bem em comodato","5909":"Retorno de bem recebido em comodato","5910":"Remessa em bonificação, doação ou brinde","5911":"Remessa de amostra grátis","5912":"Remessa para demonstração","5913":"Retorno de mercadoria recebida para demonstração","5915":"Remessa para conserto ou reparo","5916":"Retorno de mercadoria recebida para conserto","5917":"Remessa em consignação mercantil ou industrial","5918":"Devolução de mercadoria recebida em consignação","5920":"Remessa de vasilhame ou sacaria","5921":"Devolução de vasilhame ou sacaria","5922":"Simples faturamento de venda para entrega futura","5923":"Remessa por conta e ordem de terceiros, em venda à ordem","5924":"Remessa para industrialização por conta e ordem do adquirente","5927":"Baixa de estoque (perda, roubo, deterioração)","5929":"Documento relativo a operação também registrada em ECF/NFC-e","5949":"Outra saída não especificada",
+"6101":"Venda de produção do estabelecimento (interestadual)","6102":"Venda de mercadoria adquirida de terceiros (interestadual)","6107":"Venda de produção a não contribuinte (interestadual)","6108":"Venda de mercadoria de terceiros a não contribuinte (interestadual)","6151":"Transferência de produção (interestadual)","6152":"Transferência de mercadoria de terceiros (interestadual)","6202":"Devolução de compra para comercialização (interestadual)","6401":"Venda de produção com ST, como substituto (interestadual)","6403":"Venda de mercadoria de terceiros com ST, como substituto (interestadual)","6404":"Venda de mercadoria com ST já retida anteriormente (interestadual)","6409":"Transferência de mercadoria sujeita a ST (interestadual)","6904":"Remessa para venda fora do estabelecimento (interestadual)","6910":"Remessa em bonificação, doação ou brinde (interestadual)","6915":"Remessa para conserto ou reparo (interestadual)","6917":"Remessa em consignação (interestadual)","6923":"Remessa por conta e ordem de terceiros (interestadual)","6929":"Documento relativo a operação registrada em ECF/NFC-e (interestadual)","6949":"Outra saída não especificada (interestadual)",
+"7101":"Venda de produção ao exterior","7102":"Venda de mercadoria de terceiros ao exterior","7949":"Outra saída para o exterior"};
+function cfopDesc(c){c=onlyDig(c);if(CFOPD[c])return CFOPD[c];const m={"1":"Entrada interna","2":"Entrada interestadual","3":"Entrada do exterior","5":"Saída interna","6":"Saída interestadual","7":"Saída para o exterior"}[c[0]]||"CFOP";const g={"1":"venda/compra","2":"devolução","3":"energia ou comunicação","4":"operação com ST","5":"ativo, uso e consumo ou exportação","6":"combustíveis ou créditos","9":"remessa ou outra operação"}[c[1]]||"";return m+(g?" – "+g:"")}
+const TRANSF=["151","152","153","155","156","408","409","552","557","658","659"];
+
+/* Listas de ST/antecipação em RR (prefixos de NCM, sem pontos) */
+const AUTOPECAS="381512 391810 392330 392630 40103 5910 401693 48239 401610 401699 570500 590390 590900 63061 650610 700711 700721 700910 701400 731100 7320 7325 780600 800790 830120 830160 830170 830210 830230 8310 84073 840820 84099 84122 841330 841410 841480 841391 841490 842123 842129 84219 842410 842131 842139 842542 8431 843149 843390 848110 84812 848180 8482 850520 850710 851220 851240 851290 85171213 8518 851981 852550 852560 85272 852910 853400 853530 85365 853610 853620 85364 853650 853910 85392 854420 854430 8708 87141 871690 902610 902620 9029 903033 903180 903289 910400 940120 940190 961380 4009 450490 681299 482340 391910 391990 841231 841319 841350 841381 841360 841370 841459 842139 850110 850131 850450 850720 850730 851230 902710 400811 491110 560122 570320 570330 591190 690390 700729 731450 731511 841899 841950 842490 842549 843141 850161 853110 901410 902519 902590 902690 903210 903220 391620 5902 681290 732210 840910".split(" ");
+const MATCONS="2522 38160011 38160012 38160019 38244000 38245000 391000 3916 3917 3918 3919 3920 3921 3922 3924 3925 39269010 40059190 4009 40169100 4814 6805 68071000 6809 6810 6811 6907 6908 6910 7003 7004 7005 70060000 70071 7007190 70072 700729 70080000 70200000 72 7310 7324 7325 7411 7412 74182000 76071990 7608 76090000 76152000 84191 8481 8516 8535 8536 8537 8538 85434000 8544 8546 8547 9019 910700".split(" ");
+const MATCONS_EXC=["39173221","39173251","85365090"];
+const ST_RULES=[
+ {id:"fumo",p:["2402","24031"],nome:"Cigarros e derivados do fumo",art:"RICMS/RR, art. 765",interna:true},
+ {id:"bebidas",p:["2201","2202","2203"],nome:"Água, refrigerante, cerveja e chope",art:"RICMS/RR, art. 767",interna:true,nota:"Água: RR excluída do Protocolo 11/91 desde 01/02/2023; sem retenção, o destinatário de RR recolhe (art. 728, p.ú., II)."},
+ {id:"veiculos",p:["870210","870290","870321","870322","870323","870324","870332","870333","870421","870431"],nome:"Veículos novos",art:"RICMS/RR, art. 769",interna:true},
+ {id:"motos",p:["8711"],nome:"Veículos de duas e três rodas",art:"RICMS/RR, art. 772",interna:true},
+ {id:"pneus",p:["4011","4013","401290"],nome:"Pneus, câmaras de ar e protetores",art:"RICMS/RR, art. 782",interna:true},
+ {id:"cimento",p:["2523"],nome:"Cimento",art:"RICMS/RR, art. 785"},
+ {id:"trigo",p:["1101","190120"],nome:"Farinha de trigo e misturas (antecipação)",art:"RICMS/RR, art. 787"},
+ {id:"farma",p:["3002","3003","3004","3005","300630","300660","56012190","392330","392410","392490","401410","401490","901831","901832","330610","330620","330690","960321","2936","481840","9619"],nome:"Farmacêuticos, higiene e correlatos",art:"RICMS/RR, art. 798"},
+ {id:"cosmeticos",p:["3303","3304","3305","3307"],nome:"Perfumes e cosméticos",art:"RICMS/RR, art. 800",interna:true},
+ {id:"combustiveis",p:["2710","2711","2713","220710","3826","3403","3811","3819","3820"],nome:"Combustíveis e lubrificantes",art:"RICMS/RR, arts. 802 a 803 e 839-U",mono:true},
+ {id:"tintas",p:["3208","3209","3210","3204","3205","3206","3211","3212","3214","3404","3405","3506","3805","3807","3810","3814","3815","3905","3907","3909","3910"],nome:"Tintas, vernizes e química (lista com descrições restritivas)",art:"RICMS/RR, arts. 824 e 825",interna:true},
+ {id:"alcoolicas",p:["2204","2205","2206","2208"],nome:"Bebidas alcoólicas (exceto cerveja e chope)",art:"RICMS/RR, art. 831",interna:true},
+ {id:"frango",p:["0207","1507","1508","1509","1510","1511","1512","1513","1514","1515","1516","1517"],nome:"Frango e óleos comestíveis",art:"RICMS/RR, art. 836"},
+ {id:"lampadas",p:["82121020","82122010","8539","8540","85041000","853650","3701","3702","3703","3704","3705","3706","96131000","8506","85073011","85078000","852329","852340","852341","852349","852380"],nome:"Lâminas, lâmpadas, pilhas, filmes e mídias",art:"RICMS/RR, arts. 838 e 839"},
+ {id:"telhas",p:["681110","681120","681190","39251000"],nome:"Telhas, cumeeiras e caixas d’água",art:"RICMS/RR, art. 839-B"},
+ {id:"autopecas",p:AUTOPECAS,nome:"Autopeças (uso automotivo)",art:"RICMS/RR, art. 839-E"},
+ {id:"racoes",p:["230910"],nome:"Rações pet",art:"RICMS/RR, art. 839-H"},
+ {id:"sorvetes",p:["2105"],nome:"Sorvetes",art:"RICMS/RR, art. 839-R"},
+ {id:"celulares",p:["8517123","851713","852352"],nome:"Celulares e cartões inteligentes",art:"RICMS/RR, art. 839-T"}
+];
+function stRule(ncm){
+  ncm=onlyDig(ncm); if(!ncm||/^0+$/.test(ncm)) return null;
+  let best=null,len=0;
+  for(const r of ST_RULES){for(const p of r.p){if(ncm.startsWith(p)&&p.length>len){best=r;len=p.length}}}
+  return best;
+}
+function matCons(ncm){ncm=onlyDig(ncm);if(MATCONS_EXC.some(e=>ncm.startsWith(e)))return false;return MATCONS.some(p=>ncm.startsWith(p))}
+const A25=["93","3604","8903","7113","7114","7116","2203","2204","2205","2206","2208","3303","3304","3305","3307","24"];
+const A12=["1006","071333","110620","110814","0401","1005","110220","0407","1201","0207","0105","0201","0202","0102","1101","8702","8703","8704","8711","27101911","271119"];
+function aliqInterna(ncm){ncm=onlyDig(ncm);let best=20,len=0;for(const p of A25)if(ncm.startsWith(p)&&p.length>len){best=25;len=p.length}for(const p of A12)if(ncm.startsWith(p)&&p.length>len){best=12;len=p.length}return best}
+
+/* ---------- chave ---------- */
+function dvOk(ch){if(!/^\d{44}$/.test(ch))return false;let s=0,w=2;for(let i=42;i>=0;i--){s+=+ch[i]*w;w=w===9?2:w+1}const r=s%11;const dv=r<2?0:11-r;return dv===+ch[43]}
+function parseChave(ch){return{ch,uf:UF[ch.slice(0,2)]||ch.slice(0,2),aamm:ch.slice(4,6)+"/20"+ch.slice(2,4),doc:ch.slice(6,20),mod:ch.slice(20,22),serie:+ch.slice(22,25),nnf:+ch.slice(25,34),tpEmis:ch[34],dv:dvOk(ch)}}
+function extractChave(txt){
+  const s=String(txt||"").trim();
+  let url=null; if(/^https?:\/\//i.test(s)) url=s;
+  let m=s.match(/(?:chNFe|chDCe|chave)=(\d{44})/i)||s.match(/[?&]p=(\d{44})/i)||s.replace(/\s/g,"").match(/(\d{44})/);
+  return m?{ch:m[1],url}:null;
+}
+
+/* ---------- leitura de XML ---------- */
+function q(el,name){if(!el)return null;const l=el.getElementsByTagNameNS("*",name);return l.length?l[0]:null}
+function qa(el,name){return el?Array.from(el.getElementsByTagNameNS("*",name)):[]}
+function t(el,name){const e=q(el,name);return e?e.textContent.trim():""}
+function kids(el){return el?Array.from(el.children):[]}
+function parseNFe(xml,fileName){
+  const doc=new DOMParser().parseFromString(xml,"application/xml");
+  if(doc.getElementsByTagName("parsererror").length) throw new Error("Arquivo não é um XML válido.");
+  const inf=q(doc,"infNFe"); if(!inf) throw new Error("Não encontrei uma NF-e/NFC-e neste XML.");
+  const ide=q(inf,"ide"),emit=q(inf,"emit"),dest=q(inf,"dest"),ent=q(inf,"entrega"),tr=q(inf,"transp"),tot=q(inf,"ICMSTot"),adic=q(inf,"infAdic"),prot=q(doc,"infProt");
+  const enderEmit=q(emit,"enderEmit"),enderDest=q(dest,"enderDest");
+  const nf={file:fileName,chave:(inf.getAttribute("Id")||"").replace(/^NFe/,""),
+    ide:{natOp:t(ide,"natOp"),mod:t(ide,"mod"),serie:t(ide,"serie"),nNF:t(ide,"nNF"),dhEmi:t(ide,"dhEmi"),dhSaiEnt:t(ide,"dhSaiEnt"),tpNF:t(ide,"tpNF"),idDest:t(ide,"idDest"),tpEmis:t(ide,"tpEmis"),tpAmb:t(ide,"tpAmb"),finNFe:t(ide,"finNFe"),indFinal:t(ide,"indFinal"),indPres:t(ide,"indPres"),cUF:t(ide,"cUF")},
+    emit:{doc:t(emit,"CNPJ")||t(emit,"CPF"),nome:t(emit,"xNome"),fant:t(emit,"xFant"),ie:t(emit,"IE"),crt:t(emit,"CRT"),mun:t(enderEmit,"xMun"),uf:t(enderEmit,"UF")},
+    dest:dest?{doc:t(dest,"CNPJ")||t(dest,"CPF")||t(dest,"idEstrangeiro"),cpf:!!q(dest,"CPF"),estrangeiro:!!q(dest,"idEstrangeiro"),nome:t(dest,"xNome"),ie:t(dest,"IE"),indIE:t(dest,"indIEDest"),lgr:t(enderDest,"xLgr"),nro:t(enderDest,"nro"),bairro:t(enderDest,"xBairro"),mun:t(enderDest,"xMun"),uf:t(enderDest,"UF")}:null,
+    entrega:ent?{mun:t(ent,"xMun"),uf:t(ent,"UF"),lgr:t(ent,"xLgr"),nro:t(ent,"nro"),nome:t(ent,"xNome")}:null,
+    transp:{modFrete:t(tr,"modFrete"),transp:t(q(tr,"transporta"),"xNome"),transpDoc:t(q(tr,"transporta"),"CNPJ")||t(q(tr,"transporta"),"CPF"),placa:t(q(tr,"veicTransp"),"placa"),qVol:qa(tr,"vol").reduce((s,v)=>s+num(t(v,"qVol")),0),pesoB:qa(tr,"vol").reduce((s,v)=>s+num(t(v,"pesoB")),0)},
+    tot:{vProd:num(t(tot,"vProd")),vNF:num(t(tot,"vNF")),vBC:num(t(tot,"vBC")),vICMS:num(t(tot,"vICMS")),vST:num(t(tot,"vST")),vBCST:num(t(tot,"vBCST")),vFrete:num(t(tot,"vFrete")),vDesc:num(t(tot,"vDesc")),vICMSUFDest:num(t(tot,"vICMSUFDest"))},
+    pag:qa(inf,"detPag").map(p=>({tPag:t(p,"tPag"),vPag:num(t(p,"vPag")),xPag:t(p,"xPag")})),
+    dup:qa(q(inf,"cobr"),"dup").map(d=>({n:t(d,"nDup"),venc:t(d,"dVenc"),v:num(t(d,"vDup"))})),
+    infCpl:t(adic,"infCpl"),infAdFisco:t(adic,"infAdFisco"),
+    prot:prot?{dhRecbto:t(prot,"dhRecbto"),cStat:t(prot,"cStat"),xMotivo:t(prot,"xMotivo"),nProt:t(prot,"nProt")}:null,
+    hasRef:qa(inf,"NFref").length>0,
+    itens:qa(inf,"det").map(d=>{
+      const p=q(d,"prod"),imp=q(d,"imposto"),icmsWrap=q(imp,"ICMS");const g=kids(icmsWrap)[0];
+      const gi=g?{grupo:g.localName,orig:t(g,"orig"),cst:t(g,"CST"),csosn:t(g,"CSOSN"),vBC:num(t(g,"vBC")),pICMS:num(t(g,"pICMS")),vICMS:num(t(g,"vICMS")),pRedBC:num(t(g,"pRedBC")),vICMSST:num(t(g,"vICMSST")),vBCST:num(t(g,"vBCST")),vICMSSTRet:num(t(g,"vICMSSTRet")),vICMSDeson:num(t(g,"vICMSDeson"))}:{};
+      return{n:d.getAttribute("nItem")||t(d,"nItem"),cod:t(p,"cProd"),desc:t(p,"xProd"),ncm:t(p,"NCM"),cest:t(p,"CEST"),cfop:t(p,"CFOP"),un:t(p,"uCom"),q:num(t(p,"qCom")),vUn:num(t(p,"vUnCom")),vProd:num(t(p,"vProd")),vFrete:num(t(p,"vFrete")),vSeg:num(t(p,"vSeg")),vDesc:num(t(p,"vDesc")),vOutro:num(t(p,"vOutro")),icms:gi,ufdest:!!q(imp,"ICMSUFDest")}
+    })};
+  return nf;
+}
+
+/* ---------- análise ---------- */
+function isSTcode(i){const c=i.icms.cst,s=i.icms.csosn,f=onlyDig(i.cfop).slice(1);return ["10","30","60","70"].includes(c)||["201","202","203","500"].includes(s)||["401","403","404","405","408","409","411"].includes(f)}
+function isMono(i){return ["02","15","53","61"].includes(i.icms.cst)}
+function interRegiao(ufOrig){return SULSUDESTE.includes(ufOrig)?7:12}
+function analyze(nf,ctx){
+  const A=[];const add=(lvl,titulo,texto,base)=>A.push({lvl,titulo,texto,base});
+  const emitUF=nf.emit.uf||UF[nf.ide.cUF]||"";const destUF=nf.dest?nf.dest.uf:"";
+  const cfops=[...new Set(nf.itens.map(i=>onlyDig(i.cfop)))];
+  const cf1=cfops.map(c=>c[0]);const cf3=cfops.map(c=>c.slice(1));
+  const simples=["1","2","4"].includes(nf.emit.crt);const simplesPuro=["1","4"].includes(nf.emit.crt);
+  const nfce=nf.ide.mod==="65";
+  const dhRec=nf.prot&&nf.prot.dhRecbto?new Date(nf.prot.dhRecbto):null;
+  const dhEmi=nf.ide.dhEmi?new Date(nf.ide.dhEmi):null;
+  const abord=ctx.abordagem;
+  const vNF=nf.tot.vNF||nf.tot.vProd;
+  const isVenda=cf3.some(c=>/^1\d\d$/.test(c)||c==="405"||c==="403"||c==="401"||c==="404");
+
+  /* 1. Autorização e tempo */
+  if(nf.ide.tpAmb==="2") add("para","Nota de homologação, sem valor fiscal","O XML indica ambiente de testes (tpAmb = 2). Não acoberta o transporte.","RICMS/RR, art. 147; CTE, art. 69, III, “a”");
+  if(!nf.prot) add("confere","XML sem protocolo de autorização","O arquivo não traz o protocolo da SEFAZ. Confirme no portal se a nota foi autorizada.","RICMS/RR, art. 186-D");
+  else if(!["100","150"].includes(nf.prot.cStat)) add("para","Uso não autorizado (cStat "+esc(nf.prot.cStat)+")",esc(nf.prot.xMotivo),"RICMS/RR, art. 147; CTE, art. 69, III, “a”");
+  if(dhRec&&abord&&dhRec>abord){const h=(dhRec-abord)/36e5;add("para","Autorizada depois do início da abordagem","Autorização em "+fmtDate(dhRec)+", "+h.toLocaleString("pt-BR",{maximumFractionDigits:1})+" h após o início da abordagem ("+fmtDate(abord)+"). Nota emitida após a ação fiscal não afasta a infração. Multa de 40% do valor da operação: "+brl(vNF*0.4)+".","CTE, art. 168, § 3º; CTE, art. 69, III, “a”; RICMS/RR, art. 184, I");}
+  const ref=dhRec||dhEmi;
+  if(ref&&abord&&abord>ref){const d=(abord-ref)/864e5;if(d>15)add("confere","Nota emitida há "+Math.floor(d)+" dias","Prazo longo entre a emissão e o trânsito. Verifique se a nota já foi registrada em outra passagem (reutilização).","RICMS/RR, art. 147")}
+  if(nf.ide.tpEmis&&nf.ide.tpEmis!=="1") add("confere","Emitida em contingência ("+(TPEMIS[nf.ide.tpEmis]||nf.ide.tpEmis)+")","Confirme no portal se a nota foi transmitida e autorizada depois da contingência.","Ajuste SINIEF 07/05");
+  add("info","Cancelamento posterior não aparece no XML","Antes de liberar, confirme a situação atual da chave no portal.","");
+
+  /* 2. Operação e CFOP */
+  const dig1={"1":"5","2":"6","3":"7"}[nf.ide.idDest];
+  if(dig1&&nf.ide.tpNF==="1"&&cf1.some(c=>c!==dig1)) add("registrar","CFOP não combina com o destino da operação","Indicador de destino "+esc(nf.ide.idDest)+" (1 interna, 2 interestadual, 3 exterior) com CFOP "+cfops.join(", ")+".","Ajuste SINIEF 07/01 (CFOP)");
+  if(cf1.includes("5")&&destUF&&emitUF&&destUF!==emitUF) add("confere","CFOP de operação interna com destinatário em outra UF","Emitente em "+esc(emitUF)+" e destinatário em "+esc(destUF)+".","RICMS/RR, art. 147, III");
+  if(cf1.includes("7")) add("confere","Saída para o exterior","Confirme a DU-E/registro de exportação e o destino físico. A falta de documentação de exportação é matéria da Receita Federal.","CTE, art. 6º (não incidência na exportação); legislação aduaneira");
+  if(nfce&&emitUF&&emitUF!=="RR") add("confere","NFC-e emitida em outra UF","NFC-e acoberta só operação interna, presencial ou com entrega em domicílio no estado do emitente. Em trânsito por RR, a operação é interestadual.","Ajuste SINIEF 19/16; Guia Prático EFD (NFC-e só CFOP 5.xxx)");
+  if(nfce&&vNF>=200000) add("confere","NFC-e acima de R$ 200 mil","A emissão de NFC-e é vedada nessas operações; o documento cabível é a NF-e.","Ajuste SINIEF 19/16, cl. 4ª, § 4º");
+  if(nfce&&!nf.dest&&vNF>=10000) add("registrar","NFC-e de R$ 10 mil ou mais sem identificar o consumidor","A identificação do adquirente é obrigatória nessa faixa.","RICMS/RR, art. 186-Z, I");
+  // rota
+  const posto=norm(ctx.posto);
+  if(posto&&!cf3.includes("904")){const muns=[nf.emit.mun,nf.dest&&nf.dest.mun,nf.entrega&&nf.entrega.mun].map(norm);if(!muns.includes(posto))add("confere","Nem origem nem destino é "+esc(ctx.posto),"Origem: "+esc(nf.emit.mun||"—")+"/"+esc(emitUF)+". Destino: "+esc(nf.dest?nf.dest.mun:"—")+"/"+esc(destUF)+(nf.entrega?". Entrega: "+esc(nf.entrega.mun):"")+". Pergunte a rota. Mercadoria em local diverso do documento pode indicar destinatário diverso.","CTE, art. 60, § 1º, III; CTE, art. 69, III, “i”")}
+  // transferência
+  if(cf3.some(c=>TRANSF.includes(c))){const r1=onlyDig(nf.emit.doc).slice(0,8),r2=nf.dest?onlyDig(nf.dest.doc).slice(0,8):"";
+    if(r2&&r1!==r2) add("para","Transferência entre empresas diferentes","CFOP de transferência, mas a raiz do CNPJ do emitente ("+r1+") difere da do destinatário ("+r2+"). Pode ser venda com CFOP de transferência.","RICMS/RR, art. 147, III");
+    else add("info","Transferência entre estabelecimentos do mesmo titular","Não há fato gerador; o destaque é opcional (equiparação ou transferência de crédito).","LC 87/96, art. 12, § 4º (LC 204/2023); STF, ADC 49; Conv. ICMS 109/24");}
+  // venda fora do estabelecimento
+  if(cf3.includes("904")){
+    if(nf.dest&&onlyDig(nf.dest.doc)!==onlyDig(nf.emit.doc)) add("confere","Remessa para venda fora com destinatário diferente do emitente","Na venda fora do estabelecimento, o destinatário é o próprio emitente. Confirme se quem transporta é preposto ou se é venda/consignação a terceiro.","RICMS/RR, arts. 523 e 527; Consulta SEFAZ/RR nº 011/2018");
+    if(!/s[ée]rie/i.test(nf.infCpl)) add("registrar","Faltam as séries e números das notas de venda","A remessa deve indicar, nas informações complementares, os documentos que serão usados nas vendas efetivas.","RICMS/RR, art. 523; Consulta nº 011/2018");
+    if(/consign/i.test(nf.infCpl)) add("registrar","Remessa 5904 descrita como consignação","Preposto não é consignatário; consignação tem CFOP próprio (5917).","RICMS/RR, arts. 523 e 527");
+    add("info","Peça o documento do preposto","Quem transporta deve portar comprovante da condição de preposto. Na volta, a empresa emite a nota de retorno (CFOP 1.904).","RICMS/RR, arts. 526 e 527");}
+  if(cf3.includes("910")&&nf.emit.crt==="3"&&nf.itens.some(i=>onlyDig(i.cfop).endsWith("910")&&i.icms.vICMS===0&&!isSTcode(i)&&!["40","41"].includes(i.icms.cst))) add("confere","Bonificação sem destaque de ICMS","Bonificação é saída tributada.","RICMS/RR, art. 2º; CTE, art. 5º");
+  const naoVenda=cf3.every(c=>c[0]==="9"||TRANSF.includes(c));
+  if(naoVenda&&nf.pag.some(p=>p.tPag!=="90"&&p.vPag>0)) add("registrar","Pagamento informado em operação sem venda","Remessas e transferências devem informar “sem pagamento”.","MOC NF-e (grupo pag)");
+
+  /* 3. Partes */
+  const d=nf.dest;
+  if(d&&d.ie&&d.indIE==="9") add("registrar","Destinatário com IE marcado como não contribuinte","IE "+esc(d.ie)+" informada, mas o indicador diz não contribuinte.","MOC NF-e (indIEDest)");
+  if(d&&d.indIE==="1"&&nf.ide.indFinal==="1"&&isVenda) add("registrar","Venda a contribuinte marcada como consumidor final","Confirme se a compra é para uso e consumo ou para revenda.","MOC NF-e (indFinal)");
+  if(simplesPuro&&!/simples\s+nacional/i.test(nf.infCpl+" "+nf.infAdFisco)) add("registrar","Sem a expressão obrigatória do Simples Nacional","Faltou “Documento emitido por ME ou EPP optante pelo Simples Nacional”.","Res. CGSN 140/2018, art. 59, § 4º, II");
+  if(simples) add("info","Emitente declara "+(CRT[nf.emit.crt]||"Simples"),"O código vem do próprio emitente. Confirme a opção no Portal do Simples Nacional.","Res. CGSN 140/2018");
+  const pf=!d||d.cpf||d.estrangeiro||(d.indIE==="9"&&!d.ie);
+  const destRR=(destUF||emitUF)==="RR"||(!d&&emitUF==="RR");
+  const und=["UN","UND","UNID","PC","PCT","CX","FD","VDO","KIT","PAR","DZ","LT","GF","GRF"];
+  const maxQ=Math.max(0,...nf.itens.filter(i=>und.includes((i.un||"").toUpperCase().replace(/[^A-Z]/g,"")) ).map(i=>i.q));
+  if(pf&&isVenda&&destRR&&(maxQ>=10||vNF>=3000)){
+    let base=0,cred=0;const its=nf.itens.filter(i=>!isSTcode(i)&&!isMono(i));
+    its.forEach(i=>{const b=(i.vProd-i.vDesc+i.vFrete+i.vSeg+i.vOutro)*1.3;base+=b*aliqInterna(i.ncm)/100;cred+=simplesPuro?0:i.icms.vICMS});
+    const est=Math.max(0,base-cred);
+    add("confere","Comprador sem inscrição com volume de revenda?","Maior quantidade de um item: "+maxQ.toLocaleString("pt-BR")+"; valor da nota: "+brl(vNF)+". Se a quantidade e a natureza indicarem comercialização, cabe a antecipação sem multa. Estimativa (itens sem ST, margem de 30%"+(simplesPuro?", sem crédito por ser Simples":", menos o ICMS destacado")+"): "+brl(est)+".","RICMS/RR, arts. 72, IV, 73 e 43; prática do posto");}
+  // interestadual para RR
+  const entradaRR=destUF==="RR"&&emitUF&&emitUF!=="RR";
+  if(entradaRR&&nf.ide.indFinal==="1"&&d&&d.indIE==="9"){
+    if(simples) add("info","Simples vendendo a consumidor final de outra UF","Remetente do Simples não recolhe o DIFAL da EC 87/15 nessas vendas.","STF, ADI 5464; Res. CGSN 140/2018, art. 5º, XII");
+    else if(!nf.itens.some(i=>i.ufdest)&&nf.tot.vICMSUFDest===0) add("confere","DIFAL de venda a consumidor final não informado","Remetente do regime normal deve informar e recolher o DIFAL para RR.","EC 87/15; LC 190/2022; CTE, art. 11");}
+  if(entradaRR&&d&&d.indIE==="1"&&isVenda){
+    const naoST=nf.itens.filter(i=>!isSTcode(i)&&!isMono(i)&&!stRule(i.ncm)&&!matCons(i.ncm));
+    if(naoST.length){const ai=interRegiao(emitUF);const est=naoST.reduce((s,i)=>s+i.vProd*(aliqInterna(i.ncm)-ai)/100,0);
+      add("info","Antecipação parcial do destinatário","Contribuinte de RR comprando de "+esc(emitUF)+" para revenda. Estimativa: "+brl(est)+" ("+naoST.length+" item(ns); alíquota interestadual de "+ai+"% fixada pelo § 6º). Confira se o sistema gerou o DARE e as exceções do § 2º.","RICMS/RR, art. 75")}}
+
+  /* 4. Itens: CST, ST e destaque */
+  const porCod={};const addItem=(k,lvl,tit,txt,base,n)=>{(porCod[k]=porCod[k]||{lvl,tit,txt,base,itens:[]}).itens.push(n)};
+  nf.itens.forEach(i=>{
+    const c=i.icms.cst,s=i.icms.csosn,f=onlyDig(i.cfop),ncm=onlyDig(i.ncm),r=stRule(ncm),st=isSTcode(i);
+    if(!ncm||/^0+$/.test(ncm)) addItem("ncm0","registrar","NCM inválido ou zerado","Itens sem classificação fiscal válida.","MOC NF-e; Ajuste SINIEF 07/05",i.n);
+    if(simplesPuro&&c&&!s) addItem("crt","registrar","Simples usando CST em vez de CSOSN","Emitente com CRT "+nf.emit.crt+" deveria usar CSOSN.","MOC NF-e",i.n);
+    if(nf.emit.crt==="3"&&s) addItem("crt3","registrar","Regime normal usando CSOSN","Emitente com CRT 3 deveria usar CST.","MOC NF-e",i.n);
+    if(simplesPuro&&i.icms.vICMS>0&&s!=="900") addItem("snd","confere","Simples com destaque de ICMS próprio","Optante não destaca ICMS de operação própria (salvo sublimite).","Res. CGSN 140/2018, art. 59, § 4º, I",i.n);
+    if(f.slice(1)==="405"&&(c==="00"||s==="102"||s==="101")) addItem("405x","registrar","CFOP de ST com CST de tributação normal","CFOP 5405 pede CST 60 ou CSOSN 500.","Ajuste SINIEF 07/01",i.n);
+    if(st&&!r&&!isMono(i)&&!matCons(ncm)) addItem("stind:"+ncm.slice(0,4),"confere","Item marcado como ST sem previsão nas listas de RR","NCM "+esc(i.ncm)+" ("+esc(i.desc).slice(0,60)+") não aparece nas listas iniciais de ST do RICMS/RR. Pode ser item tratado como ST para escapar da antecipação.","RICMS/RR, Livro III, Cap. II (seções de ST); confira a lista vigente",i.n);
+    // ST interna sem retenção
+    if(r&&r.interna&&!st&&!isMono(i)&&emitUF==="RR"&&(destUF==="RR"||!d)&&f[0]==="5"&&!TRANSF.includes(f.slice(1))) addItem("stint:"+r.id,"confere","Produto com ST interna em RR sem retenção: "+r.nome,"Esperado CST 10/60 ou CSOSN 201/202/500. Se o emitente é industrial, importador, distribuidor ou atacadista, ele deveria reter; se é varejista, a ST já deveria ter sido paga antes."+(r.nota?" "+r.nota:""),r.art,i.n);
+    // entrada interestadual sem ST
+    if(r&&entradaRR&&!st&&!isMono(i)&&d&&d.indIE==="1") addItem("stent:"+r.id,"confere","ST de RR sem retenção na entrada: "+r.nome,"Sem retenção pelo remetente, o destinatário de RR recolhe a ST na entrada."+(r.id==="autopecas"?" Vale só para peça de uso automotivo.":"")+(r.nota?" "+r.nota:""),r.art+"; RICMS/RR, art. 728, p.ú., II",i.n);
+    if(matCons(ncm)&&entradaRR&&d&&d.indIE==="1"&&!st) addItem("matcons","info","Material de construção: antecipação do destinatário","Recolhimento até o dia 10 do segundo mês seguinte à entrada (MVA de 35%). Para destinatário inscrito, não é exigível no trânsito.","RICMS/RR, art. 839-Q, §§ 3º e 5º",i.n);
+    if(isMono(i)||(r&&r.mono&&st)) addItem("mono","info","Combustível com ICMS monofásico","O imposto incide uma única vez, na refinaria ou no importador. Não há ICMS a cobrar no trânsito.","RICMS/RR, art. 839-U; Conv. ICMS 199/22",i.n);
+    // destaque no regime normal
+    if(nf.emit.crt==="3"&&!st&&!isMono(i)){
+      if(["40","41"].includes(c)&&/^[56]1\d\d$/.test(f)) addItem("isen","confere","Venda sem débito (CST "+c+")","Confirme qual isenção ou não incidência se aplica ao produto.","CTE, arts. 32 e seguintes; Anexo de isenções do RICMS/RR",i.n);
+      if(c==="00"||c==="20"){
+        const esperado=f[0]==="5"?aliqInterna(ncm):(f[0]==="6"?(["1","2","3","8"].includes(i.icms.orig)?4:(SULSUDESTE.includes(emitUF)&&!SULSUDESTE.includes(destUF)?7:12)):null);
+        if(esperado&&emitUF==="RR"&&f[0]==="5"&&Math.abs(i.icms.pICMS-esperado)>0.01) addItem("aliq:"+i.icms.pICMS,"confere","Alíquota de "+pct(i.icms.pICMS)+" difere da esperada ("+esperado+"%)","Estimativa pelo NCM conforme o CTE (20% geral; 25% e 12% para listas). Confirme o enquadramento.","CTE, art. 32, I",i.n);
+        if(esperado&&f[0]==="6"&&Math.abs(i.icms.pICMS-esperado)>0.01) addItem("aliqi:"+i.icms.pICMS,"confere","Alíquota interestadual de "+pct(i.icms.pICMS)+" (esperada "+esperado+"%)","4% para importados (origem 1, 2, 3, 8); 7% de Sul/Sudeste para N/NE/CO/ES; 12% nos demais casos.","Res. Senado 22/89 e 13/2012",i.n);
+        const bcEsp=i.vProd-i.vDesc+i.vFrete+i.vSeg+i.vOutro;
+        if(c==="00"&&bcEsp>0&&i.icms.vBC+0.05<bcEsp) addItem("bc","confere","Base de cálculo menor que o valor da operação","CST 00 não admite redução de base. Base "+brl(i.icms.vBC)+" para operação de "+brl(bcEsp)+".","LC 87/96, art. 13; CTE",i.n);
+        if(Math.abs(i.icms.vBC*i.icms.pICMS/100-i.icms.vICMS)>0.05) addItem("calc","registrar","ICMS destacado não confere com base × alíquota","Diferença de cálculo no item.","MOC NF-e",i.n);
+      }
+    }
+  });
+  Object.values(porCod).forEach(g=>add(g.lvl,g.tit,g.txt+(g.itens.length===nf.itens.length&&nf.itens.length>1?" Todos os itens.":" Itens: "+g.itens.join(", ")+"."),g.base));
+
+  /* 5. Transporte */
+  if(nf.transp.modFrete==="9"&&(nf.transp.placa||nf.transp.qVol>0||/placa/i.test(nf.infCpl))) add("registrar","“Sem frete” com veículo ou volumes informados","Modalidade 9 indica que não há transporte, mas a nota traz placa ou volumes.","MOC NF-e (modFrete)");
+
+  const lvl=A.some(a=>a.lvl==="para")?"para":A.some(a=>a.lvl==="confere")?"confere":"libera";
+  return{alerts:A,lvl};
+}
+
+/* ---------- renderização ---------- */
+const VERD={para:["Para e aprofunda","Há sinal material de irregularidade. Fotografe horário, carga, placa e documentos antes de qualquer providência."],confere:["Confere rápido","Algo precisa de explicação antes de liberar. Pergunte ao condutor, olhe a guia, consulte a chave."],libera:["Libera","Documento sem sinal material de irregularidade nas regras aplicadas. Confira se a carga bate com a nota."]};
+function codeDesc(i){if(i.icms.csosn)return i.icms.csosn+" – "+(CSOSN[i.icms.csosn]||"");if(i.icms.cst)return i.icms.cst+" – "+(CST[i.icms.cst]||"");return "—"}
+function renderNF(nf,res){
+  const v=VERD[res.lvl];const d=nf.dest;
+  const dhRec=nf.prot&&nf.prot.dhRecbto?new Date(nf.prot.dhRecbto):null;
+  const cfops=[...new Set(nf.itens.map(i=>onlyDig(i.cfop)))];
+  const groups=[["para","Para e aprofunda"],["confere","Confere"],["registrar","Registrar (formais)"],["info","Informações"]];
+  let alertsHtml="";groups.forEach(([k,lab])=>{const L=res.alerts.filter(a=>a.lvl===k);if(!L.length)return;alertsHtml+=`<p class="group-t">${lab} (${L.length})</p>`+L.map(a=>`<div class="alert ${k}"><b>${a.titulo}</b><span>${a.texto}</span>${a.base?`<div class="base">Base: ${esc(a.base)}</div>`:""}</div>`).join("")});
+  const itens=nf.itens.map(i=>{const r=stRule(i.ncm);return `<div class="item"><div class="t">${esc(i.n)}. ${esc(i.desc)}</div>
+    <div class="grid2"><span>NCM ${esc(i.ncm)}${i.cest?" · CEST "+esc(i.cest):""}</span><span>${i.q.toLocaleString("pt-BR")} ${esc(i.un)} × ${brl(i.vUn)} = <b>${brl(i.vProd)}</b></span>
+    <span>CFOP ${esc(i.cfop)}: ${esc(cfopDesc(i.cfop))}</span><span>${esc(codeDesc(i))}</span>
+    <span>Origem ${esc(i.icms.orig)}: ${esc(ORIG[i.icms.orig]||"")}</span><span>BC ${brl(i.icms.vBC)} · ${pct(i.icms.pICMS)} · ICMS ${brl(i.icms.vICMS)}${i.icms.vICMSST?" · ST "+brl(i.icms.vICMSST):""}</span></div>
+    ${r?`<span class="tag st">ST/antecipação em RR: ${esc(r.nome)} (${esc(r.art)})</span>`:""}${matCons(i.ncm)?`<span class="tag st">Material de construção (art. 839-Q)</span>`:""}</div>`}).join("");
+  const pag=nf.pag.map(p=>`${TPAG[p.tPag]||p.tPag}${p.xPag?" ("+esc(p.xPag)+")":""}: ${brl(p.vPag)}`).join("; ");
+  const dups=nf.dup.map(x=>`${esc(x.n)} – ${esc(x.venc.split("-").reverse().join("/"))} – ${brl(x.v)}`).join("<br>");
+  return `<article class="nf">
+  <div class="plate ${res.lvl}" role="status"><div class="ident">${esc(MODELO[nf.ide.mod]||"Nota")} nº ${esc(nf.ide.nNF)} · série ${esc(nf.ide.serie)}</div><h2>${v[0]}</h2><p>${v[1]}</p></div>
+  <p class="resumo"><b>${esc(nf.ide.natOp)}</b> (CFOP ${cfops.join(", ")}), de <b>${esc(nf.emit.nome)}</b> (${esc(nf.emit.mun)}/${esc(nf.emit.uf)}) para <b>${d?esc(d.nome||"—"):"consumidor não identificado"}</b>${d?` (${esc(d.mun)}/${esc(d.uf)})`:""}. Valor ${brl(nf.tot.vNF)}. ${dhRec?"Autorizada em "+fmtDate(dhRec)+".":"Sem protocolo no XML."}</p>
+  <div class="section"><h3>Sinais de alerta</h3>${alertsHtml||"<p>Nenhum alerta pelas regras aplicadas.</p>"}</div>
+  <details open><summary>Emitente e destinatário</summary>
+    <dl class="kv"><dt>Emitente</dt><dd>${esc(nf.emit.nome)}${nf.emit.fant?" ("+esc(nf.emit.fant)+")":""}</dd><dt>CNPJ/CPF</dt><dd>${fmtDoc(nf.emit.doc)} · IE ${esc(nf.emit.ie||"—")}</dd><dt>Regime</dt><dd>CRT ${esc(nf.emit.crt)}: ${esc(CRT[nf.emit.crt]||"—")}</dd><dt>Local</dt><dd>${esc(nf.emit.mun)}/${esc(nf.emit.uf)}</dd></dl>
+    <dl class="kv" style="margin-top:12px">${d?`<dt>Destinatário</dt><dd>${esc(d.nome)}</dd><dt>${d.cpf?"CPF":d.estrangeiro?"ID estrangeiro":"CNPJ"}</dt><dd>${fmtDoc(d.doc)}${d.ie?" · IE "+esc(d.ie):""}</dd><dt>Indicador</dt><dd>${esc(d.indIE)}: ${esc(INDIE[d.indIE]||"—")}; ${nf.ide.indFinal==="1"?"consumidor final":"não é consumidor final"}</dd><dt>Endereço</dt><dd>${esc([d.lgr,d.nro,d.bairro].filter(Boolean).join(", "))} – ${esc(d.mun)}/${esc(d.uf)}</dd>`:`<dt>Destinatário</dt><dd>Não identificado</dd>`}
+    ${nf.entrega?`<dt>Entrega</dt><dd>${esc([nf.entrega.lgr,nf.entrega.nro].filter(Boolean).join(", "))} – ${esc(nf.entrega.mun)}/${esc(nf.entrega.uf)}</dd>`:""}</dl></details>
+  <details><summary>Itens (${nf.itens.length})</summary>${itens}</details>
+  <details><summary>Imposto, transporte e pagamento</summary>
+    <dl class="kv"><dt>Produtos</dt><dd>${brl(nf.tot.vProd)}</dd><dt>Base ICMS</dt><dd>${brl(nf.tot.vBC)}</dd><dt>ICMS</dt><dd>${brl(nf.tot.vICMS)}</dd><dt>ICMS-ST</dt><dd>${brl(nf.tot.vST)}</dd><dt>Frete / desconto</dt><dd>${brl(nf.tot.vFrete)} / ${brl(nf.tot.vDesc)}</dd><dt>Total da nota</dt><dd><b>${brl(nf.tot.vNF)}</b></dd>
+    <dt>Frete</dt><dd>${esc(nf.transp.modFrete)}: ${esc(MODFRETE[nf.transp.modFrete]||"—")}${nf.transp.transp?" · "+esc(nf.transp.transp):""}${nf.transp.placa?" · placa "+esc(nf.transp.placa):""}${nf.transp.qVol?" · "+nf.transp.qVol+" volume(s)":""}</dd>
+    <dt>Pagamento</dt><dd>${pag||"—"}</dd>${dups?`<dt>Parcelas</dt><dd>${dups}</dd>`:""}
+    <dt>Emissão</dt><dd>${fmtDate(nf.ide.dhEmi?new Date(nf.ide.dhEmi):null)}</dd><dt>Protocolo</dt><dd>${nf.prot?esc(nf.prot.nProt)+" ("+esc(nf.prot.cStat)+" – "+esc(nf.prot.xMotivo)+")":"—"}</dd>
+    <dt>Chave</dt><dd class="digits">${esc(nf.chave)}</dd></dl></details>
+  <details${nf.infCpl||nf.infAdFisco?" open":""}><summary>Informações complementares</summary>${nf.infCpl?`<div class="pre">${esc(nf.infCpl)}</div>`:"<p class=muted>Sem informações complementares.</p>"}${nf.infAdFisco?`<p class="muted" style="margin-top:8px">Ao fisco:</p><div class="pre">${esc(nf.infAdFisco)}</div>`:""}</details>
+  </article>`;
+}
+function copyText(txt,btn){
+  const done=()=>{const o=btn.textContent;btn.textContent="Chave copiada ✓";setTimeout(()=>btn.textContent=o,2200)};
+  const fb=()=>{const i=$("#chaveTxt");i.focus();i.select();i.setSelectionRange(0,99);let ok=false;try{ok=document.execCommand("copy")}catch(e){}if(ok)done();else aviso("A cópia automática foi bloqueada. A chave está selecionada no campo acima: toque e segure para copiar.",false)};
+  try{if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(txt).then(done,fb)}else fb()}catch(e){fb()}
+}
+function renderChave(info){
+  const c=parseChave(info.ch);
+  $("#chaveOut").innerHTML=`<div class="chavebox"><h3>Chave de acesso</h3>
+  <textarea id="chaveTxt" class="chave digits" readonly rows="2" aria-label="Chave de acesso lida" style="margin-top:8px;font-size:1.15rem;word-break:break-all;resize:none;line-height:1.4">${esc(c.ch)}</textarea>
+  ${c.dv?"":`<div class="msg">Dígito verificador não confere. A leitura pode ter falhado; leia de novo ou digite a chave.</div>`}
+  <div class="actions" style="margin-top:10px">
+    ${c.mod==="55"?`<button class="btn primary wide" id="bBusca">Buscar XML e analisar</button>`:""}
+    <button class="btn ${c.mod==="55"?"":"primary "}wide" id="bCopy">Copiar chave de acesso</button>
+    <button class="btn" id="bCopyDanfe">Copiar e abrir o Meu Danfe</button>
+    <a class="btn" href="https://www.nfe.fazenda.gov.br/portal/consultaRecaptcha.aspx?tipoConsulta=resumo&tipoConteudo=7PhJ+gAVw2g=" target="_blank" rel="noopener">Portal nacional</a>
+    ${info.url?`<a class="btn wide" href="${esc(info.url)}" target="_blank" rel="noopener">Abrir consulta do QR Code</a>`:""}
+  </div>
+  <dl class="kv"><dt>Documento</dt><dd>${esc(MODELO[c.mod]||"modelo "+c.mod)} nº ${c.nnf} · série ${c.serie}</dd><dt>UF do emitente</dt><dd>${esc(c.uf)}${c.uf==="RR"?"":" (fora de RR)"}</dd><dt>Mês de emissão</dt><dd>${esc(c.aamm)}</dd><dt>Emitente</dt><dd>${fmtDoc(c.doc)}</dd><dt>Tipo de emissão</dt><dd>${esc(TPEMIS[c.tpEmis]||c.tpEmis)}</dd></dl>
+  <p class="muted" style="margin-top:8px">${c.mod==="55"?"A busca automática usa o serviço consultadanfe.com e alcança NF-e do mês corrente (e do anterior até o dia 14). Fora disso, baixe o XML e abra em “Abrir XML da nota”.":"NFC-e não é coberta pela busca automática: use a consulta do QR Code ou baixe o XML e abra em “Abrir XML da nota”."}</p></div>`;
+  $("#bCopy").onclick=e=>copyText(c.ch,e.currentTarget);
+  $("#bCopyDanfe").onclick=e=>{copyText(c.ch,e.currentTarget);window.open("https://meudanfe.com.br/","_blank","noopener")};
+  state.chave=c.ch;
+  if(c.mod==="55"){$("#bBusca").onclick=e=>buscarXml(c.ch,e.currentTarget);if(c.dv)buscarXml(c.ch,$("#bBusca"))}
+  $("#chaveOut").scrollIntoView({behavior:"smooth",block:"start"});
+}
+async function buscarXml(ch,btn){
+  const o=btn?btn.textContent:"";if(btn){btn.disabled=true;btn.textContent="Buscando XML…"}
+  aviso("");
+  try{
+    const r=await fetch(API_URL,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({chave:ch,format:"json"})});
+    let j=null;try{j=await r.json()}catch(e){}
+    if(!r.ok||!j||j.status!=="ok"||!j.xml_base64){
+      const m=(j&&(j.mensagem||j.message||j.erro||j.error))||("HTTP "+r.status);
+      throw new Error(m)}
+    const bin=atob(j.xml_base64);const bytes=Uint8Array.from(bin,c=>c.charCodeAt(0));
+    const xml=new TextDecoder("utf-8").decode(bytes);
+    const nf=parseNFe(xml,"consulta "+ch);
+    state.nfs=[nf].concat(state.nfs.filter(n=>n.chave!==nf.chave));renderAll();
+    document.querySelector(".nf")&&document.querySelector(".nf").scrollIntoView({behavior:"smooth",block:"start"});
+  }catch(e){
+    const rede=e instanceof TypeError;
+    aviso(rede?"Não foi possível acessar o serviço de consulta (rede ou bloqueio do navegador). Use “Copiar e abrir o Meu Danfe” e abra o XML manualmente.":"A consulta não retornou o XML: "+e.message+". Lembre que o serviço só alcança NF-e (modelo 55) do mês corrente, e do mês anterior até o dia 14. Use “Copiar e abrir o Meu Danfe” se precisar.",true);
+  }finally{if(btn){btn.disabled=false;btn.textContent=o}}
+}
+/* ---------- fluxo ---------- */
+const state={chave:null,nfs:[]};
+function aviso(txt,scroll){const a=$("#aviso");if(!txt){a.classList.add("hidden");return}a.textContent=txt;a.classList.remove("hidden");if(scroll)a.scrollIntoView({behavior:"smooth",block:"center"})}
+function ctx(){const v=$("#abordagem").value;return{posto:$("#posto").value.trim(),abordagem:v?new Date(v+":00-04:00"):null}}
+function renderAll(){
+  if(!state.nfs.length){return}
+  $("#out").innerHTML=state.nfs.map(nf=>{const r=analyze(nf,ctx());let extra="";
+    if(state.chave&&nf.chave&&state.chave!==nf.chave&&state.nfs.length===1) r.alerts.unshift({lvl:"confere",titulo:"O XML não corresponde à chave lida",texto:"Chave lida: "+state.chave+". Chave do XML: "+nf.chave+".",base:""}),r.lvl=r.lvl==="libera"?"confere":r.lvl;
+    return renderNF(nf,r)}).join("");
+}
+function onCode(txt){const info=extractChave(txt);if(!info){aviso("Não encontrei uma chave de 44 dígitos nessa leitura. Tente de novo ou digite a chave.");return}aviso("");renderChave(info);if(state.nfs.length)renderAll()}
+$("#bChave").onclick=()=>onCode($("#chaveManual").value);
+$("#chaveManual").addEventListener("keydown",e=>{if(e.key==="Enter")onCode(e.target.value)});
+$("#fXml").addEventListener("change",async e=>{
+  const files=Array.from(e.target.files||[]);const novos=[];const erros=[];
+  for(const f of files){try{novos.push(parseNFe(await f.text(),f.name))}catch(err){erros.push(f.name+": "+err.message)}}
+  state.nfs=novos.concat(state.nfs.filter(n=>!novos.some(x=>x.chave===n.chave)));
+  aviso(erros.join(" "));renderAll();e.target.value="";
+  if(novos.length) document.querySelector(".nf")&&document.querySelector(".nf").scrollIntoView({behavior:"smooth",block:"start"});
+});
+["#abordagem","#posto"].forEach(s=>$(s).addEventListener("change",()=>{if(s==="#posto")store("triagem.posto",$("#posto").value);renderAll()}));
+
+/* ---------- câmera ---------- */
+let stream=null,loop=null,h5=null;
+function loadScript(src){return new Promise((ok,ko)=>{const s=document.createElement("script");s.src=src;s.onload=ok;s.onerror=()=>ko(new Error("load"));document.head.appendChild(s)})}
+async function nativeDetector(){if(!("BarcodeDetector" in window))return null;try{const f=await BarcodeDetector.getSupportedFormats();const want=["code_128","qr_code","itf"].filter(x=>f.includes(x));return want.length?new BarcodeDetector({formats:want}):null}catch(e){return null}}
+async function ensureH5(){if(window.Html5Qrcode)return;await loadScript("https://cdn.jsdelivr.net/npm/html5-qrcode@2.3.8/html5-qrcode.min.js")}
+async function stopScan(){if(loop)cancelAnimationFrame(loop);loop=null;if(stream){stream.getTracks().forEach(t=>t.stop());stream=null}if(h5){try{await h5.stop()}catch(e){}h5=null}$("#scanner").classList.add("hidden")}
+$("#bStop").onclick=stopScan;
+$("#bScan").onclick=async()=>{
+  aviso("");$("#scanner").classList.remove("hidden");$("#scanMsg").textContent="Aponte para o código de barras ou QR Code";
+  const det=await nativeDetector();const vid=$("#vid");
+  try{
+    if(det){vid.classList.remove("hidden");$("#h5q").classList.add("hidden");
+      stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:"environment"},width:{ideal:1920}}});vid.srcObject=stream;await vid.play();
+      const tick=async()=>{try{const r=await det.detect(vid);if(r&&r.length){const txt=r[0].rawValue;await stopScan();onCode(txt);return}}catch(e){}loop=requestAnimationFrame(tick)};tick();
+    }else{vid.classList.add("hidden");$("#h5q").classList.remove("hidden");await ensureH5();
+      h5=new Html5Qrcode("h5q",{formatsToSupport:[Html5QrcodeSupportedFormats.CODE_128,Html5QrcodeSupportedFormats.QR_CODE,Html5QrcodeSupportedFormats.ITF],verbose:false});
+      await h5.start({facingMode:"environment"},{fps:12,qrbox:(w,h)=>({width:Math.floor(w*.86),height:Math.floor(Math.min(h*.4,w*.5))})},async txt=>{await stopScan();onCode(txt)},()=>{});
+    }
+  }catch(e){await stopScan();camBloqueada(e&&e.name);aviso("A câmera ao vivo foi bloqueada nesta página"+(e&&e.name?" ("+e.name+")":"")+". Use “Ler código de uma foto”: ele abre a câmera do celular e lê o código na foto.",true)}
+};
+async function bitmapVariants(file){
+  const bmp=await createImageBitmap(file);const out=[bmp];
+  const mk=(w,h,draw)=>{const c=document.createElement("canvas");c.width=w;c.height=h;const x=c.getContext("2d");draw(x);return c};
+  out.push(mk(bmp.height,bmp.width,x=>{x.translate(bmp.height,0);x.rotate(Math.PI/2);x.drawImage(bmp,0,0)}));
+  const k=Math.min(1,1600/Math.max(bmp.width,bmp.height));if(k<1)out.push(mk(Math.round(bmp.width*k),Math.round(bmp.height*k),x=>x.drawImage(bmp,0,0,bmp.width*k,bmp.height*k)));
+  return out;
+}
+async function decodeFile(file){
+  const det=await nativeDetector();
+  if(det){for(const v of await bitmapVariants(file)){try{const r=await det.detect(v);const hit=r&&r.find(x=>extractChave(x.rawValue));if(hit)return hit.rawValue;if(r&&r.length)return r[0].rawValue}catch(e){}}}
+  await ensureH5();const tmp=new Html5Qrcode("h5q",{formatsToSupport:[Html5QrcodeSupportedFormats.CODE_128,Html5QrcodeSupportedFormats.QR_CODE,Html5QrcodeSupportedFormats.ITF],verbose:false});
+  return await tmp.scanFile(file,false);
+}
+const onFoto=async e=>{
+  const f=e.target.files&&e.target.files[0];if(!f)return;aviso("Lendo o código da foto…",true);
+  try{const txt=await decodeFile(f);onCode(txt);if(extractChave(txt))$("#chaveOut").scrollIntoView({behavior:"smooth",block:"start"})}
+  catch(err){aviso("Não consegui ler o código nessa foto. Tire outra bem de perto, com o código de barras ocupando a largura da tela, reto e sem reflexo. Se não der, digite os 44 números impressos abaixo do código.",true)}
+  e.target.value="";
+};
+$("#fFoto").addEventListener("change",onFoto);$("#fCam").addEventListener("change",onFoto);
+function camBloqueada(motivo){
+  const b=$("#bScan"),f=$("#bCam");
+  b.classList.add("hidden");f.classList.add("primary");
+  if(!$("#camHint")){const h=document.createElement("p");h.id="camHint";h.className="hint";h.textContent="A leitura ao vivo não está disponível aqui. “Fotografar o código” abre a câmera do celular; a chave aparece logo depois da foto.";document.querySelector(".actions").after(h)}
+}
+/* ---------- início ---------- */
+(function init(){
+  const p=load("triagem.posto");if(p)$("#posto").value=p;
+  try{const pp=document.permissionsPolicy||document.featurePolicy;if(!(navigator.mediaDevices&&navigator.mediaDevices.getUserMedia)||(pp&&pp.allowsFeature&&!pp.allowsFeature("camera")))camBloqueada()}catch(e){}
+  const now=new Date(Date.now()-4*36e5);$("#abordagem").value=now.toISOString().slice(0,16);
+})();
+window.__triagem={parseNFe,analyze,extractChave,parseChave,dvOk};
+</script>
+</body>
+</html>
