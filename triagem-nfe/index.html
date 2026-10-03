@@ -129,14 +129,14 @@ details summary{cursor:pointer;font-family:var(--display);font-weight:600;font-s
   <section id="chaveOut"></section>
   <section id="out"><div class="empty">Nenhuma nota analisada. Leia o código do DANFE para obter a chave e baixar o XML (por exemplo, no Meu Danfe), depois abra o XML aqui.</div></section>
 
-  <p class="footer">Ferramenta de apoio à triagem. As regras seguem o RICMS/RR (Decreto nº 4.335-E/2001, cópia de referência até jan/2026), o CTE (Lei nº 59/93) e a prática do posto; listas de NCM são iniciais e precisam de calibragem. Não substitui a análise do auditor. A busca automática envia a chave de acesso ao serviço privado consultadanfe.com; o XML aberto manualmente é lido só neste aparelho.</p>
+  <p class="footer">Ferramenta de apoio à triagem · leitor móvel v2 (ZXing). As regras seguem o RICMS/RR (Decreto nº 4.335-E/2001, cópia de referência até jan/2026), o CTE (Lei nº 59/93) e a prática do posto; listas de NCM são iniciais e precisam de calibragem. Não substitui a análise do auditor. A busca automática envia a chave de acesso ao serviço privado consultadanfe.com; o XML aberto manualmente é lido só neste aparelho.</p>
 </main>
 
 <div class="scanner hidden" id="scanner" role="dialog" aria-label="Leitura do código">
   <video id="vid" playsinline muted></video>
   <div id="h5q" class="hidden"></div>
   <div class="aim" aria-hidden="true"></div>
-  <div class="bar"><span id="scanMsg">Aponte para o código de barras ou QR Code</span><button class="btn small" id="bStop" style="color:#fff;border-color:#fff;background:transparent">Cancelar</button></div>
+  <div class="bar"><span id="scanMsg">Deixe o código de barras inteiro na horizontal, com as duas margens visíveis.</span><button class="btn small" id="bStop" style="color:#fff;border-color:#fff;background:transparent">Cancelar</button></div>
 </div>
 
 <script>
@@ -469,50 +469,270 @@ $("#fXml").addEventListener("change",async e=>{
 ["#abordagem","#posto"].forEach(s=>$(s).addEventListener("change",()=>{if(s==="#posto")store("triagem.posto",$("#posto").value);renderAll()}));
 
 /* ---------- câmera ---------- */
-let stream=null,loop=null,h5=null;
-function loadScript(src){return new Promise((ok,ko)=>{const s=document.createElement("script");s.src=src;s.onload=ok;s.onerror=()=>ko(new Error("load"));document.head.appendChild(s)})}
-async function nativeDetector(){if(!("BarcodeDetector" in window))return null;try{const f=await BarcodeDetector.getSupportedFormats();const want=["code_128","qr_code","itf"].filter(x=>f.includes(x));return want.length?new BarcodeDetector({formats:want}):null}catch(e){return null}}
-async function ensureH5(){if(window.Html5Qrcode)return;await loadScript("https://cdn.jsdelivr.net/npm/html5-qrcode@2.3.8/html5-qrcode.min.js")}
-async function stopScan(){if(loop)cancelAnimationFrame(loop);loop=null;if(stream){stream.getTracks().forEach(t=>t.stop());stream=null}if(h5){try{await h5.stop()}catch(e){}h5=null}$("#scanner").classList.add("hidden")}
-$("#bStop").onclick=stopScan;
-$("#bScan").onclick=async()=>{
-  aviso("");$("#scanner").classList.remove("hidden");$("#scanMsg").textContent="Aponte para o código de barras ou QR Code";
-  const det=await nativeDetector();const vid=$("#vid");
-  try{
-    if(det){vid.classList.remove("hidden");$("#h5q").classList.add("hidden");
-      stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:"environment"},width:{ideal:1920}}});vid.srcObject=stream;await vid.play();
-      const tick=async()=>{try{const r=await det.detect(vid);if(r&&r.length){const txt=r[0].rawValue;await stopScan();onCode(txt);return}}catch(e){}loop=requestAnimationFrame(tick)};tick();
-    }else{vid.classList.add("hidden");$("#h5q").classList.remove("hidden");await ensureH5();
-      h5=new Html5Qrcode("h5q",{formatsToSupport:[Html5QrcodeSupportedFormats.CODE_128,Html5QrcodeSupportedFormats.QR_CODE,Html5QrcodeSupportedFormats.ITF],verbose:false});
-      await h5.start({facingMode:"environment"},{fps:12,qrbox:(w,h)=>({width:Math.floor(w*.86),height:Math.floor(Math.min(h*.4,w*.5))})},async txt=>{await stopScan();onCode(txt)},()=>{});
+let stream=null,loop=null,h5=null,zxReader=null,zxControls=null;
+
+function loadScript(src){
+  return new Promise((ok,ko)=>{
+    const existing=[...document.scripts].find(s=>s.src===src);
+    if(existing){
+      if(existing.dataset.loaded==="1") return ok();
+      existing.addEventListener("load",ok,{once:true});
+      existing.addEventListener("error",()=>ko(new Error("load")),{once:true});
+      return;
     }
-  }catch(e){await stopScan();camBloqueada(e&&e.name);aviso("A câmera ao vivo foi bloqueada nesta página"+(e&&e.name?" ("+e.name+")":"")+". Use “Ler código de uma foto”: ele abre a câmera do celular e lê o código na foto.",true)}
+    const s=document.createElement("script");
+    s.src=src;
+    s.async=true;
+    s.onload=()=>{s.dataset.loaded="1";ok()};
+    s.onerror=()=>{s.remove();ko(new Error("load"))};
+    document.head.appendChild(s);
+  });
+}
+
+async function ensureZX(){
+  if(window.ZXingBrowser&&window.ZXingBrowser.BrowserMultiFormatReader)return;
+  const urls=[
+    "https://unpkg.com/@zxing/browser@0.1.5",
+    "https://cdn.jsdelivr.net/npm/@zxing/browser@0.1.5/umd/zxing-browser.min.js"
+  ];
+  let last=null;
+  for(const u of urls){
+    try{
+      await loadScript(u);
+      if(window.ZXingBrowser&&window.ZXingBrowser.BrowserMultiFormatReader)return;
+    }catch(e){last=e}
+  }
+  throw last||new Error("ZXing indisponível");
+}
+
+async function ensureH5(){
+  if(window.Html5Qrcode)return;
+  await loadScript("https://cdn.jsdelivr.net/npm/html5-qrcode@2.3.8/html5-qrcode.min.js");
+}
+
+async function nativeDetector(){
+  if(!("BarcodeDetector" in window))return null;
+  try{
+    const f=await BarcodeDetector.getSupportedFormats();
+    const want=["code_128","qr_code","itf"].filter(x=>f.includes(x));
+    return want.length?new BarcodeDetector({formats:want}):null;
+  }catch(e){return null}
+}
+
+function tryContinuousFocus(video){
+  try{
+    const st=video&&video.srcObject;
+    const tr=st&&st.getVideoTracks&&st.getVideoTracks()[0];
+    if(!tr||!tr.getCapabilities||!tr.applyConstraints)return;
+    const caps=tr.getCapabilities();
+    if(caps.focusMode&&Array.from(caps.focusMode).includes("continuous")){
+      tr.applyConstraints({advanced:[{focusMode:"continuous"}]}).catch(()=>{});
+    }
+  }catch(e){}
+}
+
+async function stopScan(){
+  if(loop)cancelAnimationFrame(loop);loop=null;
+  if(zxControls){try{zxControls.stop()}catch(e){}zxControls=null}
+  zxReader=null;
+  if(stream){stream.getTracks().forEach(t=>t.stop());stream=null}
+  if(h5){try{await h5.stop()}catch(e){}try{await h5.clear()}catch(e){}h5=null}
+  const vid=$("#vid");
+  if(vid&&vid.srcObject){
+    try{vid.srcObject.getTracks().forEach(t=>t.stop())}catch(e){}
+    vid.srcObject=null;
+  }
+  $("#scanner").classList.add("hidden");
+}
+
+$("#bStop").onclick=stopScan;
+
+async function startZXing(){
+  await ensureZX();
+  const vid=$("#vid");
+  vid.classList.remove("hidden");
+  $("#h5q").classList.add("hidden");
+  zxReader=new ZXingBrowser.BrowserMultiFormatReader(undefined,{
+    delayBetweenScanAttempts:70,
+    delayBetweenScanSuccess:250
+  });
+  const constraints={
+    audio:false,
+    video:{
+      facingMode:{ideal:"environment"},
+      width:{ideal:1920},
+      height:{ideal:1080}
+    }
+  };
+  zxControls=await zxReader.decodeFromConstraints(constraints,vid,async(result,error,controls)=>{
+    if(!result)return;
+    const txt=result.getText?result.getText():String(result.text||result||"");
+    const info=extractChave(txt);
+    if(!info){
+      $("#scanMsg").textContent="Código lido, mas não encontrei 44 dígitos. Continue apontando para a chave do DANFE.";
+      return;
+    }
+    try{controls&&controls.stop&&controls.stop()}catch(e){}
+    zxControls=null;
+    await stopScan();
+    onCode(txt);
+  });
+  setTimeout(()=>tryContinuousFocus(vid),700);
+}
+
+async function startHtml5Fallback(){
+  const vid=$("#vid");
+  vid.classList.add("hidden");
+  $("#h5q").classList.remove("hidden");
+  await ensureH5();
+  h5=new Html5Qrcode("h5q",{
+    formatsToSupport:[
+      Html5QrcodeSupportedFormats.CODE_128,
+      Html5QrcodeSupportedFormats.QR_CODE,
+      Html5QrcodeSupportedFormats.ITF
+    ],
+    verbose:false
+  });
+  await h5.start(
+    {facingMode:{ideal:"environment"}},
+    {
+      fps:15,
+      aspectRatio:1.777,
+      disableFlip:true,
+      qrbox:(w,h)=>({
+        width:Math.floor(w*.94),
+        height:Math.floor(Math.min(h*.32,w*.34))
+      })
+    },
+    async txt=>{
+      if(!extractChave(txt))return;
+      await stopScan();
+      onCode(txt);
+    },
+    ()=>{}
+  );
+}
+
+$("#bScan").onclick=async()=>{
+  aviso("");
+  $("#scanner").classList.remove("hidden");
+  $("#scanMsg").textContent="Deixe o código de barras inteiro na horizontal, com as duas margens visíveis.";
+  try{
+    await startZXing();
+  }catch(zxErr){
+    try{
+      await startHtml5Fallback();
+      $("#scanMsg").textContent="Leitor alternativo ativo. Deixe o código inteiro, reto e sem reflexo.";
+    }catch(h5Err){
+      await stopScan();
+      camBloqueada((h5Err&&h5Err.name)||(zxErr&&zxErr.name));
+      aviso("Não consegui iniciar o leitor ao vivo. Use “Fotografar o código”: tire a foto de perto, com o código inteiro, reto e sem reflexo.",true);
+    }
+  }
 };
-async function bitmapVariants(file){
-  const bmp=await createImageBitmap(file);const out=[bmp];
-  const mk=(w,h,draw)=>{const c=document.createElement("canvas");c.width=w;c.height=h;const x=c.getContext("2d");draw(x);return c};
-  out.push(mk(bmp.height,bmp.width,x=>{x.translate(bmp.height,0);x.rotate(Math.PI/2);x.drawImage(bmp,0,0)}));
-  const k=Math.min(1,1600/Math.max(bmp.width,bmp.height));if(k<1)out.push(mk(Math.round(bmp.width*k),Math.round(bmp.height*k),x=>x.drawImage(bmp,0,0,bmp.width*k,bmp.height*k)));
+
+function mkCanvas(w,h){
+  const c=document.createElement("canvas");
+  c.width=Math.max(1,Math.round(w));
+  c.height=Math.max(1,Math.round(h));
+  return c;
+}
+
+async function canvasVariants(file){
+  const bmp=await createImageBitmap(file);
+  const maxSide=2400;
+  const k=Math.min(1,maxSide/Math.max(bmp.width,bmp.height));
+  const w=Math.max(1,Math.round(bmp.width*k)),h=Math.max(1,Math.round(bmp.height*k));
+  const base=mkCanvas(w,h);
+  base.getContext("2d").drawImage(bmp,0,0,w,h);
+  const out=[base];
+  const r90=mkCanvas(h,w);
+  let x=r90.getContext("2d");x.translate(h,0);x.rotate(Math.PI/2);x.drawImage(base,0,0);
+  out.push(r90);
+  const r180=mkCanvas(w,h);
+  x=r180.getContext("2d");x.translate(w,h);x.rotate(Math.PI);x.drawImage(base,0,0);
+  out.push(r180);
+  const r270=mkCanvas(h,w);
+  x=r270.getContext("2d");x.translate(0,w);x.rotate(-Math.PI/2);x.drawImage(base,0,0);
+  out.push(r270);
+  try{bmp.close&&bmp.close()}catch(e){}
   return out;
 }
-async function decodeFile(file){
-  const det=await nativeDetector();
-  if(det){for(const v of await bitmapVariants(file)){try{const r=await det.detect(v);const hit=r&&r.find(x=>extractChave(x.rawValue));if(hit)return hit.rawValue;if(r&&r.length)return r[0].rawValue}catch(e){}}}
-  await ensureH5();const tmp=new Html5Qrcode("h5q",{formatsToSupport:[Html5QrcodeSupportedFormats.CODE_128,Html5QrcodeSupportedFormats.QR_CODE,Html5QrcodeSupportedFormats.ITF],verbose:false});
-  return await tmp.scanFile(file,false);
+
+async function decodeFileZXing(file){
+  await ensureZX();
+  const reader=new ZXingBrowser.BrowserMultiFormatReader();
+  let last=null;
+  for(const canvas of await canvasVariants(file)){
+    try{
+      const r=reader.decodeFromCanvas(canvas);
+      const txt=r&&r.getText?r.getText():String(r&&r.text||r||"");
+      if(txt)return txt;
+    }catch(e){last=e}
+  }
+  throw last||new Error("Código não encontrado");
 }
+
+async function decodeFile(file){
+  /* ZXing é o motor principal porque lê CODE_128 longo do DANFE melhor no celular. */
+  try{return await decodeFileZXing(file)}catch(e){}
+
+  /* Fallback nativo, quando o navegador oferece BarcodeDetector para CODE_128. */
+  const det=await nativeDetector();
+  if(det){
+    try{
+      for(const canvas of await canvasVariants(file)){
+        const r=await det.detect(canvas);
+        const hit=r&&r.find(x=>extractChave(x.rawValue));
+        if(hit)return hit.rawValue;
+        if(r&&r.length)return r[0].rawValue;
+      }
+    }catch(e){}
+  }
+
+  /* Último fallback: html5-qrcode. */
+  await ensureH5();
+  const tmp=new Html5Qrcode("h5q",{
+    formatsToSupport:[
+      Html5QrcodeSupportedFormats.CODE_128,
+      Html5QrcodeSupportedFormats.QR_CODE,
+      Html5QrcodeSupportedFormats.ITF
+    ],
+    verbose:false
+  });
+  try{return await tmp.scanFile(file,false)}
+  finally{try{await tmp.clear()}catch(e){}}
+}
+
 const onFoto=async e=>{
-  const f=e.target.files&&e.target.files[0];if(!f)return;aviso("Lendo o código da foto…",true);
-  try{const txt=await decodeFile(f);onCode(txt);if(extractChave(txt))$("#chaveOut").scrollIntoView({behavior:"smooth",block:"start"})}
-  catch(err){aviso("Não consegui ler o código nessa foto. Tire outra bem de perto, com o código de barras ocupando a largura da tela, reto e sem reflexo. Se não der, digite os 44 números impressos abaixo do código.",true)}
+  const f=e.target.files&&e.target.files[0];if(!f)return;
+  aviso("Lendo o código da foto…",true);
+  try{
+    const txt=await decodeFile(f);
+    onCode(txt);
+    if(extractChave(txt))$("#chaveOut").scrollIntoView({behavior:"smooth",block:"start"});
+  }catch(err){
+    aviso("Não consegui ler o código nessa foto. Fotografe só a área do código de barras, deixando a chave inteira, as duas margens brancas, a imagem reta e sem reflexo. Se ainda falhar, digite os 44 números.",true);
+  }
   e.target.value="";
 };
-$("#fFoto").addEventListener("change",onFoto);$("#fCam").addEventListener("change",onFoto);
+
+$("#fFoto").addEventListener("change",onFoto);
+$("#fCam").addEventListener("change",onFoto);
+
 function camBloqueada(motivo){
   const b=$("#bScan"),f=$("#bCam");
-  b.classList.add("hidden");f.classList.add("primary");
-  if(!$("#camHint")){const h=document.createElement("p");h.id="camHint";h.className="hint";h.textContent="A leitura ao vivo não está disponível aqui. “Fotografar o código” abre a câmera do celular; a chave aparece logo depois da foto.";document.querySelector(".actions").after(h)}
+  b.classList.add("hidden");
+  f.classList.add("primary");
+  if(!$("#camHint")){
+    const h=document.createElement("p");
+    h.id="camHint";
+    h.className="hint";
+    h.textContent="A leitura ao vivo não está disponível aqui. “Fotografar o código” abre a câmera do celular e tenta ler CODE 128/QR diretamente da foto.";
+    document.querySelector(".actions").after(h);
+  }
 }
+
 /* ---------- início ---------- */
 (function init(){
   const p=load("triagem.posto");if(p)$("#posto").value=p;
