@@ -116,6 +116,17 @@ input[type=datetime-local],input.chave,textarea.chave{width:100%;padding:12px;bo
 details{margin-top:12px;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:10px 14px}
 details summary{cursor:pointer;font-family:var(--display);font-weight:600;font-size:1.08rem;padding:4px 0}
 .item{border-top:1px solid var(--line);padding:10px 0}
+.item.item-risk{border-left:5px solid var(--amber);padding-left:12px;margin-left:-12px;border-radius:6px}
+.item-flag{margin:8px 0 5px;padding:9px 10px;border-left:5px solid var(--amber);background:var(--bg);border-radius:5px;font-size:.93rem}
+.item-flag.para{border-color:var(--red)}
+.item-flag b{display:block;margin-bottom:2px}
+.item-flag .base{font-size:.84rem;color:var(--muted);margin-top:3px}
+.tag.ok{background:var(--sign);color:var(--sign-ink)}
+.tag.cond{border:1px solid var(--line);background:var(--chip)}
+.top-summary{margin:12px 0 0;padding:13px 14px;background:var(--surface);border:1px solid var(--line);border-radius:12px}
+.top-summary .resumo{margin:0}
+.priority-top{border:2px solid var(--amber);margin-top:10px}
+.priority-top h3{font-size:1.18rem}
 .item:first-of-type{border-top:0}
 .item .t{font-weight:600}
 .grid2{display:grid;grid-template-columns:1fr 1fr;gap:2px 14px;font-size:.93rem;margin-top:4px}
@@ -181,7 +192,7 @@ details summary{cursor:pointer;font-family:var(--display);font-weight:600;font-s
     <div id="histDetalhe"></div>
   </section>
 
-  <p class="footer">Ferramenta de apoio à triagem operacional · v4.4.0. Prioriza irregularidades materiais, destino da carga e exposição tributária. As regras seguem o RICMS/RR (Decreto nº 4.335-E/2001, consolidação de referência até jan/2026), o CTE (Lei nº 59/93) e a prática do posto; listas de NCM são indicativas e precisam de calibragem. Não substitui a análise do auditor. A busca automática envia somente a chave de acesso ao endpoint serverless desta ferramenta, que consulta o serviço privado consultadanfe.com; o XML aberto manualmente é lido só neste aparelho.</p>
+  <p class="footer">Ferramenta de apoio à triagem operacional · v4.5.0. Prioriza irregularidades materiais, destino da carga e exposição tributária. As regras seguem o RICMS/RR (Decreto nº 4.335-E/2001, consolidação de referência até jan/2026), o CTE (Lei nº 59/93) e a prática do posto; listas de NCM são indicativas e precisam de calibragem. Não substitui a análise do auditor. A busca automática envia somente a chave de acesso ao endpoint serverless desta ferramenta, que consulta o serviço privado consultadanfe.com; o XML aberto manualmente é lido só neste aparelho.</p>
 </main>
 
 <div class="scanner hidden" id="scanner" role="dialog" aria-label="Leitura do código">
@@ -299,7 +310,7 @@ async function abrirDetalheHistorico(id){
       posto:rec.posto||($("#posto")?$("#posto").value.trim():"Pacaraima"),
       abordagem:rec.abordagem?new Date(rec.abordagem+":00-04:00"):new Date(rec.ts)
     };
-    const res=rec.analise||analyze(nf,contextoHist);
+    const res=analyze(nf,contextoHist);
     $("#histDetalhe").innerHTML=
       renderNF(nf,res,contextoHist)+
       '<details><summary>XML bruto completo</summary><div class="xmlraw">'+esc(xml)+'</div></details>';
@@ -363,7 +374,8 @@ const ST_RULES=[
  {id:"combustiveis",p:["2710","2711","2713","220710","3826","3403","3811","3819","3820"],nome:"Combustíveis e lubrificantes",art:"RICMS/RR, arts. 802 a 803 e 839-U",mono:true},
  {id:"tintas",p:["3208","3209","3210","3204","3205","3206","3211","3212","3214","3404","3405","3506","3805","3807","3810","3814","3815","3905","3907","3909","3910"],nome:"Tintas, vernizes e química (lista com descrições restritivas)",art:"RICMS/RR, arts. 824 e 825",interna:true},
  {id:"alcoolicas",p:["2204","2205","2206","2208"],nome:"Bebidas alcoólicas (exceto cerveja e chope)",art:"RICMS/RR, art. 831",interna:true},
- {id:"frango",p:["0207","1507","1508","1509","1510","1511","1512","1513","1514","1515","1516","1517"],nome:"Frango e óleos comestíveis",art:"RICMS/RR, art. 836"},
+ {id:"carnes_gado",p:["0201","0202","0203","0204","0206"],nome:"Carnes e produtos comestíveis do abate de gado",art:"RICMS/RR, arts. 612, 613 e 618",regime:"antecipacao-st",nota:"O imposto alcança as operações subsequentes; na entrada de outra UF, o recolhimento ocorre na primeira repartição fiscal."},
+ {id:"frango",p:["0207","1507","1508","1509","1510","1511","1512","1513","1514","1515","1516","1517"],nome:"Frango e óleos comestíveis",art:"RICMS/RR, arts. 836 e 837",regime:"st",condicionalOrigem:true,nota:"O art. 836 alcança frango/partes e óleo comestível provenientes de outra UF ou do exterior."},
  {id:"lampadas",p:["82121020","82122010","8539","8540","85041000","853650","3701","3702","3703","3704","3705","3706","96131000","8506","85073011","85078000","852329","852340","852341","852349","852380"],nome:"Lâminas, lâmpadas, pilhas, filmes e mídias",art:"RICMS/RR, arts. 838 e 839"},
  {id:"telhas",p:["681110","681120","681190","39251000"],nome:"Telhas, cumeeiras e caixas d’água",art:"RICMS/RR, art. 839-B"},
  {id:"autopecas",p:AUTOPECAS,nome:"Autopeças (uso automotivo)",art:"RICMS/RR, art. 839-E"},
@@ -379,7 +391,7 @@ function stRule(ncm){
 }
 function matCons(ncm){ncm=onlyDig(ncm);if(MATCONS_EXC.some(e=>ncm.startsWith(e)))return false;return MATCONS.some(p=>ncm.startsWith(p))}
 const A25=["93","3604","8903","7113","7114","7116","2203","2204","2205","2206","2208","3303","3304","3305","3307","24"];
-const A12=["1006","071333","110620","110814","0401","1005","110220","0407","1201","0207","0105","0201","0202","0102","8702","8703","8704","8711","27101911","271119"];
+const A12=["1006","071333","110620","110814","0401","1005","110220","0407","1201","0207","0105","0201","0202","0203","0204","0206","0102","0103","0104","8702","8703","8704","8711","27101911","271119"];
 function aliqInterna(ncm){ncm=onlyDig(ncm);let best=20,len=0;for(const p of A25)if(ncm.startsWith(p)&&p.length>len){best=25;len=p.length}for(const p of A12)if(ncm.startsWith(p)&&p.length>len){best=12;len=p.length}return best}
 
 /* ---------- chave ---------- */
@@ -561,7 +573,10 @@ function analyze(nf,ctx){
       add("info","Antecipação parcial do destinatário","Contribuinte de RR comprando de "+esc(emitUF)+" para revenda. Estimativa: "+brl(est)+" ("+naoST.length+" item(ns); alíquota interestadual de "+ai+"% fixada pelo § 6º). Confira se o sistema gerou o DARE e as exceções do § 2º.","RICMS/RR, art. 75")}}
 
   /* 4. Itens: CST, ST e destaque */
-  const porCod={};const addItem=(k,lvl,tit,txt,base,n)=>{(porCod[k]=porCod[k]||{lvl,tit,txt,base,itens:[]}).itens.push(n)};
+  const porCod={},itemAlerts={};const addItem=(k,lvl,tit,txt,base,n)=>{
+    (porCod[k]=porCod[k]||{lvl,tit,txt,base,itens:[]}).itens.push(n);
+    const nk=String(n);(itemAlerts[nk]=itemAlerts[nk]||[]).push({lvl,tit,txt,base});
+  };
   nf.itens.forEach(i=>{
     const c=i.icms.cst,s=i.icms.csosn,f=onlyDig(i.cfop),ncm=onlyDig(i.ncm),r=stRule(ncm),st=isSTcode(i);
     if(!ncm||ncm.length!==8||/^0+$/.test(ncm)){const nlvl=i.vProd>=3000?"confere":"registrar";addItem("ncm0:"+nlvl,nlvl,"NCM inválido, incompleto ou zerado","A classificação fiscal não tem 8 dígitos válidos. Isso pode alterar alíquota, ST e benefício fiscal.","MOC NF-e; Ajuste SINIEF 07/05",i.n);}
@@ -574,11 +589,14 @@ function analyze(nf,ctx){
     if((cAnterior||sAnterior)&&["101","102"].includes(cf3i)) addItem("stcod-normal","confere","CST/CSOSN de ST com CFOP de venda comum","O item informa "+(cAnterior?"CST 60":"CSOSN 500")+" (ST anterior), mas usa CFOP "+f+". Em venda interna de mercadoria de terceiros já substituída, confira a compatibilidade com CFOP 5.405.","RICMS/RR, arts. 748 e 755; tabela CFOP",i.n);
     if((cRetem||sRetem)&&["101","102"].includes(cf3i)) addItem("stret-normal","confere","CST/CSOSN com retenção de ST e CFOP de venda comum","O item indica retenção de ST, mas usa CFOP "+f+". Confira se o remetente deveria usar CFOP próprio de substituto (ex.: 5.401/5.403).","RICMS/RR, arts. 746 e 747; tabela CFOP",i.n);
     if(["401","403"].includes(cf3i)&&d&&d.indIE==="1"&&i.icms.vBCST===0&&i.icms.vICMSST===0) addItem("stsemvalor","confere","CFOP de substituto sem base/ICMS-ST","Para destinatário contribuinte, a NF do substituto deve indicar a base de cálculo da ST e o imposto retido. Ambos estão zerados.","RICMS/RR, art. 747",i.n);
-    if(st&&!r&&!isMono(i)&&!matCons(ncm)) addItem("stind:"+ncm.slice(0,4),"confere","Item marcado como ST sem previsão nas listas de RR","NCM "+esc(i.ncm)+" ("+esc(i.desc).slice(0,60)+") não aparece nas listas iniciais de ST do RICMS/RR. Pode ser item tratado como ST para escapar da antecipação.","RICMS/RR, Livro III, Cap. II (seções de ST); confira a lista vigente",i.n);
+    if(st&&!r&&!isMono(i)&&!matCons(ncm)) addItem("stind:"+ncm.slice(0,4),"confere","CST/CFOP de ST a conferir","NCM "+esc(i.ncm)+" ("+esc(i.desc).slice(0,60)+") está com tratamento de ST, mas a regra automática não encontrou enquadramento específico no RICMS/RR. Confira o fundamento e se houve tributação anterior; não presumir irregularidade apenas por este alerta.","RICMS/RR, regimes específicos de ST/antecipação",i.n);
     // ST interna sem retenção
     if(r&&r.interna&&!st&&!isMono(i)&&emitUF==="RR"&&(destUF==="RR"||!d)&&f[0]==="5"&&!TRANSF.includes(f.slice(1))) addItem("stint:"+r.id,"confere","Produto com ST interna em RR sem retenção: "+r.nome,"Esperado CST 10/60 ou CSOSN 201/202/500. Se o emitente é industrial, importador, distribuidor ou atacadista, ele deveria reter; se é varejista, a ST já deveria ter sido paga antes."+(r.nota?" "+r.nota:""),r.art,i.n);
     // entrada interestadual sem ST
-    if(r&&entradaRR&&!st&&!isMono(i)&&d&&d.indIE==="1") addItem("stent:"+r.id,"confere","ST de RR sem retenção na entrada: "+r.nome,"Sem retenção pelo remetente, o destinatário de RR recolhe a ST na entrada."+(r.id==="autopecas"?" Vale só para peça de uso automotivo.":"")+(r.nota?" "+r.nota:""),r.art+"; RICMS/RR, art. 728, p.ú., II",i.n);
+    if(r&&entradaRR&&!st&&!isMono(i)&&d&&d.indIE==="1"){
+      if(r.regime==="antecipacao-st") addItem("stent:"+r.id,"confere","Antecipação/ST de RR a conferir: "+r.nome,"O RICMS/RR exige o imposto na entrada de outra UF e alcança as operações subsequentes. Confira o DARE/recolhimento na primeira repartição fiscal."+(r.nota?" "+r.nota:""),r.art,i.n);
+      else addItem("stent:"+r.id,"confere","ST de RR sem retenção na entrada: "+r.nome,"Sem retenção pelo remetente, confira a responsabilidade pelo recolhimento na entrada."+(r.id==="autopecas"?" Vale só para peça de uso automotivo.":"")+(r.nota?" "+r.nota:""),r.art+"; RICMS/RR, art. 728, p.ú., II",i.n);
+    }
     if(matCons(ncm)&&entradaRR&&d&&d.indIE==="1"&&!st) addItem("matcons","info","Material de construção: antecipação do destinatário","Recolhimento até o dia 10 do segundo mês seguinte à entrada (MVA de 35%). Para destinatário inscrito, não é exigível no trânsito.","RICMS/RR, art. 839-Q, §§ 3º e 5º",i.n);
     if(isMono(i)||(r&&r.mono&&st)) addItem("mono","info","Combustível com ICMS monofásico","O imposto incide uma única vez, na refinaria ou no importador. Não há ICMS a cobrar no trânsito.","RICMS/RR, art. 839-U; Conv. ICMS 199/22",i.n);
     // destaque no regime normal
@@ -600,7 +618,7 @@ function analyze(nf,ctx){
   if(nf.transp.modFrete==="9"&&(nf.transp.placa||nf.transp.qVol>0||/placa/i.test(nf.infCpl))) add("registrar","“Sem frete” com veículo ou volumes informados","Modalidade 9 indica que não há transporte, mas a nota traz placa ou volumes.","MOC NF-e (modFrete)");
 
   const lvl=A.some(a=>a.lvl==="para")?"para":A.some(a=>a.lvl==="confere")?"confere":"libera";
-  return{alerts:A,lvl};
+  return{alerts:A,lvl,itemAlerts};
 }
 
 /* ---------- renderização ---------- */
@@ -631,15 +649,32 @@ function renderNF(nf,res,contextoOverride){
   const validade=validadeTransito(nf,leitura);
   const validadeTitulo=!validade||!validade.dias?"Não calculado":validade.expirado?"VENCIDO há "+duracaoHumana(-validade.restante):"Válido · faltam "+duracaoHumana(validade.restante);
   const validadeDetalhe=validade?(validade.regra+" · desde "+validade.fonte+(validade.limite?" · limite "+fmtDate(validade.limite):"")):"Sem data suficiente";
-  const itens=nf.itens.map(i=>{const r=stRule(i.ncm);return `<div class="item"><div class="t">${esc(i.n)}. ${esc(i.desc)}</div>
+  const itens=nf.itens.map(i=>{
+    const r=stRule(i.ncm),st=isSTcode(i);
+    const ia=(res.itemAlerts&&res.itemAlerts[String(i.n)])||[];
+    const crit=ia.filter(a=>a.lvl==="para"||a.lvl==="confere");
+    const flagHtml=crit.map(a=>`<div class="item-flag ${a.lvl}"><b>⚠ ${esc(a.tit)}</b><span>${a.txt}</span>${a.base?`<div class="base">Base: ${esc(a.base)}</div>`:""}</div>`).join("");
+    let regimeTag="";
+    if(r){
+      if(r.id==="carnes_gado") regimeTag=`<span class="tag cond">Regime específico RR: antecipação/ST · arts. 612, 613 e 618</span>`;
+      else if(r.id==="frango") regimeTag=`<span class="tag cond">ST em RR se proveniente de outra UF/exterior · arts. 836 e 837</span>`;
+      else regimeTag=`<span class="tag st">ST/antecipação em RR: ${esc(r.nome)} (${esc(r.art)})</span>`;
+    }
+    let coerencia="";
+    if(st&&r&&r.id==="carnes_gado") coerencia=`<span class="tag ok">CST/CFOP compatível com tributação anterior, se o imposto já foi recolhido no abate/entrada</span>`;
+    else if(st&&r&&r.id==="frango") coerencia=`<span class="tag ok">CST/CFOP compatível com ST anterior, se houve ingresso interestadual/exterior</span>`;
+    return `<div class="item${crit.length?" item-risk":""}"><div class="t">${esc(i.n)}. ${esc(i.desc)}</div>
+    ${flagHtml}
     <div class="grid2"><span>NCM ${esc(i.ncm)}${i.cest?" · CEST "+esc(i.cest):""}${i.cBenef?" · cBenef "+esc(i.cBenef):""}</span><span>${i.q.toLocaleString("pt-BR")} ${esc(i.un)} × ${brl(i.vUn)} = <b>${brl(i.vProd)}</b></span>
     <span>CFOP ${esc(i.cfop)}: ${esc(cfopDesc(i.cfop))}</span><span><b>${esc(codeDesc(i))}</b></span>
     <span>Origem ${esc(i.icms.orig)}: ${esc(ORIG[i.icms.orig]||"")}</span><span>BC ${brl(i.icms.vBC)} · ${pct(i.icms.pICMS)} · ICMS ${brl(i.icms.vICMS)}${i.icms.vICMSST?" · ST "+brl(i.icms.vICMSST):""}</span></div>
-    ${r?`<span class="tag st">ST/antecipação em RR: ${esc(r.nome)} (${esc(r.art)})</span>`:""}${matCons(i.ncm)?`<span class="tag st">Material de construção (art. 839-Q)</span>`:""}</div>`}).join("");
+    ${regimeTag}${coerencia}${matCons(i.ncm)?`<span class="tag st">Material de construção (art. 839-Q)</span>`:""}</div>`}).join("");
   const pag=nf.pag.map(p=>`${TPAG[p.tPag]||p.tPag}${p.xPag?" ("+esc(p.xPag)+")":""}: ${brl(p.vPag)}`).join("; ");
   const dups=nf.dup.map(x=>`${esc(x.n)} – ${esc(x.venc.split("-").reverse().join("/"))} – ${brl(x.v)}`).join("<br>");
   return `<article class="nf">
   <div class="plate ${res.lvl}" role="status"><div class="ident">${esc(MODELO[nf.ide.mod]||"Nota")} nº ${esc(nf.ide.nNF)} · série ${esc(nf.ide.serie)}</div><h2>${v[0]}</h2><p>${v[1]}</p></div>
+  <div class="top-summary"><p class="resumo"><b>${esc(nf.ide.natOp)}</b> (CFOP ${cfops.join(", ")}), de <b>${esc(nf.emit.nome)}</b> (${esc(nf.emit.mun)}/${esc(nf.emit.uf)}) para <b>${d?esc(d.nome||"—"):"consumidor não identificado"}</b>${d?` (${esc(d.mun)}/${esc(d.uf)})`:""}. ${dhRec?"Autorizada em "+fmtDate(dhRec)+".":"Sem protocolo no XML."}</p></div>
+  <div class="section priority-top"><h3>O que conferir agora</h3>${priHtml||"<p>Nenhum sinal material relevante pelas regras aplicadas. Confira fisicamente a carga e a identidade/rota.</p>"}</div>
   <div class="quick">
     <div class="metric"><span>Valor da NF</span><b>${brl(nf.tot.vNF)}</b></div>
     <div class="metric"><span>Emitida há</span><b>${esc(idadeEmissao)}</b><small>${emi&&!isNaN(emi)?fmtDate(emi):"Data de emissão não disponível"}</small></div>
@@ -649,8 +684,6 @@ function renderNF(nf,res,contextoOverride){
     <div class="metric risk"><span>Inidoneidade — regra geral</span><b>Multa no valor de 40% nominal ≈ ${brl(multaInidonea)}</b><small>CTE/RR, art. 69, III, “a” / RICMS, art. 907, III, “a”. Use para falta de documento ou inidoneidade por outra causa relevante, não apenas destinatário diverso. Art. 69-A limita ao imposto devido ou não recolhido.</small></div>
     <div class="metric"><span>Teto das penalidades</span><b>Imposto devido / não recolhido</b><small>Art. 69-A. ICMS destacado no XML: ${brl(icmsDestacado)} — este valor não é automaticamente o teto; é necessário apurar o imposto devido.</small></div>
   </div>
-  <p class="resumo"><b>${esc(nf.ide.natOp)}</b> (CFOP ${cfops.join(", ")}), de <b>${esc(nf.emit.nome)}</b> (${esc(nf.emit.mun)}/${esc(nf.emit.uf)}) para <b>${d?esc(d.nome||"—"):"consumidor não identificado"}</b>${d?` (${esc(d.mun)}/${esc(d.uf)})`:""}. ${dhRec?"Autorizada em "+fmtDate(dhRec)+".":"Sem protocolo no XML."}</p>
-  <div class="section"><h3>Prioridades da abordagem</h3>${priHtml||"<p>Nenhum sinal material relevante pelas regras aplicadas. Confira fisicamente a carga e a identidade/rota.</p>"}</div>
   ${formais.length?`<details><summary>Inconsistências formais (${formais.length})</summary>${formalHtml}</details>`:""}
   ${infos.length?`<details><summary>Informações auxiliares (${infos.length})</summary>${infoHtml}</details>`:""}
   <details open><summary>Partes e rota</summary>
