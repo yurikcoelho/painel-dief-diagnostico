@@ -196,7 +196,7 @@ details summary{cursor:pointer;font-family:var(--display);font-weight:600;font-s
     <div id="histDetalhe"></div>
   </section>
 
-  <p class="footer">Ferramenta de apoio à triagem operacional · v4.5.1. Prioriza irregularidades materiais, destino da carga e exposição tributária. As regras seguem o RICMS/RR (Decreto nº 4.335-E/2001, consolidação de referência até jan/2026), o CTE (Lei nº 59/93) e a prática do posto; listas de NCM são indicativas e precisam de calibragem. Não substitui a análise do auditor. A busca automática envia somente a chave de acesso ao endpoint serverless desta ferramenta, que consulta o serviço privado consultadanfe.com; o XML aberto manualmente é lido só neste aparelho.</p>
+  <p class="footer">Ferramenta de apoio à triagem operacional · v4.6.0. Prioriza irregularidades materiais, destino da carga e exposição tributária. As regras seguem o RICMS/RR (Decreto nº 4.335-E/2001, consolidação de referência até jan/2026), o CTE (Lei nº 59/93) e a prática do posto; listas de NCM são indicativas e precisam de calibragem. Não substitui a análise do auditor. A busca automática envia somente a chave de acesso ao endpoint serverless desta ferramenta, que consulta o serviço privado consultadanfe.com; o XML aberto manualmente é lido só neste aparelho.</p>
 </main>
 
 <div class="scanner hidden" id="scanner" role="dialog" aria-label="Leitura do código">
@@ -418,7 +418,7 @@ function parseNFe(xml,fileName){
   const doc=new DOMParser().parseFromString(xml,"application/xml");
   if(doc.getElementsByTagName("parsererror").length) throw new Error("Arquivo não é um XML válido.");
   const inf=q(doc,"infNFe"); if(!inf) throw new Error("Não encontrei uma NF-e/NFC-e neste XML.");
-  const ide=q(inf,"ide"),emit=q(inf,"emit"),dest=q(inf,"dest"),ent=q(inf,"entrega"),ret=q(inf,"retirada"),tr=q(inf,"transp"),tot=q(inf,"ICMSTot"),adic=q(inf,"infAdic"),prot=q(doc,"infProt");
+  const ide=q(inf,"ide"),emit=q(inf,"emit"),dest=q(inf,"dest"),ent=q(inf,"entrega"),ret=q(inf,"retirada"),tr=q(inf,"transp"),tot=q(inf,"ICMSTot"),adic=q(inf,"infAdic"),prot=q(doc,"infProt"),exp=q(inf,"exporta");
   const enderEmit=q(emit,"enderEmit"),enderDest=q(dest,"enderDest");
   const nf={file:fileName,chave:(inf.getAttribute("Id")||"").replace(/^NFe/,""),
     ide:{natOp:t(ide,"natOp"),mod:t(ide,"mod"),serie:t(ide,"serie"),nNF:t(ide,"nNF"),dhEmi:t(ide,"dhEmi"),dhSaiEnt:t(ide,"dhSaiEnt"),tpNF:t(ide,"tpNF"),idDest:t(ide,"idDest"),tpEmis:t(ide,"tpEmis"),tpAmb:t(ide,"tpAmb"),finNFe:t(ide,"finNFe"),indFinal:t(ide,"indFinal"),indPres:t(ide,"indPres"),cUF:t(ide,"cUF")},
@@ -426,6 +426,7 @@ function parseNFe(xml,fileName){
     dest:dest?{doc:t(dest,"CNPJ")||t(dest,"CPF")||t(dest,"idEstrangeiro"),cpf:!!q(dest,"CPF"),estrangeiro:!!q(dest,"idEstrangeiro"),nome:t(dest,"xNome"),ie:t(dest,"IE"),indIE:t(dest,"indIEDest"),lgr:t(enderDest,"xLgr"),nro:t(enderDest,"nro"),bairro:t(enderDest,"xBairro"),mun:t(enderDest,"xMun"),uf:t(enderDest,"UF")}:null,
     entrega:ent?{mun:t(ent,"xMun"),uf:t(ent,"UF"),lgr:t(ent,"xLgr"),nro:t(ent,"nro"),nome:t(ent,"xNome")}:null,
     retirada:ret?{mun:t(ret,"xMun"),uf:t(ret,"UF"),lgr:t(ret,"xLgr"),nro:t(ret,"nro"),nome:t(ret,"xNome")}:null,
+    exporta:exp?{ufSaida:t(exp,"UFSaidaPais"),local:t(exp,"xLocExporta"),despacho:t(exp,"xLocDespacho")}:null,
     transp:{modFrete:t(tr,"modFrete"),transp:t(q(tr,"transporta"),"xNome"),transpDoc:t(q(tr,"transporta"),"CNPJ")||t(q(tr,"transporta"),"CPF"),placa:t(q(tr,"veicTransp"),"placa"),qVol:qa(tr,"vol").reduce((s,v)=>s+num(t(v,"qVol")),0),pesoB:qa(tr,"vol").reduce((s,v)=>s+num(t(v,"pesoB")),0)},
     tot:{vProd:num(t(tot,"vProd")),vNF:num(t(tot,"vNF")),vBC:num(t(tot,"vBC")),vICMS:num(t(tot,"vICMS")),vST:num(t(tot,"vST")),vBCST:num(t(tot,"vBCST")),vFrete:num(t(tot,"vFrete")),vDesc:num(t(tot,"vDesc")),vICMSUFDest:num(t(tot,"vICMSUFDest"))},
     pag:qa(inf,"detPag").map(p=>({tPag:t(p,"tPag"),vPag:num(t(p,"vPag")),xPag:t(p,"xPag")})),
@@ -460,7 +461,8 @@ function validadeTransito(nf,leitura){
   const inicio=sai&&!isNaN(sai)?sai:(emi&&!isNaN(emi)?emi:null);
   if(!inicio)return null;
   const internaRR=emitUF==="RR"&&destUF==="RR";
-  const inter=emitUF&&destUF&&emitUF!==destUF;
+  const exportacao=nf.ide.idDest==="3"||destUF==="EX";
+  const inter=!exportacao&&(nf.ide.idDest==="2"||(emitUF&&destUF&&emitUF!==destUF));
   let dias=null,regra="";
   if(internaRR){
     const mesmoMun=norm(nf.emit.mun)&&norm(nf.emit.mun)===norm(nf.dest&&nf.dest.mun);
@@ -468,10 +470,13 @@ function validadeTransito(nf,leitura){
     regra=mesmoMun?"1 dia — remetente e destinatário no mesmo município":"3 dias — municípios distintos dentro de RR";
     const itensMadeira=nf.itens.length>0&&nf.itens.every(i=>onlyDig(i.ncm).startsWith("44")||/(madeira|tábua|tabua|prancha|ripa|caibro|viga|tora)/i.test(i.desc||""));
     if(itensMadeira){dias=5;regra="5 dias — transporte interno de madeira (§ 6º)"}
-  }else if(inter||nf.ide.idDest==="2"){
+  }else if(inter){
     dias=5;regra="5 dias — operação/prestação interestadual";
   }
-  if(!dias)return {inicio,fonte:sai&&!isNaN(sai)?"data/hora de saída":"data de emissão (§ 5º)",dias:null,regra:"Prazo não calculável automaticamente",limite:null};
+  if(!dias){
+    const regraSemPrazo=exportacao?"Exportação — o art. 289 não fixa prazo específico de validade para operação destinada diretamente ao exterior; não aplicar automaticamente os 5 dias do inciso III.":"Prazo não calculável automaticamente";
+    return {inicio,fonte:sai&&!isNaN(sai)?"data/hora de saída":"data de emissão (§ 5º)",dias:null,regra:regraSemPrazo,limite:null};
+  }
   const limite=new Date(inicio.getTime()+dias*86400000);
   const ref=leitura||new Date();
   return {inicio,fonte:sai&&!isNaN(sai)?"data/hora de saída":"data de emissão (§ 5º)",dias,regra,limite,restante:limite-ref,expirado:ref>limite};
@@ -523,7 +528,7 @@ function analyze(nf,ctx){
     }
   }
   const ref=dhRec||dhEmi;
-  if(ref&&abord&&abord>ref){const d=(abord-ref)/864e5;if(d>15)add("confere","Nota emitida há "+Math.floor(d)+" dias","Prazo longo entre a emissão e o trânsito. Verifique se a nota já foi registrada em outra passagem (reutilização).","RICMS/RR, art. 147")}
+  if(ref&&abord&&abord>ref){const d=(abord-ref)/864e5;if(d>15&&nf.ide.idDest!=="3")add("confere","Nota emitida há "+Math.floor(d)+" dias","Prazo longo entre a emissão e o trânsito. Verifique se a nota já foi registrada em outra passagem (reutilização).","RICMS/RR, art. 147")}
   if(nf.ide.tpEmis&&nf.ide.tpEmis!=="1") add("confere","Emitida em contingência ("+(TPEMIS[nf.ide.tpEmis]||nf.ide.tpEmis)+")","Confirme no portal se a nota foi transmitida e autorizada depois da contingência.","Ajuste SINIEF 07/05");
   add("info","Cancelamento posterior não aparece no XML","Antes de liberar, confirme a situação atual da chave no portal.","");
 
@@ -531,7 +536,16 @@ function analyze(nf,ctx){
   const dig1={"1":"5","2":"6","3":"7"}[nf.ide.idDest];
   if(dig1&&nf.ide.tpNF==="1"&&cf1.some(c=>c!==dig1)) add("registrar","CFOP não combina com o destino da operação","Indicador de destino "+esc(nf.ide.idDest)+" (1 interna, 2 interestadual, 3 exterior) com CFOP "+cfops.join(", ")+".","Ajuste SINIEF 07/01 (CFOP)");
   if(cf1.includes("5")&&destUF&&emitUF&&destUF!==emitUF) add("confere","CFOP de operação interna com destinatário em outra UF","Emitente em "+esc(emitUF)+" e destinatário em "+esc(destUF)+".","RICMS/RR, art. 147, III");
-  if(cf1.includes("7")) add("confere","Saída para o exterior","Confirme a DU-E/registro de exportação e o destino físico. A falta de documentação de exportação é matéria da Receita Federal.","CTE, art. 6º (não incidência na exportação); legislação aduaneira");
+  if(cf1.includes("7")){
+    const exp=nf.exporta;
+    const ruc=((nf.infCpl||"").match(/\bRUC\s*[:\-]?\s*([A-Z0-9.-]+)/i)||[])[1]||"";
+    add("confere","Saída para o exterior","Confirme a DU-E/registro de exportação e o destino físico."+((exp&&exp.ufSaida)?(" A NF-e informa saída/embarque em "+esc(exp.ufSaida)+(exp.local?" – "+esc(exp.local):"")+"."):"")+(ruc?" RUC informado: "+esc(ruc)+".":"")+" A falta de documentação de exportação é matéria da Receita Federal.","CTE, art. 6º (não incidência na exportação); MOC NF-e, grupo ZA; legislação aduaneira");
+    const posto=norm(ctx&&ctx.posto||"");
+    const ufPosto=posto==="pacaraima"?"RR":"";
+    if(ufPosto&&exp&&exp.ufSaida&&exp.ufSaida!==ufPosto){
+      add("confere","UF/local de saída do país não combina com a fronteira fiscalizada","O grupo de exportação da NF-e informa UFSaidaPais="+esc(exp.ufSaida)+(exp.local?" e xLocExporta="+esc(exp.local):"")+", mas a carga está sendo fiscalizada em Pacaraima/RR. Se a transposição da fronteira ocorrer por Pacaraima, confira a DU-E e a rota efetiva, pois UFSaidaPais/xLocExporta devem indicar a UF e o local de embarque ou de transposição de fronteira.","MOC NF-e, grupo ZA (UFSaidaPais e xLocExporta)");
+    }
+  }
   if(nfce&&emitUF&&emitUF!=="RR") add("confere","NFC-e emitida em outra UF","NFC-e acoberta só operação interna, presencial ou com entrega em domicílio no estado do emitente. Em trânsito por RR, a operação é interestadual.","Ajuste SINIEF 19/16; Guia Prático EFD (NFC-e só CFOP 5.xxx)");
   if(nfce&&vNF>=200000) add("confere","NFC-e acima de R$ 200 mil","A emissão de NFC-e é vedada nessas operações; o documento cabível é a NF-e.","Ajuste SINIEF 19/16, cl. 4ª, § 4º");
   if(nfce&&!nf.dest&&vNF>=10000) add("registrar","NFC-e de R$ 10 mil ou mais sem identificar o consumidor","A identificação do adquirente é obrigatória nessa faixa.","RICMS/RR, art. 186-Z, I");
@@ -679,7 +693,8 @@ function renderNF(nf,res,contextoOverride){
   return `<article class="nf">
   <div class="plate ${res.lvl}" role="status"><div class="ident">${esc(MODELO[nf.ide.mod]||"Nota")} nº ${esc(nf.ide.nNF)} · série ${esc(nf.ide.serie)}</div><h2>${v[0]}</h2><p>${v[1]}</p></div>
   <div class="top-summary"><p class="resumo"><b>${esc(nf.ide.natOp)}</b> (CFOP ${cfops.join(", ")}), de <b>${esc(nf.emit.nome)}</b> (${esc(nf.emit.mun)}/${esc(nf.emit.uf)}) para <b>${d?esc(d.nome||"—"):"consumidor não identificado"}</b>${d?` (${esc(d.mun)}/${esc(d.uf)})`:""}. ${dhRec?"Autorizada em "+fmtDate(dhRec)+".":"Sem protocolo no XML."}</p>
-    ${cfops.some(c=>c.startsWith("7"))||nf.ide.idDest==="3"?`<div class="due-action"><strong>Exportação: conferir DU-E vinculada</strong><span>A consulta pública oficial do Portal Único aceita a chave desta NF-e como parâmetro de pesquisa.</span><button class="btn small bDue" type="button" data-chave="${esc(nf.chave)}">Consultar DU-E desta NF-e ↗</button><small>Ao tocar, a chave é copiada e a consulta oficial do Siscomex é aberta. No filtro, selecione NF-e e cole a chave.</small></div>`:""}
+    <button class="btn small bCopyChave" type="button" data-chave="${esc(nf.chave)}" style="margin-top:10px;width:100%">Copiar chave de acesso</button>
+    ${cfops.some(c=>c.startsWith("7"))||nf.ide.idDest==="3"?`<div class="due-action"><strong>Exportação: conferir DU-E vinculada</strong><span>A consulta pública oficial do Portal Único aceita a chave desta NF-e como parâmetro de pesquisa.</span>${nf.exporta?`<small>NF-e informa saída/embarque: <b>${esc(nf.exporta.ufSaida||"—")}</b>${nf.exporta.local?" · "+esc(nf.exporta.local):""}${nf.exporta.despacho?" · despacho: "+esc(nf.exporta.despacho):""}</small>`:""}<button class="btn small bDue" type="button" data-chave="${esc(nf.chave)}">Copiar chave e abrir consulta DU-E ↗</button><small>A chave será copiada. No Portal Único, selecione <b>NF-e</b>, cole a chave e conclua o hCaptcha.</small></div>`:""}
   </div>
   <div class="section priority-top"><h3>O que conferir agora</h3>${priHtml||"<p>Nenhum sinal material relevante pelas regras aplicadas. Confira fisicamente a carga e a identidade/rota.</p>"}</div>
   <div class="quick">
@@ -792,6 +807,8 @@ $("#fXml").addEventListener("change",async e=>{
 });
 ["#abordagem","#posto"].forEach(s=>$(s).addEventListener("change",()=>{if(s==="#posto")store("triagem.posto",$("#posto").value);renderAll()}));
 document.addEventListener("click",e=>{
+  const copy=e.target.closest(".bCopyChave");
+  if(copy){e.preventDefault();copyText(copy.dataset.chave||"",copy);return}
   const b=e.target.closest(".bDue");
   if(b){e.preventDefault();abrirConsultaDue(b.dataset.chave||"",b)}
 });
