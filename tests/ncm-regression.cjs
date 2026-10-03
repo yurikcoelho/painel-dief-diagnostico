@@ -55,11 +55,55 @@ for(const [name,change] of [
  ['benefício informado',n=>n.itens[0].cBenef='RR000001'],['redução declarada',n=>n.itens[0].icms.pRedBC=10],['CST60',n=>n.itens[0].icms.cst='60'],
  ['retenção inconsistente',n=>n.itens[0].icms.vICMSST=100],['Simples',n=>n.emit.crt='1'],['origem interestadual',n=>n.emit.uf='SP'],['destino outra UF',n=>n.dest.uf='AM'],
  ['CFOP de ST',n=>n.itens[0].cfop='5405'],['CFOP de devolução',n=>n.itens[0].cfop='5202'],['NCM zerado',n=>n.itens[0].ncm='00000000'],['descrição genérica',n=>n.itens[0].desc='Produto'],
- ['produto diverso no mesmo NCM',n=>n.itens[0].desc='Linguiça'],['data anterior à alíquota geral de20%',n=>n.ide.dhEmi='2022-01-01T12:00:00Z'],['IPI a conferir',n=>n.itens[0].vIPI=100],
+ ['produto diverso no mesmo NCM',n=>n.itens[0].desc='Outro preparado alimentício'],['data anterior à alíquota geral de20%',n=>n.ide.dhEmi='2022-01-01T12:00:00Z'],['IPI a conferir',n=>n.itens[0].vIPI=100],
  ['documento complementar',n=>n.ide.finNFe='2'],['dados internos contraditórios',n=>n.ide.idDest='2'],['ICMS próprio ausente',n=>delete n.itens[0].icms.vICMS]
 ])test('Flag não confirma '+name,()=>{const n=mortadela();change(n);assert(!render(n).includes(flag));});
 test('Cálculo incorpora frete/seguro/desconto/outros antes da flag',()=>{const n=mortadela(),i=n.itens[0];Object.assign(i,{vFrete:100,vSeg:20,vOutro:30,vDesc:50});assert(!render(n).includes(flag));i.icms.vBC=150040;i.icms.vICMS=30008;assert(render(n).includes(flag));});
 test('Compatibilidade do ICMS não encobre nem é bloqueada por alerta IBS/CBS',()=>{const n=mortadela(),r=a.analyze(n,ctx);r.itemAlerts['1']=[{lvl:'registrar',tit:'IBS/CBS incompatíveis',txt:'Verificar IBS/CBS'}];const h=a.renderNF(n,r,ctx);assert(h.includes(flag));});
 test('Exportação válida mantém IBS/CBS e não vira benefício pendente genérico',()=>{const n=fixture('02013000','Carne bovina','41','7102');n.ide.idDest='3';n.dest.uf='EX';n.dest.indIE='9';n.emit.uf='SC';n.itens[0].ibscbs={cst:'410',classe:'410004',vBC:0,vIBS:0,vIBSUF:0,vIBSMun:0,vCBS:0};assert(!has(n,'fundamento pendente'));assert(!has(n,'IBS/CBS incompatíveis'));n.itens[0].ibscbs.cst='000';assert(has(n,'IBS/CBS incompatíveis'));});
+
+// Ampliação v4.9: limites de espécie, operação, descrição e vigência.
+function interna(ncm,desc,cst='00',cfop='5102',aliq=20){const n=fixture(ncm,desc,cst,cfop);n.emit.uf='RR';n.ide.idDest='1';n.ide.cUF='14';Object.assign(n.itens[0].icms,{pICMS:aliq,vICMS:aliq*10});n.tot.vICMS=aliq*10;return n;}
+const bids=n=>Array.from(a.beneficiosCandidatos(n.itens[0],n),b=>b.id);
+const benefit=(n,id)=>a.beneficiosCandidatos(n.itens[0],n).find(b=>b.id===id);
+for(const [ncm,desc,id] of [
+ ['04072100','Ovos de galinha com casca','ovos'],['01042010','Cabrito vivo','caprinos'],['02045000','Carne caprina resfriada','caprinos'],
+ ['87131000','Cadeira de rodas sem motor','ortopedicos'],['90214000','Aparelho auditivo','ortopedicos'],['06022000','Muda de laranjeira','mudas'],
+ ['97019100','Pintura original obra de arte','obrasArte'],['69139000','Vaso artesanal','artesanato'],
+ ['15180090','Óleo de cozinha usado para indústria de sabão','oleoUsado'],['40122000','Pneu usado para reciclagem','pneusUsados'],
+ ['85071090','Sucata de bateria esgotada para reciclagem','bateriasUsadas'],['01022190','Matriz bovina registrada','reprodutores'],
+ ['49019900','Livro impresso de literatura','livros'],['84272090','Empilhadeira usada','maquinasUsadas'],
+ ['01022990','Bovino vivo para abate','bovinosAbate'],['01041011','Ovino vivo','gadoProdutor'],['25084090','Argila para cerâmica','ceramicaInsumos'],
+ ['72044900','Sucata ferrosa','sucata'],['38089199','Inseticida agrícola','agroInternoA'],['31021010','Ureia fertilizante agrícola','agroC'],
+ ['03027100','Tambaqui pescado regional fresco','pescadoRegional'],['03027100','Tambaqui criado em cativeiro','pescadoCativeiro'],
+ ['03063990','Pós-larvas de camarão','posLarvas'],['40141000','Preservativo masculino','preservativos'],['84322900','Arado agrícola','maquinaAgricola']
+])test('Benefício independente do CST: '+id,()=>{const n=interna(ncm,desc);assert(bids(n).includes(id));assert(!render(n).includes(flag));});
+for(const [ncm,desc,id] of [
+ ['04089100','Ovo em pó processado','ovos'],['02044300','Carne de cordeiro congelada','caprinos'],['90212900','Prótese dentária','ortopedicos'],
+ ['06029029','Muda ornamental','mudas'],['15179090','Óleo de cozinha novo industrial','oleoUsado'],['40122000','Pneu usado para revenda normal','pneusUsados'],
+ ['85071090','Bateria automotiva nova','bateriasUsadas'],['49019900','Livro de escrituração pautado','livros'],['07082000','Feijão seco','horti'],
+ ['08023200','Noz seca','horti'],['07020000','Tomate em conserva','horti'],['01039200','Suíno para abate','bovinosAbate'],
+ ['01041011','Ovino para abate','bovinosAbate'],['23099090','Ração pet para cães','agroInternoA'],['31021010','Ureia fertilizante agrícola','agroInternoA'],
+ ['03024100','Pirarucu regional fresco','pescadoRegional'],['03061790','Camarão adulto congelado','posLarvas'],['96081000','Produto sem descrição fiscal','livros']
+])test('Benefício não se estende a '+desc,()=>assert(!bids(interna(ncm,desc)).includes(id)));
+test('ST e benefício coexistem: preservativo CST60 não esconde isenção',()=>{const n=interna('40141000','Preservativo masculino','60','5405');assert(ids(n).includes('farma'));assert(bids(n).includes('preservativos'));assert(has(n,'Benefício/diferimento legal'));});
+test('Hortícola reconhecido deixa de dizer sem regra suficiente',()=>{const h=render(interna('07020000','Tomate fresco'));assert(h.includes('Hipótese de isenção'));assert(h.includes('Tratamento da operação a conferir'));assert(!h.includes('Sem regra específica suficiente'));});
+test('Embalagem de agrotóxico só no retorno vazio sem ônus a comprovar',()=>{const n=interna('39239000','Retorno de embalagem vazia de agrotóxico','40','5921');assert(bids(n).includes('embalagensAgro'));assert(!bids(n).includes('retornaveis'));n.itens[0].desc='Embalagem nova de agrotóxico';n.itens[0].cfop='5102';assert(!bids(n).includes('embalagensAgro'));});
+test('Vasilhame retornável difere da venda de embalagem',()=>{const n=interna('70109090','Vasilhame retornável vazio','40','5920');assert(bids(n).includes('retornaveis'));n.itens[0].cfop='5102';assert(!bids(n).includes('retornaveis'));});
+test('CFOP de amostra exige descrição e condições de gratuidade',()=>{const n=interna('33030010','Amostra grátis de perfume','40','5911');assert(bids(n).includes('amostras'));assert(benefit(n,'amostras').condicao.includes('quantidade'));n.itens[0].desc='Perfume para venda';assert(!bids(n).includes('amostras'));});
+test('Alienação de ativo exige tempo de uso, sem redução calculada',()=>{const n=interna('84272090','Empilhadeira usada','00','5551');assert(bids(n).includes('ativoUsado'));assert(benefit(n,'ativoUsado').condicao.includes('12 meses'));assert(!render(n).includes(flag));});
+test('Partes de máquina usada não recebem benefício de máquina inteira',()=>assert(!bids(interna('84831090','Peça eixo de máquina usada')).includes('maquinasUsadas')));
+test('Diferimento de gado não migra para operação interestadual',()=>assert(!bids(fixture('01041011','Ovino vivo')).includes('gadoProdutor')));
+test('Redução de carne inclui coelho e estados salgados, só saída de RR',()=>{const n=fixture('02081000','Carne de coelho congelada');n.emit.uf='RR';n.dest.uf='AM';assert(bids(n).includes('carneInterestadual'));n.emit.uf='SP';n.dest.uf='RR';assert(!bids(n).includes('carneInterestadual'));});
+test('Insumos vindos de outra UF mantêm referência e legislação de origem pendente',()=>{const n=fixture('12099100','Semente certificada para plantio');assert(bids(n).includes('agroInterA'));assert(benefit(n,'agroInterA').condicao.includes('legislação de origem'));assert(alerts(n).find(x=>x.titulo.includes('Antecipação parcial')).texto.includes('Sem estimativa segura'));});
+test('Farelo agro B não recebe antiga hipótese de fertilizante',()=>{const n=fixture('23040010','Farelo de soja para ração animal');assert(bids(n).includes('agroInterB'));n.itens[0].ncm='31021010';n.itens[0].desc='Ureia fertilizante agrícola';assert(bids(n).includes('agroC'));assert(!bids(n).includes('agroInterB'));});
+test('Prazo conferido pela emissão, não pelo dia de leitura',()=>{const n=interna('03027100','Tambaqui regional fresco');n.ide.dhEmi='2026-04-30T10:00:00-04:00';assert.equal(benefit(n,'pescadoRegional').situacao,'condicoes_pendentes');n.ide.dhEmi='2026-05-01T10:00:00-04:00';assert.equal(benefit(n,'pescadoRegional').situacao,'prazo_fonte_encerrado');assert(render(n).includes('conferir prorrogação'));assert(!render(n).includes(flag));});
+test('Prorrogação nacional não vira isenção de RR confirmada',()=>{const n=interna('38089199','Inseticida agrícola');n.ide.dhEmi='2026-10-03T10:00:00Z';const b=benefit(n,'agroInternoA');assert.equal(b.situacao,'prazo_fonte_encerrado');assert(b.vigencia.includes('79/25'));assert(b.vigencia.includes('2027'));assert(b.vigencia.includes('confirmar incorporação'));});
+test('Norma histórica e data ausente nunca validam vigência',()=>{const n=interna('01022990','Bovino para abate');n.ide.dhEmi='2022-10-03';assert.equal(benefit(n,'bovinosAbate').situacao,'anterior_referencia');n.ide.dhEmi='';assert.equal(benefit(n,'bovinosAbate').situacao,'data_pendente');});
+test('NCM inválido e operação fora de RR não produzem benefício RR',()=>{assert.equal(bids(interna('00000000','Ovos')).length,0);const n=fixture('04072100','Ovos');n.dest.uf='AM';assert.equal(bids(n).length,0);});
+for(const [ncm,desc,aliq] of [['16010000','Linguiça',20],['16010000','Salsicha',20],['16010000','Salame',20],['10063021','Arroz branco',12],['07133399','Feijão carioca seco',12],['11062000','Farinha de mandioca',12],['11081400','Fécula de mandioca',12]])test('Compatibilidade própria conferida: '+desc,()=>{const n=interna(ncm,desc,'00','5102',aliq);assert(render(n).includes(flag));n.itens[0].icms.pICMS=aliq===20?12:20;assert(!render(n).includes(flag));});
+test('Alíquota de referência não encobre isenção de ovos',()=>{const n=interna('04072100','Ovos de galinha','00','5102',12);assert.equal(a.aliquotaReferencia(n.itens[0]).valor,12);assert(bids(n).includes('ovos'));assert(!render(n).includes(flag));});
+test('Data civil inválida não valida vigência nem flag',()=>{const n=interna('04072100','Ovos');n.ide.dhEmi='2026-02-30T12:00:00Z';assert.equal(benefit(n,'ovos').situacao,'data_pendente');const m=mortadela();m.ide.dhEmi=n.ide.dhEmi;assert(!render(m).includes(flag));});
+test('Arroz para plantio e mistura não ganham flag de venda comum',()=>{for(const d of ['Arroz semente para plantio','Arroz mistura temperada'])assert(!render(interna('10063021',d,'00','5102',12)).includes(flag));});
 console.log(`${passed} cenários passaram; sintaxe e renderização verificadas.`);
 module.exports={fixture,ctx};
