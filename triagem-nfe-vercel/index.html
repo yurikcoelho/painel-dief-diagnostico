@@ -864,7 +864,7 @@ $("#bScan").onclick=async()=>{
   }
 
   const vert=v.videoHeight>v.videoWidth;
-  const desktop=matchMedia&&matchMedia("(pointer:fine)").matches;
+  const desktop=!!(window.matchMedia&&window.matchMedia("(pointer:fine)").matches);
   $("#scanMsg").textContent=desktop
     ?"No computador: amplie o PDF até o código ocupar boa parte da moldura e evite reflexo/moiré."
     :(vert?"Gire o celular para horizontal. Código inteiro na moldura, a uns 20 cm.":"Código inteiro na moldura, a uns 20 cm. Se desfocar, afaste um pouco.");
