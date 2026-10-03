@@ -167,7 +167,7 @@ details summary{cursor:pointer;font-family:var(--display);font-weight:600;font-s
     <p class="hint">O histórico fica salvo somente neste navegador/aparelho. Outros colegas terão o histórico próprio.</p>
   </section>
 
-  <p class="footer">Ferramenta de apoio à triagem operacional · v4.2. Prioriza irregularidades materiais, destino da carga e exposição tributária. As regras seguem o RICMS/RR (Decreto nº 4.335-E/2001, consolidação de referência até jan/2026), o CTE (Lei nº 59/93) e a prática do posto; listas de NCM são indicativas e precisam de calibragem. Não substitui a análise do auditor. A busca automática envia somente a chave de acesso ao endpoint serverless desta ferramenta, que consulta o serviço privado consultadanfe.com; o XML aberto manualmente é lido só neste aparelho.</p>
+  <p class="footer">Ferramenta de apoio à triagem operacional · v4.3. Prioriza irregularidades materiais, destino da carga e exposição tributária. As regras seguem o RICMS/RR (Decreto nº 4.335-E/2001, consolidação de referência até jan/2026), o CTE (Lei nº 59/93) e a prática do posto; listas de NCM são indicativas e precisam de calibragem. Não substitui a análise do auditor. A busca automática envia somente a chave de acesso ao endpoint serverless desta ferramenta, que consulta o serviço privado consultadanfe.com; o XML aberto manualmente é lido só neste aparelho.</p>
 </main>
 
 <div class="scanner hidden" id="scanner" role="dialog" aria-label="Leitura do código">
@@ -429,19 +429,19 @@ function analyze(nf,ctx){
   /* 0. Reutilização no próprio aparelho */
   if(nf.prevPassagem&&nf.prevPassagem.quando){
     const mins=(Date.now()-nf.prevPassagem.quando)/60000;
-    if(mins>10) add("confere","Chave já lida neste aparelho","Esta mesma chave foi lida em "+new Date(nf.prevPassagem.quando).toLocaleString("pt-BR",{timeZone:"America/Boa_Vista"})+(nf.prevPassagem.placa?" (placa registrada no XML: "+esc(nf.prevPassagem.placa)+")":"")+". Pode ser nova conferência legítima, mas vale verificar reutilização da nota.","Controle local do posto / indício operacional");
+    if(mins>10) add("confere","Chave já lida neste aparelho","Esta mesma chave foi lida em "+new Date(nf.prevPassagem.quando).toLocaleString("pt-BR",{timeZone:"America/Boa_Vista"})+(nf.prevPassagem.placa?" (placa registrada no XML: "+esc(nf.prevPassagem.placa)+")":"")+". Pode ser nova conferência legítima. Se ficar comprovado que o mesmo documento acobertou mais de uma vez o trânsito, a hipótese específica é multa nominal de 200% do imposto; pelo art. 69-A, a penalidade não pode superar o imposto devido ou não recolhido.","CTE/RR, art. 69, III, “d”, e art. 69-A; controle local do posto / indício operacional");
   }
 
   /* 1. Autorização e tempo */
   if(nf.ide.tpAmb==="2") add("para","Nota de homologação, sem valor fiscal","O XML indica ambiente de testes (tpAmb = 2). Não acoberta o transporte.","RICMS/RR, art. 147; CTE, art. 69, III, “a”");
   if(!nf.prot) add("confere","XML sem protocolo de autorização","O arquivo não traz o protocolo da SEFAZ. Confirme no portal se a nota foi autorizada.","RICMS/RR, art. 186-D");
   else if(!["100","150"].includes(nf.prot.cStat)) add("para","Uso não autorizado (cStat "+esc(nf.prot.cStat)+")",esc(nf.prot.xMotivo),"RICMS/RR, art. 147; CTE, art. 69, III, “a”");
-  if(dhRec&&abord&&dhRec>abord){const h=(dhRec-abord)/36e5;add("para","Autorizada depois do início da abordagem","Autorização em "+fmtDate(dhRec)+", "+h.toLocaleString("pt-BR",{maximumFractionDigits:1})+" h após o início da abordagem ("+fmtDate(abord)+"). Nota emitida após a ação fiscal não afasta a infração. Multa de 40% do valor da operação: "+brl(vNF*0.4)+".","CTE, art. 168, § 3º; CTE, art. 69, III, “a”; RICMS/RR, art. 184, I");}
+  if(dhRec&&abord&&dhRec>abord){const h=(dhRec-abord)/36e5;add("para","Autorizada depois do início da abordagem","Autorização em "+fmtDate(dhRec)+", "+h.toLocaleString("pt-BR",{maximumFractionDigits:1})+" h após o início da abordagem ("+fmtDate(abord)+"). Nota emitida após a ação fiscal não afasta a infração. Multa nominal de 40% do valor da operação: "+brl(vNF*0.4)+". Pelo art. 69-A, a penalidade efetivamente aplicada não pode superar o valor do imposto devido ou não recolhido.","CTE, art. 168, § 3º; CTE/RR, art. 69, III, “a”, e art. 69-A; RICMS/RR, art. 184, I");}
   if(validade){
     if(validade.inicio>leitura.getTime()+5*60000){
       add("confere","Data/hora de saída posterior à leitura","O XML informa saída em "+fmtDate(validade.inicio)+", mas a leitura ocorreu em "+fmtDate(leitura)+". Confira o momento real da saída.","RICMS/RR, art. 289");
     }else if(validade.expirado){
-      add("para","Prazo de validade no trânsito ultrapassado","Contagem a partir de "+fmtDate(validade.inicio)+" ("+validade.fonte+"). Regra aplicada: "+validade.regra+". O prazo venceu em "+fmtDate(validade.limite)+"; na leitura, estava vencido há "+duracaoHumana(-validade.restante)+". Confira eventual depósito por transportador (§§ 1º-2º) ou revalidação por força maior (§§ 3º-4º) antes de concluir a irregularidade.","RICMS/RR, art. 289, caput e §§ 1º a 6º");
+      add("para","Prazo de validade no trânsito ultrapassado","Contagem a partir de "+fmtDate(validade.inicio)+" ("+validade.fonte+"). Regra aplicada: "+validade.regra+". O prazo venceu em "+fmtDate(validade.limite)+"; na leitura, estava vencido há "+duracaoHumana(-validade.restante)+". Confira eventual depósito por transportador (§§ 1º-2º) ou revalidação por força maior (§§ 3º-4º). Se confirmada a infração, há penalidade específica de 100% do valor do imposto, observando-se o teto do art. 69-A; não enquadrar automaticamente como a multa geral de 40% por inidoneidade.","RICMS/RR, art. 289; CTE/RR, art. 69, III, “c”, e art. 69-A");
     }
   }
   const ref=dhRec||dhEmi;
@@ -459,7 +459,7 @@ function analyze(nf,ctx){
   if(nfce&&!nf.dest&&vNF>=10000) add("registrar","NFC-e de R$ 10 mil ou mais sem identificar o consumidor","A identificação do adquirente é obrigatória nessa faixa.","RICMS/RR, art. 186-Z, I");
   // rota física no posto
   const rota=rotaInfo(nf,ctx);
-  if(!rota.ok) add("confere","Destino/entrega não aponta "+esc(ctx.posto),esc(rota.detalhe)+". Pergunte a quem pertence a mercadoria e onde ela será entregue. Se o destinatário real divergir do documento, pode haver inidoneidade por incompatibilidade com a operação efetiva.","RICMS/RR, art. 147, III; art. 20, II, “d” e “e”")
+  if(!rota.ok) add("confere","Destino/entrega não aponta "+esc(ctx.posto),esc(rota.detalhe)+". Pergunte a quem pertence a mercadoria e onde ela será efetivamente entregue. Se ficar confirmado que a entrega é a destinatário diverso do indicado na NF-e, use a hipótese específica: 20% do valor da operação (código 1328), e não 40% apenas por essa divergência. Multa nominal sobre esta NF: "+brl(vNF*0.20)+". Pelo art. 69-A, a penalidade não pode superar o imposto devido ou não recolhido.","CTE/RR, art. 69, III, “i”, e art. 69-A; RICMS/RR, art. 147, III")
   // transferência
   if(cf3.some(c=>TRANSF.includes(c))){const r1=onlyDig(nf.emit.doc).slice(0,8),r2=nf.dest?onlyDig(nf.dest.doc).slice(0,8):"";
     if(r2&&r1!==r2) add("para","Transferência entre empresas diferentes","CFOP de transferência, mas a raiz do CNPJ do emitente ("+r1+") difere da do destinatário ("+r2+"). Pode ser venda com CFOP de transferência.","RICMS/RR, art. 147, III");
@@ -561,7 +561,9 @@ function renderNF(nf,res){
   const priHtml=prioritarios.map(a=>`<div class="alert ${a.lvl}"><b>${a.titulo}</b><span>${a.texto}</span>${a.base?`<div class="base">Base: ${esc(a.base)}</div>`:""}</div>`).join("");
   const formalHtml=formais.map(a=>`<div class="alert registrar"><b>${a.titulo}</b><span>${a.texto}</span>${a.base?`<div class="base">Base: ${esc(a.base)}</div>`:""}</div>`).join("");
   const infoHtml=infos.map(a=>`<div class="alert info"><b>${a.titulo}</b><span>${a.texto}</span>${a.base?`<div class="base">Base: ${esc(a.base)}</div>`:""}</div>`).join("");
-  const multaRef=(nf.tot.vNF||nf.tot.vProd)*.40;
+  const multaInidonea=(nf.tot.vNF||nf.tot.vProd)*.40;
+  const multaDestDiverso=(nf.tot.vNF||nf.tot.vProd)*.20;
+  const icmsDestacado=nf.tot.vICMS||0;
   const leitura=nf.leituraEm||new Date();
   const emi=nf.ide.dhEmi?new Date(nf.ide.dhEmi):null;
   const idadeEmissao=emi&&!isNaN(emi)?duracaoHumana(leitura-emi):"—";
@@ -582,7 +584,9 @@ function renderNF(nf,res){
     <div class="metric"><span>Emitida há</span><b>${esc(idadeEmissao)}</b><small>${emi&&!isNaN(emi)?fmtDate(emi):"Data de emissão não disponível"}</small></div>
     <div class="metric ${validade&&validade.expirado?"risk":""}"><span>Validade no trânsito</span><b>${esc(validadeTitulo)}</b><small>${esc(validadeDetalhe)}</small></div>
     <div class="metric"><span>Rota no XML</span><b class="${rota.ok?"route-ok":"route-check"}">${esc(rota.titulo)}</b><small>${esc(rota.detalhe)}</small></div>
-    <div class="metric risk"><span>Se documento inidôneo</span><b>Multa 40% ≈ ${brl(multaRef)}</b><small>RICMS/RR, art. 907, III, “a”. Referência pelo vNF; base pode ser arbitrada (art. 29, XIII).</small></div>
+    <div class="metric ${!rota.ok?"risk":""}"><span>Se confirmar destinatário diverso</span><b>20% nominal ≈ ${brl(multaDestDiverso)}</b><small>CTE/RR, art. 69, III, “i” (cód. 1328). Art. 69-A limita ao imposto devido ou não recolhido.</small></div>
+    <div class="metric risk"><span>Inidoneidade — regra geral</span><b>40% nominal ≈ ${brl(multaInidonea)}</b><small>CTE/RR, art. 69, III, “a” / RICMS, art. 907, III, “a”. Use para falta de documento ou inidoneidade por outra causa relevante, não apenas destinatário diverso. Art. 69-A limita ao imposto devido ou não recolhido.</small></div>
+    <div class="metric"><span>Teto das penalidades</span><b>Imposto devido / não recolhido</b><small>Art. 69-A. ICMS destacado no XML: ${brl(icmsDestacado)} — este valor não é automaticamente o teto; é necessário apurar o imposto devido.</small></div>
   </div>
   <p class="resumo"><b>${esc(nf.ide.natOp)}</b> (CFOP ${cfops.join(", ")}), de <b>${esc(nf.emit.nome)}</b> (${esc(nf.emit.mun)}/${esc(nf.emit.uf)}) para <b>${d?esc(d.nome||"—"):"consumidor não identificado"}</b>${d?` (${esc(d.mun)}/${esc(d.uf)})`:""}. ${dhRec?"Autorizada em "+fmtDate(dhRec)+".":"Sem protocolo no XML."}</p>
   <div class="section"><h3>Prioridades da abordagem</h3>${priHtml||"<p>Nenhum sinal material relevante pelas regras aplicadas. Confira fisicamente a carga e a identidade/rota.</p>"}</div>
