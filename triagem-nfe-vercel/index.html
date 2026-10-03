@@ -141,6 +141,7 @@ details summary{cursor:pointer;font-family:var(--display);font-weight:600;font-s
 @media (max-width:420px){ .actions{grid-template-columns:1fr} .grid2{grid-template-columns:1fr} h1{font-size:1.55rem} }
 @media (prefers-reduced-motion: no-preference){ .nf{animation:in .25s ease-out} @keyframes in{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}} }
 .legal-candidate{margin-top:8px;padding:8px 10px;border-left:3px solid #d39a20;background:#fff8e9;color:#493919;font-size:14px;line-height:1.5}.legal-candidate b{display:block;color:#755514}
+.legal-candidate.compatible{border-left-color:var(--sign);background:#e9f6ed;color:#20472d}.legal-candidate.compatible b{color:#14552b}
 </style>
 <script src="https://cdn.jsdelivr.net/npm/zxing-wasm@3.1.4/dist/iife/reader/index.js"></script>
 </head>
@@ -197,7 +198,7 @@ details summary{cursor:pointer;font-family:var(--display);font-weight:600;font-s
     <div id="histDetalhe"></div>
   </section>
 
-  <p class="footer">Ferramenta de apoio à triagem operacional · v4.8.0. Prioriza irregularidades materiais, destino da carga e exposição tributária. As regras seguem o RICMS/RR (Decreto nº 4.335-E/2001, consolidação de referência até jan/2026), o CTE (Lei nº 59/93) e a prática do posto; listas de NCM são indicativas e precisam de calibragem. Não substitui a análise do auditor. A busca automática envia somente a chave de acesso ao endpoint serverless desta ferramenta, que consulta o serviço privado consultadanfe.com; o XML aberto manualmente é lido só neste aparelho.</p>
+  <p class="footer">Ferramenta de apoio à triagem operacional · v4.8.1. Prioriza irregularidades materiais, destino da carga e exposição tributária. As regras seguem o RICMS/RR (Decreto nº 4.335-E/2001, consolidação de referência até jan/2026), o CTE (Lei nº 59/93) e a prática do posto; listas de NCM são indicativas e precisam de calibragem. Não substitui a análise do auditor. A busca automática envia somente a chave de acesso ao endpoint serverless desta ferramenta, que consulta o serviço privado consultadanfe.com; o XML aberto manualmente é lido só neste aparelho.</p>
 </main>
 
 <div class="scanner hidden" id="scanner" role="dialog" aria-label="Leitura do código">
@@ -532,6 +533,24 @@ function aliquotaReferencia(i){
 // inclusão no ICMS próprio de aquisição para comercialização/industrialização.
 function baseOperacao(i,incluirIPI=true){return Math.max(0,(i.vProd||0)-(i.vDesc||0)+(i.vFrete||0)+(i.vSeg||0)+(i.vOutro||0)+(incluirIPI?(i.vIPI||0):0))}
 
+// Compatibilidade positiva apenas para hipóteses examinadas expressamente.
+// Não concluir tributação integral pela mera ausência de uma regra de ST.
+const TRIBUTACAO_NORMAL_CONFERIDA=[{ncm:"16010000",descricao:/\bmortadela\b/,aliquota:20,inicio:"2023-03-30",art:"RICMS/RR, art. 46, I, d"}];
+function tratamentoCompativel(i,nf,itemAlerts=[]){
+  const regra=TRIBUTACAO_NORMAL_CONFERIDA.find(r=>onlyDig(i.ncm)===r.ncm&&r.descricao.test(descricaoFiscal(i)));
+  if(!regra||nf.emit.crt!=="3"||nf.emit.uf!=="RR"||!nf.dest||nf.dest.uf!=="RR")return null;
+  if(nf.ide.tpNF!=="1"||nf.ide.finNFe!=="1"||nf.ide.idDest!=="1"||!["5101","5102"].includes(onlyDig(i.cfop)))return null;
+  if(!/^\d{4}-\d{2}-\d{2}/.test(nf.ide.dhEmi||"")||nf.ide.dhEmi.slice(0,10)<regra.inicio)return null;
+  if(i.icms.cst!=="00"||i.icms.csosn||beneficioDeclarado(i)||isSTcode(i)||declaraMono(i))return null;
+  if(regimesCandidatos(i,nf).length||beneficiosCandidatos(i,nf).length)return null;
+  if(itemAlerts.some(a=>["para","confere","registrar"].includes(a.lvl)&&!a.tit.startsWith("IBS/CBS")))return null;
+  const base=baseOperacao(i,false);
+  if(![base,i.icms.pICMS,i.icms.vBC,i.icms.vICMS].every(Number.isFinite))return null;
+  if(base<=0||i.vIPI>0||i.icms.vBCST>0||i.icms.vICMSST>0||i.icms.vICMSSTRet>0)return null;
+  if(Math.abs(i.icms.pICMS-regra.aliquota)>0.01||Math.abs(i.icms.vBC-base)>0.05||Math.abs(i.icms.vICMS-i.icms.vBC*regra.aliquota/100)>0.05)return null;
+  return regra;
+}
+
 /* ---------- chave ---------- */
 function dvOk(ch){if(!/^\d{44}$/.test(ch))return false;let s=0,w=2;for(let i=42;i>=0;i--){s+=+ch[i]*w;w=w===9?2:w+1}const r=s%11;const dv=r<2?0:11-r;return dv===+ch[43]}
 function parseChave(ch){return{ch,uf:UF[ch.slice(0,2)]||ch.slice(0,2),aamm:ch.slice(4,6)+"/20"+ch.slice(2,4),doc:ch.slice(6,20),mod:ch.slice(20,22),serie:+ch.slice(22,25),nnf:+ch.slice(25,34),tpEmis:ch[34],dv:dvOk(ch)}}
@@ -847,9 +866,10 @@ function renderNF(nf,res,contextoOverride){
   const itens=nf.itens.map(i=>{
     const candidatos=regimesCandidatos(i,nf),beneficios=beneficiosCandidatos(i,nf),aliquota=aliquotaReferencia(i);
     const ia=(res.itemAlerts&&res.itemAlerts[String(i.n)])||[];
+    const compatibilidade=tratamentoCompativel(i,nf,ia);
     const crit=ia.filter(a=>a.lvl==="para"||a.lvl==="confere");
     const flagHtml=crit.map(a=>`<div class="item-flag ${a.lvl}"><b>⚠ ${esc(a.tit)}</b><span>${a.txt}</span>${a.base?`<div class="base">Base: ${esc(a.base)}</div>`:""}</div>`).join("");
-    const regimeTag=candidatos.length?candidatos.map(r=>`<div class="legal-candidate"><b>Regra legal candidata: ${esc(r.nome)}</b><div>${esc(r.art)} · ${esc(r.status)}. ${esc(r.condicao)}</div></div>`).join(""):`<div class="legal-candidate"><b>Enquadramento não validado</b><div>Sem regra específica suficiente na tabela. Confira NCM, descrição, atividade e benefícios; CST 00 não comprova tributação integral.</div></div>`;
+    const regimeTag=compatibilidade?`<div class="legal-candidate compatible"><b>✓ Tratamento declarado compatível com a regra geral</b><div>Mortadela, NCM ${esc(i.ncm)}: operação interna em RR, regime normal, CST 00 e alíquota de ${pct(compatibilidade.aliquota)}. Base e ICMS declarados conferem. ${esc(compatibilidade.art)}.</div><div>Compatibilidade do ICMS próprio nos dados analisados; benefício ou regime especial específico do contribuinte e recolhimento efetivo exigem conferência.</div></div>`:candidatos.length?candidatos.map(r=>`<div class="legal-candidate"><b>Regra legal candidata: ${esc(r.nome)}</b><div>${esc(r.art)} · ${esc(r.status)}. ${esc(r.condicao)}</div></div>`).join(""):`<div class="legal-candidate"><b>Enquadramento não validado</b><div>Sem regra específica suficiente na tabela. Confira NCM, descrição, atividade e benefícios; CST 00 não comprova tributação integral.</div></div>`;
     const beneficioHtml=beneficios.map(b=>`<div class="legal-candidate"><b>Benefício/diferimento candidato: ${esc(b.nome)}</b><div>${esc(b.art)}. ${esc(b.condicao)}</div></div>`).join("");
     return `<div class="item${crit.length?" item-risk":""}"><div class="t">${esc(i.n)}. ${esc(i.desc)}</div>
     ${flagHtml}
@@ -857,7 +877,7 @@ function renderNF(nf,res,contextoOverride){
     <span>CFOP ${esc(i.cfop)}: ${esc(cfopDesc(i.cfop))}</span><span><b>Declarado na NF-e: ${esc(codeDesc(i))}</b></span>
     <span>Origem ${esc(i.icms.orig)}: ${esc(ORIG[i.icms.orig]||"")}</span><span>BC ${brl(i.icms.vBC)} · ${pct(i.icms.pICMS)} · ICMS ${brl(i.icms.vICMS)}${i.icms.vICMSST?" · ST "+brl(i.icms.vICMSST):""}</span>
     ${i.ibscbs?`<span>IBS/CBS: CST ${esc(i.ibscbs.cst||"—")} · cClassTrib ${esc(i.ibscbs.classe||"—")}</span><span>BC ${brl(i.ibscbs.vBC)} · IBS ${brl(i.ibscbs.vIBS)} (UF ${pct(i.ibscbs.pIBSUF)}; município ${pct(i.ibscbs.pIBSMun)}) · CBS ${brl(i.ibscbs.vCBS)} (${pct(i.ibscbs.pCBS)})</span>`:""}</div>
-    <div class="base">${esc(tributacaoDeclarada(i))}. NCM, CEST e descrição também são declarados; confronte com a carga.</div><div class="base">Alíquota interna de referência: ${aliquota.valor===null?"pendente":pct(aliquota.valor)} · ${esc(aliquota.condicao)}. Benefícios e vigência exigem conferência.</div>${regimeTag}${beneficioHtml}</div>`}).join("");
+    <div class="base">${compatibilidade?"Tributação integral própria declarada compatível com a regra geral identificada":esc(tributacaoDeclarada(i))}. NCM, CEST e descrição também são declarados; confronte com a carga.</div><div class="base">Alíquota interna de referência: ${aliquota.valor===null?"pendente":pct(aliquota.valor)} · ${esc(aliquota.condicao)}. Benefícios e vigência exigem conferência.</div>${regimeTag}${beneficioHtml}</div>`}).join("");
   const pag=nf.pag.map(p=>`${TPAG[p.tPag]||p.tPag}${p.xPag?" ("+esc(p.xPag)+")":""}: ${brl(p.vPag)}`).join("; ");
   const dups=nf.dup.map(x=>`${esc(x.n)} – ${esc(x.venc.split("-").reverse().join("/"))} – ${brl(x.v)}`).join("<br>");
   return `<article class="nf">
