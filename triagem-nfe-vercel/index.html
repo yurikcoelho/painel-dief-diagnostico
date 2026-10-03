@@ -140,6 +140,7 @@ details summary{cursor:pointer;font-family:var(--display);font-weight:600;font-s
 @media (max-width:520px){ .quick{grid-template-columns:1fr} }
 @media (max-width:420px){ .actions{grid-template-columns:1fr} .grid2{grid-template-columns:1fr} h1{font-size:1.55rem} }
 @media (prefers-reduced-motion: no-preference){ .nf{animation:in .25s ease-out} @keyframes in{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}} }
+.legal-candidate{margin-top:8px;padding:8px 10px;border-left:3px solid #d39a20;background:#fff8e9;color:#493919;font-size:14px;line-height:1.5}.legal-candidate b{display:block;color:#755514}
 </style>
 <script src="https://cdn.jsdelivr.net/npm/zxing-wasm@3.1.4/dist/iife/reader/index.js"></script>
 </head>
@@ -196,7 +197,7 @@ details summary{cursor:pointer;font-family:var(--display);font-weight:600;font-s
     <div id="histDetalhe"></div>
   </section>
 
-  <p class="footer">Ferramenta de apoio à triagem operacional · v4.7.1. Prioriza irregularidades materiais, destino da carga e exposição tributária. As regras seguem o RICMS/RR (Decreto nº 4.335-E/2001, consolidação de referência até jan/2026), o CTE (Lei nº 59/93) e a prática do posto; listas de NCM são indicativas e precisam de calibragem. Não substitui a análise do auditor. A busca automática envia somente a chave de acesso ao endpoint serverless desta ferramenta, que consulta o serviço privado consultadanfe.com; o XML aberto manualmente é lido só neste aparelho.</p>
+  <p class="footer">Ferramenta de apoio à triagem operacional · v4.8.0. Prioriza irregularidades materiais, destino da carga e exposição tributária. As regras seguem o RICMS/RR (Decreto nº 4.335-E/2001, consolidação de referência até jan/2026), o CTE (Lei nº 59/93) e a prática do posto; listas de NCM são indicativas e precisam de calibragem. Não substitui a análise do auditor. A busca automática envia somente a chave de acesso ao endpoint serverless desta ferramenta, que consulta o serviço privado consultadanfe.com; o XML aberto manualmente é lido só neste aparelho.</p>
 </main>
 
 <div class="scanner hidden" id="scanner" role="dialog" aria-label="Leitura do código">
@@ -363,41 +364,173 @@ function cfopDesc(c){c=onlyDig(c);if(CFOPD[c])return CFOPD[c];const m={"1":"Entr
 const TRANSF=["151","152","153","155","156","408","409","552","557","658","659"];
 
 /* Listas de ST/antecipação em RR (prefixos de NCM, sem pontos) */
-const AUTOPECAS="381512 391810 392330 392630 40103 5910 401693 48239 401610 401699 570500 590390 590900 63061 650610 700711 700721 700910 701400 731100 7320 7325 780600 800790 830120 830160 830170 830210 830230 8310 84073 840820 84099 84122 841330 841410 841480 841391 841490 842123 842129 84219 842410 842131 842139 842542 8431 843149 843390 848110 84812 848180 8482 850520 850710 851220 851240 851290 85171213 8518 851981 852550 852560 85272 852910 853400 853530 85365 853610 853620 85364 853650 853910 85392 854420 854430 8708 87141 871690 902610 902620 9029 903033 903180 903289 910400 940120 940190 961380 4009 450490 681299 482340 391910 391990 841231 841319 841350 841381 841360 841370 841459 842139 850110 850131 850450 850720 850730 851230 902710 400811 491110 560122 570320 570330 591190 690390 700729 731450 731511 841899 841950 842490 842549 843141 850161 853110 901410 902519 902590 902690 903210 903220 391620 5902 681290 732210 840910".split(" ");
+const AUTOPECAS="381512 391810 392330 392630 40103 5910 401693 48239 401610 401699 570500 590390 590900 63061 650610 700711 700721 700910 701400 731100 7320 7325 780600 80070090 830120 830160 830170 830210 830230 8310 84073 840820 84099 84122 841330 841410 841480 841391 841490 842123 842129 84219 842410 842131 842139 842542 8431 843149 843390 848110 84812 848180 8482 850520 850710 851220 851240 851290 85171213 8518 851981 852550 852560 85272 852910 853400 853530 85365 853610 853620 85364 853650 853910 85392 854420 854430 8708 87141 871690 902610 902620 9029 903033 903180 903289 910400 940120 940190 961380 4009 450490 681299 482340 391910 391990 841231 841319 841350 841381 841360 841370 841459 842139 850110 850131 850450 850720 850730 851230 902710 400811 491110 560122 570320 570330 591190 690390 700729 731450 731511 841899 841950 842490 842549 843141 850161 853110 901410 902519 902590 902690 903210 903220 391620 5902 681290 732210 840910".split(" ");
 const MATCONS="2522 38160011 38160012 38160019 38244000 38245000 391000 3916 3917 3918 3919 3920 3921 3922 3924 3925 39269010 40059190 4009 40169100 4814 6805 68071000 6809 6810 6811 6907 6908 6910 7003 7004 7005 70060000 70071 7007190 70072 700729 70080000 70200000 72 7310 7324 7325 7411 7412 74182000 76071990 7608 76090000 76152000 84191 8481 8516 8535 8536 8537 8538 85434000 8544 8546 8547 9019 910700".split(" ");
 const MATCONS_EXC=["39173221","39173251","85365090"];
 const ST_RULES=[
  {id:"fumo",p:["2402","24031"],nome:"Cigarros e derivados do fumo",art:"RICMS/RR, art. 765",interna:true},
- {id:"bebidas",p:["2201","2202","2203"],nome:"Água, refrigerante, cerveja e chope",art:"RICMS/RR, art. 767",interna:true,nota:"Água: RR excluída do Protocolo 11/91 desde 01/02/2023; sem retenção, o destinatário de RR recolhe (art. 728, p.ú., II)."},
+ {id:"bebidas",p:["2201","2202","2203","210690"],nome:"Água, refrigerante, cerveja e chope",art:"RICMS/RR, art. 767",interna:true,nota:"Água: RR excluída do Protocolo 11/91 desde 01/02/2023; sem retenção, o destinatário de RR recolhe (art. 728, p.ú., II)."},
  {id:"veiculos",p:["870210","870290","870321","870322","870323","870324","870332","870333","870421","870431"],nome:"Veículos novos",art:"RICMS/RR, art. 769",interna:true},
  {id:"motos",p:["8711"],nome:"Veículos de duas e três rodas",art:"RICMS/RR, art. 772",interna:true},
  {id:"pneus",p:["4011","4013","401290"],nome:"Pneus, câmaras de ar e protetores",art:"RICMS/RR, art. 782",interna:true},
- {id:"cimento",p:["2523"],nome:"Cimento",art:"RICMS/RR, art. 785"},
- {id:"trigo",p:["1101","190120"],nome:"Farinha de trigo e misturas (antecipação)",art:"RICMS/RR, art. 787"},
- {id:"farma",p:["3002","3003","3004","3005","300630","300660","56012190","392330","392410","392490","401410","401490","901831","901832","330610","330620","330690","960321","2936","481840","9619"],nome:"Farmacêuticos, higiene e correlatos",art:"RICMS/RR, art. 798"},
+ {id:"cimento",p:["2523"],nome:"Cimento",art:"RICMS/RR, art. 785",interna:true},
+ {id:"trigo",p:["1101","190120","190211","190219","190220","190230","1905"],nome:"Trigo e derivados (antecipação com encerramento)",art:"RICMS/RR, arts. 787 a 793",regime:"antecipacao"},
+ {id:"farma",p:["3002","3003","3004","3005","300630","300660","56012190","392330","392410","392490","401410","401490","901831","9018321","70102000","39269040","39269090","90189099","330610","330620","330690","960321","2936","96190000"],nome:"Farmacêuticos, higiene e correlatos",art:"RICMS/RR, art. 798"},
  {id:"cosmeticos",p:["3303","3304","3305","3307"],nome:"Perfumes e cosméticos",art:"RICMS/RR, art. 800",interna:true},
- {id:"combustiveis",p:["2710","2711","2713","220710","3826","3403","3811","3819","3820"],nome:"Combustíveis e lubrificantes",art:"RICMS/RR, arts. 802 a 803 e 839-U",mono:true},
- {id:"tintas",p:["3208","3209","3210","3204","3205","3206","3211","3212","3214","3404","3405","3506","3805","3807","3810","3814","3815","3905","3907","3909","3910"],nome:"Tintas, vernizes e química (lista com descrições restritivas)",art:"RICMS/RR, arts. 824 e 825",interna:true},
+ {id:"combustiveis",p:["2710","2711","220710","3826","3403","3811","3819","3820"],nome:"Combustíveis e lubrificantes (ST, conforme produto)",art:"RICMS/RR, arts. 802 e 803"},
+ {id:"tintas",p:["3208","3209","3210","3204","3205","3206","3211","3212","3214","3404","3405","3506","3805","3807","3810","3814","3815","3905","3907","3909","3910","2706","2707","2710","2713","2714","27150000","2821","2901","2902","3808","3824","3911"],nome:"Tintas, vernizes e química (lista com descrições restritivas)",art:"RICMS/RR, arts. 824 e 825",interna:true},
  {id:"alcoolicas",p:["2204","2205","2206","2208"],nome:"Bebidas alcoólicas (exceto cerveja e chope)",art:"RICMS/RR, art. 831",interna:true},
- {id:"carnes_gado",p:["0201","0202","0203","0204","0206"],nome:"Carnes e produtos comestíveis do abate de gado",art:"RICMS/RR, arts. 612, 613 e 618",regime:"antecipacao-st",nota:"O imposto alcança as operações subsequentes; na entrada de outra UF, o recolhimento ocorre na primeira repartição fiscal."},
+ {id:"carnes_gado",p:["0102","0103","0104","0201","0202","0203","0204","0206"],nome:"Gado e produtos comestíveis do abate",art:"RICMS/RR, arts. 612, 613 e 618",regime:"antecipacao-st",nota:"O imposto alcança as operações subsequentes; na entrada de outra UF, o recolhimento ocorre na primeira repartição fiscal."},
  {id:"frango",p:["0207","1507","1508","1509","1510","1511","1512","1513","1514","1515","1516","1517"],nome:"Frango e óleos comestíveis",art:"RICMS/RR, arts. 836 e 837",regime:"st",condicionalOrigem:true,nota:"O art. 836 alcança frango/partes e óleo comestível provenientes de outra UF ou do exterior."},
- {id:"lampadas",p:["82121020","82122010","8539","8540","85041000","853650","3701","3702","3703","3704","3705","3706","96131000","8506","85073011","85078000","852329","852340","852341","852349","852380"],nome:"Lâminas, lâmpadas, pilhas, filmes e mídias",art:"RICMS/RR, arts. 838 e 839"},
- {id:"telhas",p:["681110","681120","681190","39251000"],nome:"Telhas, cumeeiras e caixas d’água",art:"RICMS/RR, art. 839-B"},
+ {id:"lampadas",p:["82121020","82122010","8539","8540","85041000","853650"],nome:"Lâminas, lâmpadas, reatores e starters",art:"RICMS/RR, arts. 838 e 839",interna:true},
+ {id:"telhas",p:["6811","392190","39251000","39259000"],nome:"Telhas, cumeeiras, caixas d’água e tampas",art:"RICMS/RR, art. 839-B",interna:true},
  {id:"autopecas",p:AUTOPECAS,nome:"Autopeças (uso automotivo)",art:"RICMS/RR, art. 839-E"},
- {id:"racoes",p:["230910"],nome:"Rações pet",art:"RICMS/RR, art. 839-H"},
- {id:"sorvetes",p:["2105"],nome:"Sorvetes",art:"RICMS/RR, art. 839-R"},
- {id:"celulares",p:["8517123","851713","852352"],nome:"Celulares e cartões inteligentes",art:"RICMS/RR, art. 839-T"}
+ {id:"racoes",p:["2309"],nome:"Rações pet",art:"RICMS/RR, art. 839-H"},
+ {id:"sorvetes",p:["2105","1806","1901","2106"],nome:"Sorvetes e preparados para máquina",art:"RICMS/RR, art. 839-R",interna:true},
+ {id:"celulares",p:["8517123","851713","852352"],nome:"Celulares e cartões inteligentes",art:"RICMS/RR, art. 839-T",interna:true}
 ];
-function stRule(ncm){
-  ncm=onlyDig(ncm); if(!ncm||/^0+$/.test(ncm)) return null;
-  let best=null,len=0;
-  for(const r of ST_RULES){for(const p of r.p){if(ncm.startsWith(p)&&p.length>len){best=r;len=p.length}}}
-  return best;
+/* Fonte: RICMS/RR consolidado no projeto até jan/2026. Catálogo de candidatos,
+   não decisão fiscal. Descrição, finalidade e recolhimento exigem conferência.
+   Não carregar redações anteriores como fundamento vigente. */
+const descricaoFiscal=i=>norm((i.desc||"")+" "+(i.infAdProd||""));
+const telhaDesc=/telha|cumeeira|caixa.{0,12}agua|tampa.{0,18}caixa/;
+const autoDesc=/automotiv|veicul|motocic|caminhao|caminhonete|carro\b|automovel|carreta|balanceamento|trator/;
+const constrDesc=/construc|obra civil|predial|parede|pavimento|piso|revestimento|sanitari|toucador|hidraulic|chuveiro|torneira|banheira|lavatorio|argamassa|alvenaria/;
+const monoNome=i=>{
+  const n=onlyDig(i.ncm),d=descricaoFiscal(i);
+  if(/lubrific|querosene|solvente|hidratad|aditivo|graxa|coque|parafina/.test(d))return null;
+  if(n.startsWith("2710")&&/gasolina|diesel/.test(d))return /diesel/.test(d)?"Diesel":"Gasolina";
+  if(n.startsWith("3826")&&/biodiesel/.test(d))return "Biodiesel";
+  if(n.startsWith("220710")&&/((etanol|alcool).*anidro.*combustiv)|\beac\b/.test(d))return "Etanol anidro combustível";
+  if(n.startsWith("2711")&&/\bglp\b|\bglgn\b|gas liquefeito de petroleo|gas de cozinha/.test(d))return "GLP/GLGN";
+  return null;
+};
+function monoCandidato(i){
+  const nome=monoNome(i);if(!nome)return null;
+  return {id:"monofasico",nome:"ICMS monofásico: "+nome,art:"RICMS/RR, art. 839-U; Conv. ICMS 199/22 e 15/23",regime:"mono",status:"produto compatível pela descrição declarada",condicao:"Confirme o combustível, a data da operação, a etapa da cadeia e os valores por quantidade. CST monofásico não prova recolhimento; a lista não abrange lubrificante, querosene ou etanol hidratado."};
 }
-function matCons(ncm){ncm=onlyDig(ncm);if(MATCONS_EXC.some(e=>ncm.startsWith(e)))return false;return MATCONS.some(p=>ncm.startsWith(p))}
+function qualificarRegra(r,i){
+  const n=onlyDig(i.ncm),d=descricaoFiscal(i);let evidencia=false,condicao="Confirme descrição da carga, finalidade, posição do remetente na cadeia e exceções operacionais dos arts. 727 a 730.";
+  switch(r.id){
+    case "fumo":evidencia=/cigar|fumo|tabaco/.test(d);break;
+    case "cimento":evidencia=/cimento/.test(d);break;
+    case "cosmeticos":evidencia=/cosmetic|perfume|shampoo|xampu|maquiagem|desodorante|capilar|creme|locao|esmalte/.test(d);break;
+    case "alcoolicas":evidencia=/vinho|licor|vodka|rum\b|cachaca|whisk|alcoolic|destilad|conhaque/.test(d);condicao="Confira bebida alcoólica da lista e finalidade comercial. O art. 831 também atribui responsabilidade ao estabelecimento de RR que recebe de outra UF para comercialização; confira guia e exceções.";break;
+    case "bebidas":
+      evidencia=/agua|gelo|refrigerante|cerveja|chope|isotonic|energetic/.test(d);
+      if(/suco|nectar|bebida lactea/.test(d)&&!evidencia)return null;
+      if(n.startsWith("210690")){evidencia=/xarope|extrato|premix|postmix|isotonic|energetic/.test(d);condicao="Para 2106.90: xarope/extrato para refrigerante em máquina ou isotônico/energético na descrição legal. Outro preparado não se enquadra por esse NCM apenas.";if(/sorvete|chocolate|vitamina alimentar/.test(d)&&!evidencia)return null;}break;
+    case "veiculos":case "motos":
+      if(/usad|seminov|segunda mao/.test(d))return null;evidencia=/\bnovo|\b0\s*km/.test(d);condicao="Confirme veículo novo, código completo, fabricante/importador e condições da operação; o NCM não comprova que é novo.";break;
+    case "pneus":if(["40115000","40132000"].includes(n)||/bicicleta/.test(d))return null;condicao="Pneus/câmaras de bicicletas excluídos (art. 783, III). Confira as demais exceções, inclusive destino industrial.";break;
+    case "trigo":
+      evidencia=/trigo/.test(d);
+      if(n.startsWith("1905")){if(/\bbolo|torta|salgado|\bdoce/.test(d))return null;evidencia=/pao|torrada|panetone|farinha de rosca|biscoito|bolacha|wafer/.test(d)&&/trigo/.test(d);}
+      if(n.startsWith("1902")){if(/sem trigo|sem gluten|arroz|milho/.test(d)&&!/trigo/.test(d))return null;evidencia=/trigo/.test(d);}
+      condicao="Aquisição interestadual: antecipação pelo adquirente, com recolhimento no desembaraço/primeira repartição, ressalvada autorização do art. 792. Derivados exigem a descrição do art. 789; bolos, tortas e outros produtos do art. 790 seguem o regime normal. Confira composição e documento do art. 793.";break;
+    case "farma":
+      if(/veterinar/.test(d)&&/^300[234]/.test(n))return null;
+      if(/^392|^401490|^701020/.test(n)){evidencia=/mamadeira|chupeta|intrauter|\bdiu\b/.test(d);if(/prato|cop[oas]|talher|pote|cozinha|mesa|embalagem industrial/.test(d)&&!evidencia)return null;}
+      if(n==="90189099"){evidencia=/intrauter|\bdiu\b/.test(d);if(/cirurgic|endoscop/.test(d)&&!evidencia)return null;}
+      if(!/^392|^401490|^701020|^90189099/.test(n))evidencia=/medicament|soro|vacina|algodao|atadura|absorvente|fralda|preservativo|seringa|agulha|dent|vitamina|contraceptivo|contraste/.test(d);
+      condicao="Compare produto e NCM completo com o quadro atual do art. 798: mamadeiras/chupetas/DIU não abrangem qualquer artefato plástico. Observe exclusão de medicamentos/soros de uso veterinário. O art. 798 atribui responsabilidade ao importador/adquirente/destinatário na entrada; confira recolhimento de RR e condições.";
+      if(/^300[45]/.test(n)){evidencia=false;condicao="NCM de medicamentos/material médico com correspondência ambígua no quadro convertido em Markdown. Valide a redação/tabela oficial vigente antes de definir ST; não usar a redação anterior automaticamente.";}break;
+    case "combustiveis":
+      if(monoNome(i))return null;
+      evidencia=/combustiv|lubrific|graxa|fluido de freio|anticongel|aditivo|hidratad|querosene/.test(d);
+      if(/solvente|asfalto|betume/.test(d)&&!evidencia)return null;
+      condicao="Confirme produto e descrição da lista dos arts. 802/803. Lubrificantes, querosene e álcool hidratado não são monofásicos pelo art. 839-U. Retenção e recolhimento de RR exigem conferência.";break;
+    case "tintas":
+      if(["35061090","35069190"].includes(n)&&/cola.*escolar|escolar.*cola/.test(d))return null;
+      if(n==="32061119")return null;
+      evidencia=/tinta|verniz|pigment|corante|pintura|cola|adesivo|massa|silicone|asfalto|betume|piche|solvente|removedor|impermeabil|diluente|secante|cera|polidor/.test(d);
+      if(/combustiv|diesel|gasolina|lubrific|fertiliz|defensivo agricola|inseticida agricola/.test(d)&&!evidencia)return null;
+      condicao="NCM com descrição restritiva no quadro dos arts. 824/825. Confira produto/finalidade e exceção de insumo industrial; colas escolares e o pigmento excluído não entram automaticamente. A MVA varia por mercadoria e operação.";break;
+    case "carnes_gado":
+      if(/equino|cavalo|coelho|peru|pato/.test(d))return null;
+      evidencia=/bovin|bufalin|suin|porc|caprin|ovin|cordeiro|gado|boi\b|vaca\b/.test(d);
+      condicao="Entrada interestadual: confira antecipação com encerramento e guia de RR, mesmo com CST 60. Destino industrial é exceção do art. 614. Gado vivo tem regras de diferimento e exceções próprias (art. 612), inclusive recria; não confundir com carne abatida.";break;
+    case "frango":
+      if(n.startsWith("0207")){if(/peru|pato|ganso|codorna|avestruz/.test(d))return null;evidencia=/frango/.test(d);}
+      else {if(/industrial|nao comestivel/.test(d))return null;evidencia=/comestivel|aliment|cozinha|refinad/.test(d);}
+      condicao="Art. 836: frango/partes e óleo comestível provenientes de outra UF/exterior, com responsabilidade do destinatário na entrada. Confira espécie, finalidade e guia; não abrange toda ave ou óleo industrial.";break;
+    case "lampadas":
+      evidencia=/barbear|lamina|lampada|reator|starter|arrancador/.test(d);
+      if(n.startsWith("853650")){evidencia=/starter|arrancador/.test(d);if(/interruptor|automotiv/.test(d)&&!evidencia)return null;}
+      condicao="Quadro atual: lâminas/aparelhos de barbear, lâmpadas, reatores e starters descritos. Filmes, pilhas, isqueiros e mídias da redação antiga não são incluídos por este fundamento.";break;
+    case "telhas":
+      evidencia=telhaDesc.test(d);if(/placa|painel|forro|tubo|porta|janela/.test(d)&&!evidencia)return null;
+      condicao="Somente telhas, cumeeiras, caixas d’água e respectivas tampas nos NCM do art. 839-B. Não aplicar o prazo genérico de material de construção a esses produtos; sem retenção, confira recolhimento do destinatário na entrada (§ 1º).";break;
+    case "autopecas":
+      if(n==="73259100")return null;
+      evidencia=autoDesc.test(d);if(/construc|obra civil|predial|industrial|moinho/.test(d)&&!evidencia)return null;
+      condicao="Exige uso automotivo ou hipótese cadastral do art. 839-E, § 2º. CNAE do destinatário não consta do XML padrão: consulte o cadastro. Confira exceções do § 3º (destino industrial, transferências e outras) e exclusão 7325.91.00.";break;
+    case "racoes":
+      if(/bovin|suin|avicola|frango|gado|equino/.test(d))return null;
+      evidencia=/\bpet\b|cao|caes|gato|animais domesticos|passaro|hamster|coelho de estimacao/.test(d);
+      condicao="Posição 2309 somente para ração pet/animais domésticos na hipótese do art. 839-H; não inclui automaticamente ração de produção pecuária.";break;
+    case "sorvetes":
+      evidencia=/sorvete|picole/.test(d);
+      if(!n.startsWith("2105")){evidencia=/sorvete/.test(d)&&/maquina/.test(d);if(/chocolate|achocolat|xarope|energetic|isotonic|pao|bolo/.test(d)&&!/sorvete/.test(d))return null;}
+      condicao="Sorvete/picolé ou preparado destinado à fabricação de sorvete em máquina; as posições 1806/1901/2106 não bastam sem essa finalidade.";break;
+    case "celulares":if(/satelite|automotiv/.test(d))return null;evidencia=/celular|smartphone|smart card|sim card|cartao inteligente|chip/.test(d);condicao="Confirme telefone celular/cartão inteligente da descrição legal e correlação do NCM atual com o histórico; excluídos telefone por satélite e uso automotivo. Regra interna prevista no § 5º.";break;
+  }
+  return {...r,status:evidencia?"descrição declarada compatível; condições pendentes":"descrição/finalidade insuficiente; enquadramento pendente",condicao};
+}
+function materialCandidato(i){
+  const n=onlyDig(i.ncm),d=descricaoFiscal(i);
+  if(MATCONS_EXC.includes(n)||!MATCONS.some(p=>n.startsWith(p)))return null;
+  if(/^681[01]/.test(n)&&telhaDesc.test(d))return null;
+  // Produto efetivamente descrito no regime de telhas não recebe o prazo de 839-Q.
+  if(telhaDesc.test(d)&&ST_RULES.find(r=>r.id==="telhas").p.some(p=>n.startsWith(p)))return null;
+  let evidencia=constrDesc.test(d);
+  if(n.startsWith("9019")){evidencia=/banheira/.test(d)&&/hidromassagem/.test(d);if(/massag|respir|terap/.test(d)&&!evidencia)return null;}
+  if(n.startsWith("8516")){evidencia=/aquecedor.*agua|chuveiro|ducha|torneira eletr|resistencia/.test(d);if(/fogao|forno|chaleira|ferro de passar|cafeteira|secador/.test(d)&&!evidencia)return null;}
+  if(n.startsWith("3924")){evidencia=/higiene|toucador/.test(d);if(/prato|copo|talher|cozinha|mesa|mamadeira|chupeta/.test(d)&&!evidencia)return null;}
+  if((autoDesc.test(d)||/industrial|moinho/.test(d))&&!constrDesc.test(d))return null;
+  return {id:"matcons",nome:"Materiais de construção: antecipação do destinatário",regime:"antecipacao",art:"RICMS/RR, art. 839-Q",status:evidencia?"descrição declarada compatível; cadastro/finalidade pendentes":"descrição ou finalidade de construção pendente",condicao:"Confira CNAE principal e enquadramento pelo caput ou § 1º, II, descrição da mercadoria e finalidade. Na hipótese de antecipação das operações subsequentes, prazo do § 5º: dia 10 do segundo mês seguinte; MVA de 35% somente sem preço fixado/sugerido (§§ 2º/3º). Uso/consumo tem hipótese própria (§ 1º, I)."};
+}
+function regimesCandidatos(i,nf){
+  const n=onlyDig(i.ncm);if(n.length!==8||/^0+$/.test(n))return [];
+  const out=ST_RULES.filter(r=>r.p.some(p=>n.startsWith(p))).map(r=>qualificarRegra(r,i)).filter(Boolean);
+  const mono=monoCandidato(i),mat=materialCandidato(i);if(mono)out.push(mono);if(mat)out.push(mat);
+  return out;
+}
+function beneficioDeclarado(i){return !!i.cBenef||["20","30","40","41","50","51","70"].includes(i.icms.cst)||["103","203","300","400"].includes(i.icms.csosn)||i.icms.pRedBC>0||i.icms.vICMSDeson>0}
+function beneficiosCandidatos(i,nf){
+  const n=onlyDig(i.ncm),d=descricaoFiscal(i),out=[];
+  if(isExportItem(i)&&(nf.ide.idDest==="3"||nf.dest&&nf.dest.uf==="EX"))return out;
+  const push=(nome,art,condicao)=>out.push({nome,art,condicao});
+  if(/^07|^08/.test(n)&&!/seco|desidrat|congelad|processad|conserva|castanha|noz|feijao/.test(d))push("Hortifrutícolas em estado natural","RICMS/RR, Anexo I, art. 1º, XXV","Confira espécie da lista, estado natural, origem da fruta e exclusão de destino industrial. NCM e CST 00/40 não comprovam nem afastam a isenção.");
+  if(/^(8702|8703|8704|8711)/.test(n)&&/usad|seminov|segunda mao/.test(d))push("Veículo usado: redução de base","RICMS/RR, Anexo I, art. 2º, III-A e condições do III","Redução de 95% depende do histórico de aquisição, tributação anterior e demais condições; não calcular automaticamente só pela palavra usado.");
+  if(n.startsWith("84")&&/usad|segunda mao/.test(d))push("Máquina/aparelho usado: redução de base","RICMS/RR, Anexo I, art. 2º, III","Redução de 80% depende das condições do inciso e histórico de aquisição; confira exclusões.");
+  if(/^(0201|0202|0203|0204|0206|0207)/.test(n)&&nf.emit.uf==="RR"&&onlyDig(i.cfop)[0]==="6")push("Carne em saída interestadual de RR","RICMS/RR, Anexo I, art. 2º, I-A","Confira espécie, produto, operação e vigência da redução de 41,67%; não aplicar benefício de RR à operação própria de remetente de outra UF.");
+  if(/^010[234]/.test(n))push("Gado vivo: diferimento/redução conforme operação","RICMS/RR, art. 612; Anexo I, art. 2º, II-A","Confira espécie, destino para abate/recria, operação e condições específicas antes de definir diferimento, redução ou antecipação.");
+  if(/agricola|agropecuario/.test(d)&&/insumo|fertiliz|defensivo|semente|maquina|implemento/.test(d))push("Insumo/máquina agrícola: benefício a conferir","RICMS/RR, Anexo I e apêndices de produtos","Localize NCM completo e descrição na lista específica e confirme finalidade, destinatário e vigência; o catálogo de benefícios desta ferramenta é parcial.");
+  return out;
+}
 const A25=["93","3604","8903","7113","7114","7116","2203","2204","2205","2206","2208","3303","3304","3305","3307","24"];
-const A12=["1006","071333","110620","110814","0401","1005","110220","0407","1201","0207","0105","0201","0202","0203","0204","0206","0102","0103","0104","8702","8703","8704","8711","27101911","271119"];
-function aliqInterna(ncm){ncm=onlyDig(ncm);let best=20,len=0;for(const p of A25)if(ncm.startsWith(p)&&p.length>len){best=25;len=p.length}for(const p of A12)if(ncm.startsWith(p)&&p.length>len){best=12;len=p.length}return best}
+const A12=["1006","0713","110620","110814","1005","110220","0407","1201"];
+function aliquotaReferencia(i){
+  const n=onlyDig(i.ncm),d=descricaoFiscal(i),pendente=condicao=>({valor:null,condicao});
+  if(n.length!==8||/^0+$/.test(n))return pendente("NCM inválido/incompleto");
+  if(monoNome(i)||/hidratad/.test(d)&&n.startsWith("2207"))return pendente("Combustível: confira regime, vigência e tributação específica");
+  if(n.startsWith("0401"))return /in natura|leite cru/.test(d)?{valor:12,condicao:"leite in natura"}:pendente("12% exige leite in natura; conferir descrição");
+  if(n.startsWith("0713")&&!/feijao/.test(d))return pendente("12% para feijão; outra leguminosa exige conferir espécie e benefício");
+  if(n.startsWith("110620")&&!/mandioca/.test(d))return pendente("12% para farinha de mandioca; conferir composição");
+  if(n.startsWith("0207")||n.startsWith("0105"))return /frango/.test(d)&&/natural|resfriad/.test(d)&&!/congelad|temperad|defumad/.test(d)?{valor:12,condicao:"frango natural/resfriado"}:pendente("12% exige frango natural/resfriado; não aplicar a toda ave/congelado");
+  if(/^(010[234]|020[12346])/.test(n))return /bovin|bufalin|suin|porc|ovin|caprin|gado|cordeiro/.test(d)&&(!n.startsWith("02")||/natural|resfriad|congelad/.test(d))?{valor:12,condicao:"gado/produto do abate na hipótese do art. 46"}:pendente("Conferir espécie e estado natural/resfriado/congelado");
+  if(/^(8702|8703|8704|8711)/.test(n))return /\bnovo|\b0\s*km/.test(d)?{valor:12,condicao:"veículo novo"}:pendente("12% exige veículo novo; usado pode ter redução de base");
+  if(/^07|^08|^03/.test(n)&&!A12.some(p=>n.startsWith(p)))return pendente("Conferir fruta regional, hortícola natural/benefício ou peixe de água doce");
+  if(n.startsWith("27101911"))return /querosene.*aviacao/.test(d)?{valor:12,condicao:"querosene de aviação"}:pendente("Conferir querosene de aviação");
+  if(/agricola|agropecuario|ceramic.*artesanal/.test(d))return pendente("Conferir hipótese de 12% e benefício específico");
+  if(A25.some(p=>n.startsWith(p)))return {valor:25,condicao:"hipótese específica do art. 46 a conferir"};
+  if(A12.some(p=>n.startsWith(p)))return {valor:12,condicao:"produto/descrição do art. 46 a conferir"};
+  return {valor:20,condicao:"alíquota geral de referência, sem validação de benefício"};
+}
+// Para art. 75, IPI integra o valor da operação quando aplicável. Não presumir
+// inclusão no ICMS próprio de aquisição para comercialização/industrialização.
+function baseOperacao(i,incluirIPI=true){return Math.max(0,(i.vProd||0)-(i.vDesc||0)+(i.vFrete||0)+(i.vSeg||0)+(i.vOutro||0)+(incluirIPI?(i.vIPI||0):0))}
 
 /* ---------- chave ---------- */
 function dvOk(ch){if(!/^\d{44}$/.test(ch))return false;let s=0,w=2;for(let i=42;i>=0;i--){s+=+ch[i]*w;w=w===9?2:w+1}const r=s%11;const dv=r<2?0:11-r;return dv===+ch[43]}
@@ -438,16 +571,26 @@ function parseNFe(xml,fileName){
     itens:qa(inf,"det").map(d=>{
       const p=q(d,"prod"),imp=q(d,"imposto"),icmsWrap=q(imp,"ICMS"),ibscbs=q(imp,"IBSCBS"),gIBSCBS=q(ibscbs,"gIBSCBS");const g=kids(icmsWrap)[0];
       const gi=g?{grupo:g.localName,orig:t(g,"orig"),cst:t(g,"CST"),csosn:t(g,"CSOSN"),vBC:num(t(g,"vBC")),pICMS:num(t(g,"pICMS")),vICMS:num(t(g,"vICMS")),pRedBC:num(t(g,"pRedBC")),vICMSST:num(t(g,"vICMSST")),vBCST:num(t(g,"vBCST")),vICMSSTRet:num(t(g,"vICMSSTRet")),vICMSDeson:num(t(g,"vICMSDeson"))}:{};
-      return{n:d.getAttribute("nItem")||t(d,"nItem"),cod:t(p,"cProd"),desc:t(p,"xProd"),ncm:t(p,"NCM"),cest:t(p,"CEST"),cBenef:t(p,"cBenef"),cfop:t(p,"CFOP"),un:t(p,"uCom"),q:num(t(p,"qCom")),vUn:num(t(p,"vUnCom")),vProd:num(t(p,"vProd")),vFrete:num(t(p,"vFrete")),vSeg:num(t(p,"vSeg")),vDesc:num(t(p,"vDesc")),vOutro:num(t(p,"vOutro")),infAdProd:t(d,"infAdProd"),icms:gi,ufdest:!!q(imp,"ICMSUFDest"),
+      return{n:d.getAttribute("nItem")||t(d,"nItem"),cod:t(p,"cProd"),desc:t(p,"xProd"),ncm:t(p,"NCM"),cest:t(p,"CEST"),cBenef:t(p,"cBenef"),cfop:t(p,"CFOP"),un:t(p,"uCom"),q:num(t(p,"qCom")),vUn:num(t(p,"vUnCom")),vProd:num(t(p,"vProd")),vFrete:num(t(p,"vFrete")),vSeg:num(t(p,"vSeg")),vDesc:num(t(p,"vDesc")),vOutro:num(t(p,"vOutro")),infAdProd:t(d,"infAdProd"),vIPI:num(t(q(imp,"IPI"),"vIPI")),icms:gi,ufdest:!!q(imp,"ICMSUFDest"),
         ibscbs:ibscbs?{cst:t(ibscbs,"CST"),classe:t(ibscbs,"cClassTrib"),vBC:num(t(gIBSCBS,"vBC")),pIBSUF:num(t(gIBSCBS,"pIBSUF")),pIBSMun:num(t(gIBSCBS,"pIBSMun")),pCBS:num(t(gIBSCBS,"pCBS")),vIBS:num(t(gIBSCBS,"vIBS")),vIBSUF:num(t(gIBSCBS,"vIBSUF")),vIBSMun:num(t(gIBSCBS,"vIBSMun")),vCBS:num(t(gIBSCBS,"vCBS"))}:null}
     })};
   return nf;
 }
 
 /* ---------- análise ---------- */
-function isSTcode(i){const c=i.icms.cst,s=i.icms.csosn,f=onlyDig(i.cfop).slice(1);return ["10","30","60","70"].includes(c)||["201","202","203","500"].includes(s)||["401","403","404","405","408","409","411"].includes(f)}
-function isMono(i){return ["02","15","53","61"].includes(i.icms.cst)}
-function interRegiao(ufOrig){return SULSUDESTE.includes(ufOrig)?7:12}
+// Estes sinais descrevem a NF-e; não comprovam o enquadramento nem recolhimento.
+function isSTcode(i){const c=i.icms.cst,s=i.icms.csosn,f=onlyDig(i.cfop).slice(1);return ["10","30","60","70"].includes(c)||["201","202","203","500"].includes(s)||(["90","900"].includes(c||s)&&i.icms.vICMSST>0)||["401","403","404","405","408","409","411"].includes(f)}
+function declaraMono(i){return ["02","15","53","61"].includes(i.icms.cst)}
+function isMono(i){return !!monoCandidato(i)&&declaraMono(i)}
+function interRegiao(ufOrig,i){return i&&["1","2","3","8"].includes(i.icms.orig)?4:(SULSUDESTE.includes(ufOrig)?7:12)}
+function tributacaoDeclarada(i){
+  const c=i.icms.cst,s=i.icms.csosn;
+  if(declaraMono(i))return "Monofasia declarada; produto e etapa a conferir";
+  if(c==="60"||s==="500")return "ST/antecipação anterior declarada; recolhimento em favor de RR não comprovado";
+  if(["10","30","70"].includes(c)||["201","202","203"].includes(s)||i.icms.vICMSST>0)return "Retenção de ST declarada nesta operação; confira valores e guia";
+  if(c==="00")return "Tributação integral própria declarada; regime do destinatário ainda a conferir";
+  return "Tratamento declarado pelo emitente; fundamento e condições a conferir";
+}
 // CFOPs de exportação de bens; não enquadrar toda remessa/devolução 7.xxx automaticamente.
 function isExportItem(i){return ["7101","7102","7105","7106","7127","7501","7551"].includes(onlyDig(i.cfop))}
 function duracaoHumana(ms){
@@ -586,27 +729,30 @@ function analyze(nf,ctx){
   const und=["UN","UND","UNID","PC","PCT","CX","FD","VDO","KIT","PAR","DZ","LT","GF","GRF"];
   const maxQ=Math.max(0,...nf.itens.filter(i=>und.includes((i.un||"").toUpperCase().replace(/[^A-Z]/g,"")) ).map(i=>i.q));
   if(pf&&isVenda&&destRR&&(maxQ>=10||vNF>=3000)){
-    let base=0,cred=0;const its=nf.itens.filter(i=>!isSTcode(i)&&!isMono(i));
-    its.forEach(i=>{const b=(i.vProd-i.vDesc+i.vFrete+i.vSeg+i.vOutro)*1.3;base+=b*aliqInterna(i.ncm)/100;cred+=simplesPuro?0:i.icms.vICMS});
-    const est=Math.max(0,base-cred);
-    add("confere","Comprador sem inscrição com volume de revenda?","Maior quantidade de um item: "+maxQ.toLocaleString("pt-BR")+"; valor da nota: "+brl(vNF)+". Se a quantidade e a natureza indicarem comercialização, cabe a antecipação sem multa. Estimativa (itens sem ST, margem de 30%"+(simplesPuro?", sem crédito por ser Simples":", menos o ICMS destacado")+"): "+brl(est)+".","RICMS/RR, arts. 72, IV, 73 e 43; prática do posto");}
+    add("confere","Comprador sem inscrição com volume de revenda?","Maior quantidade de um item: "+maxQ.toLocaleString("pt-BR")+"; valor da nota: "+brl(vNF)+". Confirme quantidade, natureza da carga e finalidade comercial. A antecipação dos arts. 72/73 depende do regime de cada produto, despesas e créditos admitidos. A margem de 30% não é automática: verifique as hipóteses dos §§ 1º e 2º do art. 73; emitente do Simples não gera o crédito previsto no § 5º.","RICMS/RR, arts. 72, IV, e 73");}
   // interestadual para RR
   const entradaRR=destUF==="RR"&&emitUF&&emitUF!=="RR";
   if(entradaRR&&nf.ide.indFinal==="1"&&d&&d.indIE==="9"){
     if(simples) add("info","Simples vendendo a consumidor final de outra UF","Remetente do Simples não recolhe o DIFAL da EC 87/15 nessas vendas.","STF, ADI 5464; Res. CGSN 140/2018, art. 5º, XII");
     else if(!nf.itens.some(i=>i.ufdest)&&nf.tot.vICMSUFDest===0) add("confere","DIFAL de venda a consumidor final não informado","Remetente do regime normal deve informar e recolher o DIFAL para RR.","EC 87/15; LC 190/2022; CTE, art. 11");}
   if(entradaRR&&d&&d.indIE==="1"&&isVenda){
-    const naoST=nf.itens.filter(i=>!isSTcode(i)&&!isMono(i)&&!stRule(i.ncm)&&!matCons(i.ncm));
-    if(naoST.length){const ai=interRegiao(emitUF);const est=naoST.reduce((s,i)=>s+i.vProd*(aliqInterna(i.ncm)-ai)/100,0);
-      add("info","Antecipação parcial do destinatário","Contribuinte de RR comprando de "+esc(emitUF)+" para revenda. Estimativa: "+brl(est)+" ("+naoST.length+" item(ns); alíquota interestadual de "+ai+"% fixada pelo § 6º). Confira se o sistema gerou o DARE e as exceções do § 2º.","RICMS/RR, art. 75")}}
+    const comuns=nf.itens.filter(i=>!regimesCandidatos(i,nf).length);
+    if(comuns.length){
+      const estimaveis=comuns.filter(i=>onlyDig(i.ncm).length===8&&!/^0+$/.test(i.ncm)&&!isSTcode(i)&&!declaraMono(i)&&!beneficiosCandidatos(i,nf).length&&!beneficioDeclarado(i)&&aliquotaReferencia(i).valor!==null);
+      const est=estimaveis.reduce((v,i)=>v+baseOperacao(i)*Math.max(0,aliquotaReferencia(i).valor-interRegiao(emitUF,i))/100,0);
+      add("info","Antecipação parcial: hipótese a conferir","Aquisição por contribuinte de RR, "+(nf.ide.indFinal==="1"?"declarada para consumo final":"com finalidade a confirmar")+". Sem regime específico identificado em "+comuns.length+" item(ns), confira o art. 75 e as exclusões do § 2º. "+(estimaveis.length?"Cenário indicativo, sem pauta ou benefício: "+brl(est)+" para "+estimaveis.length+" item(ns), pela base da operação e alíquota interestadual de 4%, 7% ou 12% conforme origem e UF. ":"Sem estimativa segura com os dados disponíveis. ")+"Itens com regime/benefício pendente não entram no cálculo. Confirme no cadastro o CNAE/atividade: os arts. 839-E, § 2º, e 839-Q podem alcançar aquisições pela atividade do destinatário, além da lista de NCM. Confira redução interna de base (§ 5º), pauta (§ 7º), regime do destinatário e DARE; a ausência de regra nesta ferramenta não confirma tributação integral.","RICMS/RR, art. 75");
+    }
+  }
 
   /* 4. Itens: CST, ST e destaque */
   const porCod={},itemAlerts={};const addItem=(k,lvl,tit,txt,base,n)=>{
-    (porCod[k]=porCod[k]||{lvl,tit,txt,base,itens:[]}).itens.push(n);
+    // Mesma regra pode exigir conferências diferentes em itens distintos.
+    const groupKey=k+"|"+lvl+"|"+txt;
+    (porCod[groupKey]=porCod[groupKey]||{lvl,tit,txt,base,itens:[]}).itens.push(n);
     const nk=String(n);(itemAlerts[nk]=itemAlerts[nk]||[]).push({lvl,tit,txt,base});
   };
   nf.itens.forEach(i=>{
-    const c=i.icms.cst,s=i.icms.csosn,f=onlyDig(i.cfop),ncm=onlyDig(i.ncm),r=stRule(ncm),st=isSTcode(i);
+    const c=i.icms.cst,s=i.icms.csosn,f=onlyDig(i.cfop),ncm=onlyDig(i.ncm),candidatos=regimesCandidatos(i,nf),st=isSTcode(i);
     if(exportacaoBens&&isExportItem(i)&&i.ibscbs){
       const b=i.ibscbs;
       if(b.cst!=="410"||b.classe!=="410004"||b.vIBS>0||b.vIBSUF>0||b.vIBSMun>0||b.vCBS>0){
@@ -618,31 +764,45 @@ function analyze(nf,ctx){
     if(simplesPuro&&c&&!s) addItem("crt","registrar","Simples usando CST em vez de CSOSN","Emitente com CRT "+nf.emit.crt+" deveria usar CSOSN.","MOC NF-e",i.n);
     if(nf.emit.crt==="3"&&s) addItem("crt3","registrar","Regime normal usando CSOSN","Emitente com CRT 3 deveria usar CST.","MOC NF-e",i.n);
     if(simplesPuro&&i.icms.vICMS>0&&s!=="900") addItem("snd","confere","Simples com destaque de ICMS próprio","Optante não destaca ICMS de operação própria (salvo sublimite).","Res. CGSN 140/2018, art. 59, § 4º, I",i.n);
-    const cf3i=f.slice(1),cRetem=["10","30","70"].includes(c),sRetem=["201","202","203"].includes(s),cAnterior=c==="60",sAnterior=s==="500";
+    const cf3i=f.slice(1),cRetem=["10","30","70"].includes(c)||(c==="90"&&i.icms.vICMSST>0),sRetem=["201","202","203"].includes(s)||(s==="900"&&i.icms.vICMSST>0),cAnterior=c==="60",sAnterior=s==="500";
     if(["404","405"].includes(cf3i)&&!cAnterior&&!sAnterior) addItem("stcfop-ant","confere","CFOP de ST anterior incompatível com CST/CSOSN","CFOP "+f+" indica mercadoria com ST já retida, mas o item não usa CST 60 nem CSOSN 500.","RICMS/RR, arts. 748 e 755; tabela CFOP",i.n);
     if(["401","403"].includes(cf3i)&&!cRetem&&!sRetem) addItem("stcfop-ret","confere","CFOP de substituto incompatível com CST/CSOSN","CFOP "+f+" indica retenção de ST pelo remetente, mas o CST/CSOSN não indica cobrança da substituição tributária.","RICMS/RR, arts. 727, 746 e 747; tabela CFOP",i.n);
     if((cAnterior||sAnterior)&&["101","102"].includes(cf3i)) addItem("stcod-normal","confere","CST/CSOSN de ST com CFOP de venda comum","O item informa "+(cAnterior?"CST 60":"CSOSN 500")+" (ST anterior), mas usa CFOP "+f+". Em venda interna de mercadoria de terceiros já substituída, confira a compatibilidade com CFOP 5.405.","RICMS/RR, arts. 748 e 755; tabela CFOP",i.n);
     if((cRetem||sRetem)&&["101","102"].includes(cf3i)) addItem("stret-normal","confere","CST/CSOSN com retenção de ST e CFOP de venda comum","O item indica retenção de ST, mas usa CFOP "+f+". Confira se o remetente deveria usar CFOP próprio de substituto (ex.: 5.401/5.403).","RICMS/RR, arts. 746 e 747; tabela CFOP",i.n);
     if(["401","403"].includes(cf3i)&&d&&d.indIE==="1"&&i.icms.vBCST===0&&i.icms.vICMSST===0) addItem("stsemvalor","confere","CFOP de substituto sem base/ICMS-ST","Para destinatário contribuinte, a NF do substituto deve indicar a base de cálculo da ST e o imposto retido. Ambos estão zerados.","RICMS/RR, art. 747",i.n);
-    if(st&&!r&&!isMono(i)&&!matCons(ncm)) addItem("stind:"+ncm.slice(0,4),"confere","CST/CFOP de ST a conferir","NCM "+esc(i.ncm)+" ("+esc(i.desc).slice(0,60)+") está com tratamento de ST, mas a regra automática não encontrou enquadramento específico no RICMS/RR. Confira o fundamento e se houve tributação anterior; não presumir irregularidade apenas por este alerta.","RICMS/RR, regimes específicos de ST/antecipação",i.n);
-    // ST interna sem retenção
-    if(r&&r.interna&&!st&&!isMono(i)&&emitUF==="RR"&&(destUF==="RR"||!d)&&f[0]==="5"&&!TRANSF.includes(f.slice(1))) addItem("stint:"+r.id,"confere","Produto com ST interna em RR sem retenção: "+r.nome,"Esperado CST 10/60 ou CSOSN 201/202/500. Se o emitente é industrial, importador, distribuidor ou atacadista, ele deveria reter; se é varejista, a ST já deveria ter sido paga antes."+(r.nota?" "+r.nota:""),r.art,i.n);
-    // entrada interestadual sem ST
-    if(r&&entradaRR&&!st&&!isMono(i)&&d&&d.indIE==="1"){
-      if(r.regime==="antecipacao-st") addItem("stent:"+r.id,"confere","Antecipação/ST de RR a conferir: "+r.nome,"O RICMS/RR exige o imposto na entrada de outra UF e alcança as operações subsequentes. Confira o DARE/recolhimento na primeira repartição fiscal."+(r.nota?" "+r.nota:""),r.art,i.n);
-      else addItem("stent:"+r.id,"confere","ST de RR sem retenção na entrada: "+r.nome,"Sem retenção pelo remetente, confira a responsabilidade pelo recolhimento na entrada."+(r.id==="autopecas"?" Vale só para peça de uso automotivo.":"")+(r.nota?" "+r.nota:""),r.art+"; RICMS/RR, art. 728, p.ú., II",i.n);
-    }
-    if(matCons(ncm)&&entradaRR&&d&&d.indIE==="1"&&!st) addItem("matcons","info","Material de construção: antecipação do destinatário","Recolhimento até o dia 10 do segundo mês seguinte à entrada (MVA de 35%). Para destinatário inscrito, não é exigível no trânsito.","RICMS/RR, art. 839-Q, §§ 3º e 5º",i.n);
-    if(isMono(i)||(r&&r.mono&&st)) addItem("mono","info","Combustível com ICMS monofásico","O imposto incide uma única vez, na refinaria ou no importador. Não há ICMS a cobrar no trânsito.","RICMS/RR, art. 839-U; Conv. ICMS 199/22",i.n);
+    if(declaraMono(i)&&!monoCandidato(i))addItem("mono-incomp:"+ncm,"confere","CST monofásico sem combustível compatível","CST "+esc(c)+" declarado para "+esc(i.desc)+". O código de combustível não valida o produto nem afasta ST/antecipação de RR. Confira NCM, natureza da carga e art. 839-U; lubrificantes não se tornam monofásicos pelo CST.","RICMS/RR, art. 839-U",i.n);
+    if(st&&!candidatos.length)addItem("stind:"+ncm.slice(0,4),"confere","ST declarada sem enquadramento validado","A NF-e declara ST, mas a tabela/descrição não identificou fundamento específico suficiente. Confira regra vigente, uso, atividade e recolhimento em favor de RR; a declaração não comprova pagamento.","RICMS/RR, arts. 727 a 730 e regimes específicos",i.n);
+    candidatos.forEach(r=>{
+      if(r.regime==="mono"){
+        const data=nf.ide.dhEmi.slice(0,10),inicio=/Gasolina|Etanol/.test(r.nome)?"2023-06-01":"2023-05-01";
+        addItem("mono:"+r.id,declaraMono(i)&&data>=inicio?"info":"confere","Monofasia: produto e etapa a conferir",r.condicao+" "+(!data?"Data da operação ausente; confira vigência.":data<inicio?"Data da NF-e anterior ao início desse regime; confira a norma da época.":!declaraMono(i)?"CST declarado não indica monofasia; confira enquadramento.":"Há CST monofásico declarado; isso não autoriza dispensa automática de conferência."),r.art,i.n);return;
+      }
+      const internaRR=emitUF==="RR"&&destUF==="RR"&&f[0]==="5";
+      if(!entradaRR&&!internaRR)return;
+      if(r.id==="frango"&&!entradaRR)return;
+      if((r.id==="trigo"||r.id==="carnes_gado"||r.id==="matcons")&&!entradaRR)return;
+      if(!d||d.indIE!=="1"||!isVenda){
+        addItem("cond:"+r.id,"info","Regime específico: operação a conferir — "+r.nome,r.condicao+" Não concluir cobrança apenas pelo NCM nesta operação; confira destinatário, finalidade e exceções.",r.art,i.n);return;
+      }
+      if(r.id==="matcons"){
+        addItem("matcons","info","Material de construção: hipótese e prazo a conferir",r.condicao+" CST/CFOP de ST não confirma cumprimento da antecipação. Valide primeiro o enquadramento para definir prazo e exigibilidade.",r.art,i.n);return;
+      }
+      const titulo=entradaRR?(r.regime==="antecipacao"||r.regime==="antecipacao-st"||r.id==="frango"?"Antecipação de RR a conferir: ":"ST de RR a conferir: "):"ST interna de RR a conferir: ";
+      const retAtual=i.icms.vICMSST>0&&(["10","30","70","90"].includes(c)||["201","202","203","900"].includes(s));
+      const texto=r.condicao+" "+(retAtual?"Retenção nesta operação declarada: "+brl(i.icms.vICMSST)+"; confira base, valor, beneficiário RR e guia/inscrição do substituto.":(cAnterior||sAnterior)?"Tributação anterior declarada não comprova imposto devido a RR; retenção para outra UF não dispensa a conferência (art. 727, § 1º).":"Sem retenção atual suficiente demonstrada no XML; confira o responsável legal e a guia antes de concluir inadimplência.")+" "+(r.nota||"");
+      addItem("regime:"+r.id,retAtual?"info":"confere",titulo+r.nome,texto,r.art+(entradaRR?"; art. 727, § 1º, e art. 728":"; art. 730, § 9º"),i.n);
+    });
+    const beneficios=beneficiosCandidatos(i,nf);
+    if(beneficios.length)addItem("benef:"+beneficios.map(b=>b.nome).join("|"),"confere","Benefício/diferimento legal a conferir",beneficios.map(b=>esc(b.nome)+": "+esc(b.condicao)).join(" ")+" O CST declarado não confirma nem afasta o benefício; valide os fatos e a norma da data da operação.",beneficios.map(b=>b.art).join("; "),i.n);
+    if(beneficioDeclarado(i)&&!(exportacaoBens&&isExportItem(i)&&c==="41"))addItem("benef-decl:"+(c||s),"confere","Benefício ou desoneração declarados: fundamento pendente","CST/CSOSN "+esc(c||s)+"; "+(i.cBenef?"cBenef "+esc(i.cBenef):"sem cBenef informado")+". Confira fundamento, destinatário, finalidade, vigência e condições. O catálogo de benefícios é parcial e não valida automaticamente cBenef, isenção, redução, suspensão ou diferimento.","RICMS/RR, Anexo I e regimes específicos; MOC NF-e",i.n);
     // destaque no regime normal
-    if(nf.emit.crt==="3"&&!st&&!isMono(i)){
-      if(["40","41"].includes(c)&&/^[56]1\d\d$/.test(f)) addItem("isen","confere","Venda sem débito (CST "+c+")","Confirme qual isenção ou não incidência se aplica ao produto."+(!i.cBenef?" O item não informa cBenef.":(" cBenef "+esc(i.cBenef)+".")),"RICMS/RR, arts. 4º e 5º e Anexo I; MOC NF-e",i.n);
-      if(c==="00"||c==="20"){
-        const esperado=f[0]==="5"?aliqInterna(ncm):(f[0]==="6"?(["1","2","3","8"].includes(i.icms.orig)?4:(SULSUDESTE.includes(emitUF)&&!SULSUDESTE.includes(destUF)?7:12)):null);
-        if(esperado&&emitUF==="RR"&&f[0]==="5"&&Math.abs(i.icms.pICMS-esperado)>0.01) addItem("aliq:"+i.icms.pICMS,"confere","Alíquota de "+pct(i.icms.pICMS)+" difere da esperada ("+esperado+"%)","Estimativa pelo NCM conforme o RICMS/RR (20% geral; 25% e 12% nas hipóteses específicas). Confirme o enquadramento.","RICMS/RR, art. 46, I",i.n);
+    if(nf.emit.crt==="3"&&!declaraMono(i)){
+      if(["00","10","20","70","90"].includes(c)&&(i.icms.vBC>0||["00","10","20","70"].includes(c))){
+        const esperado=f[0]==="5"?aliquotaReferencia(i).valor:(f[0]==="6"?(["1","2","3","8"].includes(i.icms.orig)?4:(SULSUDESTE.includes(emitUF)&&!SULSUDESTE.includes(destUF)?7:12)):null);
+        if(esperado&&emitUF==="RR"&&f[0]==="5"&&Math.abs(i.icms.pICMS-esperado)>0.01) addItem("aliq:"+i.icms.pICMS,"confere","Alíquota de "+pct(i.icms.pICMS)+" difere da esperada ("+esperado+"%)","Alíquota de referência conforme NCM e descrição declarados. Confira a carga, as condições do art. 46 e os benefícios; esta comparação não valida tributação integral.","RICMS/RR, art. 46, I",i.n);
         if(esperado&&f[0]==="6"&&Math.abs(i.icms.pICMS-esperado)>0.01) addItem("aliqi:"+i.icms.pICMS,"confere","Alíquota interestadual de "+pct(i.icms.pICMS)+" (esperada "+esperado+"%)","4% para importados (origem 1, 2, 3, 8); 7% de Sul/Sudeste para N/NE/CO/ES; 12% nos demais casos.","Res. Senado 22/89 e 13/2012",i.n);
-        const bcEsp=i.vProd-i.vDesc+i.vFrete+i.vSeg+i.vOutro;
-        if(c==="00"&&bcEsp>0&&i.icms.vBC+0.05<bcEsp) addItem("bc","confere","Base de cálculo menor que o valor da operação","CST 00 não admite redução de base. Base "+brl(i.icms.vBC)+" para operação de "+brl(bcEsp)+".","LC 87/96, art. 13; CTE",i.n);
+        const bcEsp=baseOperacao(i,false);
+        if(["00","10"].includes(c)&&bcEsp>0&&i.icms.vBC+0.05<bcEsp) addItem("bc","confere","Base de cálculo menor que o valor da operação","CST "+c+" declara operação própria sem redução de base. Base "+brl(i.icms.vBC)+" para operação de "+brl(bcEsp)+".","LC 87/96, art. 13; CTE",i.n);
         if(Math.abs(i.icms.vBC*i.icms.pICMS/100-i.icms.vICMS)>0.05) addItem("calc","registrar","ICMS destacado não confere com base × alíquota","Diferença de cálculo no item.","MOC NF-e",i.n);
       }
     }
@@ -657,7 +817,7 @@ function analyze(nf,ctx){
 }
 
 /* ---------- renderização ---------- */
-const VERD={para:["Para e aprofunda","Há sinal material de irregularidade. Fotografe horário, carga, placa e documentos antes de qualquer providência."],confere:["Confere rápido","Algo precisa de explicação antes de liberar. Pergunte ao condutor, olhe a guia, consulte a chave."],libera:["Libera","Documento sem sinal material de irregularidade nas regras aplicadas. Confira se a carga bate com a nota."]};
+const VERD={para:["Para e aprofunda","Há sinal material de irregularidade. Fotografe horário, carga, placa e documentos antes de qualquer providência."],confere:["Confere rápido","Algo precisa de explicação antes de liberar. Pergunte ao condutor, olhe a guia, consulte a chave."],libera:["Libera","Sem sinal material nas regras aplicadas. Enquadramento e recolhimento não certificados; confira a carga e as condições pendentes."]};
 function codeDesc(i){if(i.icms.csosn)return "CSOSN "+i.icms.csosn+" – "+(CSOSN[i.icms.csosn]||"");if(i.icms.cst)return "CST "+i.icms.cst+" – "+(CST[i.icms.cst]||"");return "—"}
 function alertRank(a){
   const s=norm((a.titulo||"")+" "+(a.texto||""));
@@ -685,26 +845,19 @@ function renderNF(nf,res,contextoOverride){
   const validadeTitulo=!validade||!validade.dias?"Não calculado":validade.expirado?"VENCIDO há "+duracaoHumana(-validade.restante):"Válido · faltam "+duracaoHumana(validade.restante);
   const validadeDetalhe=validade?(validade.regra+" · desde "+validade.fonte+(validade.limite?" · limite "+fmtDate(validade.limite):"")):"Sem data suficiente";
   const itens=nf.itens.map(i=>{
-    const r=stRule(i.ncm),st=isSTcode(i);
+    const candidatos=regimesCandidatos(i,nf),beneficios=beneficiosCandidatos(i,nf),aliquota=aliquotaReferencia(i);
     const ia=(res.itemAlerts&&res.itemAlerts[String(i.n)])||[];
     const crit=ia.filter(a=>a.lvl==="para"||a.lvl==="confere");
     const flagHtml=crit.map(a=>`<div class="item-flag ${a.lvl}"><b>⚠ ${esc(a.tit)}</b><span>${a.txt}</span>${a.base?`<div class="base">Base: ${esc(a.base)}</div>`:""}</div>`).join("");
-    let regimeTag="";
-    if(r){
-      if(r.id==="carnes_gado") regimeTag=`<span class="tag cond">Regime específico RR: antecipação/ST · arts. 612, 613 e 618</span>`;
-      else if(r.id==="frango") regimeTag=`<span class="tag cond">ST em RR se proveniente de outra UF/exterior · arts. 836 e 837</span>`;
-      else regimeTag=`<span class="tag st">ST/antecipação em RR: ${esc(r.nome)} (${esc(r.art)})</span>`;
-    }
-    let coerencia="";
-    if(st&&r&&r.id==="carnes_gado") coerencia=`<span class="tag ok">CST/CFOP compatível com tributação anterior, se o imposto já foi recolhido no abate/entrada</span>`;
-    else if(st&&r&&r.id==="frango") coerencia=`<span class="tag ok">CST/CFOP compatível com ST anterior, se houve ingresso interestadual/exterior</span>`;
+    const regimeTag=candidatos.length?candidatos.map(r=>`<div class="legal-candidate"><b>Regra legal candidata: ${esc(r.nome)}</b><div>${esc(r.art)} · ${esc(r.status)}. ${esc(r.condicao)}</div></div>`).join(""):`<div class="legal-candidate"><b>Enquadramento não validado</b><div>Sem regra específica suficiente na tabela. Confira NCM, descrição, atividade e benefícios; CST 00 não comprova tributação integral.</div></div>`;
+    const beneficioHtml=beneficios.map(b=>`<div class="legal-candidate"><b>Benefício/diferimento candidato: ${esc(b.nome)}</b><div>${esc(b.art)}. ${esc(b.condicao)}</div></div>`).join("");
     return `<div class="item${crit.length?" item-risk":""}"><div class="t">${esc(i.n)}. ${esc(i.desc)}</div>
     ${flagHtml}
     <div class="grid2"><span>NCM ${esc(i.ncm)}${i.cest?" · CEST "+esc(i.cest):""}${i.cBenef?" · cBenef "+esc(i.cBenef):""}</span><span>${i.q.toLocaleString("pt-BR")} ${esc(i.un)} × ${brl(i.vUn)} = <b>${brl(i.vProd)}</b></span>
-    <span>CFOP ${esc(i.cfop)}: ${esc(cfopDesc(i.cfop))}</span><span><b>${esc(codeDesc(i))}</b></span>
+    <span>CFOP ${esc(i.cfop)}: ${esc(cfopDesc(i.cfop))}</span><span><b>Declarado na NF-e: ${esc(codeDesc(i))}</b></span>
     <span>Origem ${esc(i.icms.orig)}: ${esc(ORIG[i.icms.orig]||"")}</span><span>BC ${brl(i.icms.vBC)} · ${pct(i.icms.pICMS)} · ICMS ${brl(i.icms.vICMS)}${i.icms.vICMSST?" · ST "+brl(i.icms.vICMSST):""}</span>
     ${i.ibscbs?`<span>IBS/CBS: CST ${esc(i.ibscbs.cst||"—")} · cClassTrib ${esc(i.ibscbs.classe||"—")}</span><span>BC ${brl(i.ibscbs.vBC)} · IBS ${brl(i.ibscbs.vIBS)} (UF ${pct(i.ibscbs.pIBSUF)}; município ${pct(i.ibscbs.pIBSMun)}) · CBS ${brl(i.ibscbs.vCBS)} (${pct(i.ibscbs.pCBS)})</span>`:""}</div>
-    ${regimeTag}${coerencia}${matCons(i.ncm)?`<span class="tag st">Material de construção (art. 839-Q)</span>`:""}</div>`}).join("");
+    <div class="base">${esc(tributacaoDeclarada(i))}. NCM, CEST e descrição também são declarados; confronte com a carga.</div><div class="base">Alíquota interna de referência: ${aliquota.valor===null?"pendente":pct(aliquota.valor)} · ${esc(aliquota.condicao)}. Benefícios e vigência exigem conferência.</div>${regimeTag}${beneficioHtml}</div>`}).join("");
   const pag=nf.pag.map(p=>`${TPAG[p.tPag]||p.tPag}${p.xPag?" ("+esc(p.xPag)+")":""}: ${brl(p.vPag)}`).join("; ");
   const dups=nf.dup.map(x=>`${esc(x.n)} – ${esc(x.venc.split("-").reverse().join("/"))} – ${brl(x.v)}`).join("<br>");
   return `<article class="nf">
@@ -1118,8 +1271,7 @@ function camBloqueada(){
   try{const pp=document.permissionsPolicy||document.featurePolicy;if(!(navigator.mediaDevices&&navigator.mediaDevices.getUserMedia)||(pp&&pp.allowsFeature&&!pp.allowsFeature("camera")))camBloqueada()}catch(e){}
   const now=new Date(Date.now()-4*36e5);$("#abordagem").value=now.toISOString().slice(0,16);
 })();
-window.__triagem={parseNFe,analyze,extractChave,parseChave,dvOk};
+window.__triagem={parseNFe,analyze,extractChave,parseChave,dvOk,regimesCandidatos,beneficiosCandidatos,aliquotaReferencia,tributacaoDeclarada};
 </script>
 </body>
 </html>
-
