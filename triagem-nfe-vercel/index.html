@@ -196,7 +196,7 @@ details summary{cursor:pointer;font-family:var(--display);font-weight:600;font-s
     <div id="histDetalhe"></div>
   </section>
 
-  <p class="footer">Ferramenta de apoio à triagem operacional · v4.6.0. Prioriza irregularidades materiais, destino da carga e exposição tributária. As regras seguem o RICMS/RR (Decreto nº 4.335-E/2001, consolidação de referência até jan/2026), o CTE (Lei nº 59/93) e a prática do posto; listas de NCM são indicativas e precisam de calibragem. Não substitui a análise do auditor. A busca automática envia somente a chave de acesso ao endpoint serverless desta ferramenta, que consulta o serviço privado consultadanfe.com; o XML aberto manualmente é lido só neste aparelho.</p>
+  <p class="footer">Ferramenta de apoio à triagem operacional · v4.7.0. Prioriza irregularidades materiais, destino da carga e exposição tributária. As regras seguem o RICMS/RR (Decreto nº 4.335-E/2001, consolidação de referência até jan/2026), o CTE (Lei nº 59/93) e a prática do posto; listas de NCM são indicativas e precisam de calibragem. Não substitui a análise do auditor. A busca automática envia somente a chave de acesso ao endpoint serverless desta ferramenta, que consulta o serviço privado consultadanfe.com; o XML aberto manualmente é lido só neste aparelho.</p>
 </main>
 
 <div class="scanner hidden" id="scanner" role="dialog" aria-label="Leitura do código">
@@ -419,7 +419,7 @@ function parseNFe(xml,fileName){
   if(doc.getElementsByTagName("parsererror").length) throw new Error("Arquivo não é um XML válido.");
   const inf=q(doc,"infNFe"); if(!inf) throw new Error("Não encontrei uma NF-e/NFC-e neste XML.");
   const ide=q(inf,"ide"),emit=q(inf,"emit"),dest=q(inf,"dest"),ent=q(inf,"entrega"),ret=q(inf,"retirada"),tr=q(inf,"transp"),tot=q(inf,"ICMSTot"),adic=q(inf,"infAdic"),prot=q(doc,"infProt"),exp=q(inf,"exporta");
-  const enderEmit=q(emit,"enderEmit"),enderDest=q(dest,"enderDest");
+  const enderEmit=q(emit,"enderEmit"),enderDest=q(dest,"enderDest"),ibscbsTot=q(q(inf,"total"),"IBSCBSTot");
   const nf={file:fileName,chave:(inf.getAttribute("Id")||"").replace(/^NFe/,""),
     ide:{natOp:t(ide,"natOp"),mod:t(ide,"mod"),serie:t(ide,"serie"),nNF:t(ide,"nNF"),dhEmi:t(ide,"dhEmi"),dhSaiEnt:t(ide,"dhSaiEnt"),tpNF:t(ide,"tpNF"),idDest:t(ide,"idDest"),tpEmis:t(ide,"tpEmis"),tpAmb:t(ide,"tpAmb"),finNFe:t(ide,"finNFe"),indFinal:t(ide,"indFinal"),indPres:t(ide,"indPres"),cUF:t(ide,"cUF")},
     emit:{doc:t(emit,"CNPJ")||t(emit,"CPF"),nome:t(emit,"xNome"),fant:t(emit,"xFant"),ie:t(emit,"IE"),crt:t(emit,"CRT"),mun:t(enderEmit,"xMun"),uf:t(enderEmit,"UF")},
@@ -427,6 +427,7 @@ function parseNFe(xml,fileName){
     entrega:ent?{mun:t(ent,"xMun"),uf:t(ent,"UF"),lgr:t(ent,"xLgr"),nro:t(ent,"nro"),nome:t(ent,"xNome")}:null,
     retirada:ret?{mun:t(ret,"xMun"),uf:t(ret,"UF"),lgr:t(ret,"xLgr"),nro:t(ret,"nro"),nome:t(ret,"xNome")}:null,
     exporta:exp?{ufSaida:t(exp,"UFSaidaPais"),local:t(exp,"xLocExporta"),despacho:t(exp,"xLocDespacho")}:null,
+    ibscbsTot:ibscbsTot?{vBC:num(t(ibscbsTot,"vBCIBSCBS")),vIBS:num(t(ibscbsTot,"vIBS")),vCBS:num(t(ibscbsTot,"vCBS"))}:null,
     transp:{modFrete:t(tr,"modFrete"),transp:t(q(tr,"transporta"),"xNome"),transpDoc:t(q(tr,"transporta"),"CNPJ")||t(q(tr,"transporta"),"CPF"),placa:t(q(tr,"veicTransp"),"placa"),qVol:qa(tr,"vol").reduce((s,v)=>s+num(t(v,"qVol")),0),pesoB:qa(tr,"vol").reduce((s,v)=>s+num(t(v,"pesoB")),0)},
     tot:{vProd:num(t(tot,"vProd")),vNF:num(t(tot,"vNF")),vBC:num(t(tot,"vBC")),vICMS:num(t(tot,"vICMS")),vST:num(t(tot,"vST")),vBCST:num(t(tot,"vBCST")),vFrete:num(t(tot,"vFrete")),vDesc:num(t(tot,"vDesc")),vICMSUFDest:num(t(tot,"vICMSUFDest"))},
     pag:qa(inf,"detPag").map(p=>({tPag:t(p,"tPag"),vPag:num(t(p,"vPag")),xPag:t(p,"xPag")})),
@@ -435,9 +436,10 @@ function parseNFe(xml,fileName){
     prot:prot?{dhRecbto:t(prot,"dhRecbto"),cStat:t(prot,"cStat"),xMotivo:t(prot,"xMotivo"),nProt:t(prot,"nProt")}:null,
     hasRef:qa(inf,"NFref").length>0,
     itens:qa(inf,"det").map(d=>{
-      const p=q(d,"prod"),imp=q(d,"imposto"),icmsWrap=q(imp,"ICMS");const g=kids(icmsWrap)[0];
+      const p=q(d,"prod"),imp=q(d,"imposto"),icmsWrap=q(imp,"ICMS"),ibscbs=q(imp,"IBSCBS"),gIBSCBS=q(ibscbs,"gIBSCBS");const g=kids(icmsWrap)[0];
       const gi=g?{grupo:g.localName,orig:t(g,"orig"),cst:t(g,"CST"),csosn:t(g,"CSOSN"),vBC:num(t(g,"vBC")),pICMS:num(t(g,"pICMS")),vICMS:num(t(g,"vICMS")),pRedBC:num(t(g,"pRedBC")),vICMSST:num(t(g,"vICMSST")),vBCST:num(t(g,"vBCST")),vICMSSTRet:num(t(g,"vICMSSTRet")),vICMSDeson:num(t(g,"vICMSDeson"))}:{};
-      return{n:d.getAttribute("nItem")||t(d,"nItem"),cod:t(p,"cProd"),desc:t(p,"xProd"),ncm:t(p,"NCM"),cest:t(p,"CEST"),cBenef:t(p,"cBenef"),cfop:t(p,"CFOP"),un:t(p,"uCom"),q:num(t(p,"qCom")),vUn:num(t(p,"vUnCom")),vProd:num(t(p,"vProd")),vFrete:num(t(p,"vFrete")),vSeg:num(t(p,"vSeg")),vDesc:num(t(p,"vDesc")),vOutro:num(t(p,"vOutro")),infAdProd:t(d,"infAdProd"),icms:gi,ufdest:!!q(imp,"ICMSUFDest")}
+      return{n:d.getAttribute("nItem")||t(d,"nItem"),cod:t(p,"cProd"),desc:t(p,"xProd"),ncm:t(p,"NCM"),cest:t(p,"CEST"),cBenef:t(p,"cBenef"),cfop:t(p,"CFOP"),un:t(p,"uCom"),q:num(t(p,"qCom")),vUn:num(t(p,"vUnCom")),vProd:num(t(p,"vProd")),vFrete:num(t(p,"vFrete")),vSeg:num(t(p,"vSeg")),vDesc:num(t(p,"vDesc")),vOutro:num(t(p,"vOutro")),infAdProd:t(d,"infAdProd"),icms:gi,ufdest:!!q(imp,"ICMSUFDest"),
+        ibscbs:ibscbs?{cst:t(ibscbs,"CST"),classe:t(ibscbs,"cClassTrib"),vBC:num(t(gIBSCBS,"vBC")),pIBSUF:num(t(gIBSCBS,"pIBSUF")),pIBSMun:num(t(gIBSCBS,"pIBSMun")),pCBS:num(t(gIBSCBS,"pCBS")),vIBS:num(t(gIBSCBS,"vIBS")),vIBSUF:num(t(gIBSCBS,"vIBSUF")),vIBSMun:num(t(gIBSCBS,"vIBSMun")),vCBS:num(t(gIBSCBS,"vCBS"))}:null}
     })};
   return nf;
 }
@@ -446,6 +448,8 @@ function parseNFe(xml,fileName){
 function isSTcode(i){const c=i.icms.cst,s=i.icms.csosn,f=onlyDig(i.cfop).slice(1);return ["10","30","60","70"].includes(c)||["201","202","203","500"].includes(s)||["401","403","404","405","408","409","411"].includes(f)}
 function isMono(i){return ["02","15","53","61"].includes(i.icms.cst)}
 function interRegiao(ufOrig){return SULSUDESTE.includes(ufOrig)?7:12}
+// CFOPs de exportação de bens; não enquadrar toda remessa/devolução 7.xxx automaticamente.
+function isExportItem(i){return ["7101","7102","7105","7106","7127","7501","7551"].includes(onlyDig(i.cfop))}
 function duracaoHumana(ms){
   if(ms==null||!isFinite(ms))return "—";
   const futuro=ms<0; ms=Math.abs(ms);
@@ -484,6 +488,7 @@ function validadeTransito(nf,leitura){
 
 function rotaInfo(nf,ctx){
   const posto=norm(ctx&&ctx.posto||""); if(!posto)return{ok:true,titulo:"Rota não configurada",detalhe:""};
+  if(nf.ide.tpNF==="1"&&(nf.ide.idDest==="3"||nf.itens.some(i=>onlyDig(i.cfop).startsWith("7"))))return{ok:true,titulo:"Saída para o exterior",detalhe:"O posto pode integrar a rota até a fronteira; confirme o trajeto e o local efetivo de saída do País"};
   const d=norm(nf.dest&&nf.dest.mun),e=norm(nf.entrega&&nf.entrega.mun),r=norm(nf.retirada&&nf.retirada.mun);
   const comp=norm([nf.infCpl,nf.infAdFisco,...nf.itens.map(i=>i.infAdProd||"")].join(" "));
   const cf904=nf.itens.some(i=>onlyDig(i.cfop).slice(1)==="904");
@@ -501,6 +506,8 @@ function analyze(nf,ctx){
   const cf1=cfops.map(c=>c[0]);const cf3=cfops.map(c=>c.slice(1));
   const simples=["1","2","4"].includes(nf.emit.crt);const simplesPuro=["1","4"].includes(nf.emit.crt);
   const nfce=nf.ide.mod==="65";
+  const saidaExterior=nf.ide.tpNF==="1"&&(nf.ide.idDest==="3"||cf1.includes("7"));
+  const exportacaoBens=saidaExterior&&nf.itens.some(isExportItem);
   const dhRec=nf.prot&&nf.prot.dhRecbto?new Date(nf.prot.dhRecbto):null;
   const dhEmi=nf.ide.dhEmi?new Date(nf.ide.dhEmi):null;
   const abord=ctx.abordagem;
@@ -536,15 +543,17 @@ function analyze(nf,ctx){
   const dig1={"1":"5","2":"6","3":"7"}[nf.ide.idDest];
   if(dig1&&nf.ide.tpNF==="1"&&cf1.some(c=>c!==dig1)) add("registrar","CFOP não combina com o destino da operação","Indicador de destino "+esc(nf.ide.idDest)+" (1 interna, 2 interestadual, 3 exterior) com CFOP "+cfops.join(", ")+".","Ajuste SINIEF 07/01 (CFOP)");
   if(cf1.includes("5")&&destUF&&emitUF&&destUF!==emitUF) add("confere","CFOP de operação interna com destinatário em outra UF","Emitente em "+esc(emitUF)+" e destinatário em "+esc(destUF)+".","RICMS/RR, art. 147, III");
-  if(cf1.includes("7")){
+  if(saidaExterior){
     const exp=nf.exporta;
     const ruc=((nf.infCpl||"").match(/\bRUC\s*[:\-]?\s*([A-Z0-9.-]+)/i)||[])[1]||"";
-    add("confere","Saída para o exterior","Confirme a DU-E/registro de exportação e o destino físico."+((exp&&exp.ufSaida)?(" A NF-e informa saída/embarque em "+esc(exp.ufSaida)+(exp.local?" – "+esc(exp.local):"")+"."):"")+(ruc?" RUC informado: "+esc(ruc)+".":"")+" A falta de documentação de exportação é matéria da Receita Federal.","CTE, art. 6º (não incidência na exportação); MOC NF-e, grupo ZA; legislação aduaneira");
+    add("confere","Saída para o exterior","Confira a DU-E, o transporte internacional e a correspondência entre o destino físico, a carga e a NF-e, conforme a etapa da operação."+((exp&&exp.ufSaida)?(" A NF-e informa saída/embarque em "+esc(exp.ufSaida)+(exp.local?" – "+esc(exp.local):"")+"."):"")+(ruc?" RUC informado: "+esc(ruc)+".":"")+" A averbação comprova a exportação concluída; sua ausência antes da saída não prova irregularidade. O controle aduaneiro cabe à Receita Federal; o posto estadual também fiscaliza o trânsito e a correspondência dos documentos.","LC 87/96, art. 3º, II; MOC NF-e, grupo ZA; legislação aduaneira");
     const posto=norm(ctx&&ctx.posto||"");
     const ufPosto=posto==="pacaraima"?"RR":"";
-    if(ufPosto&&exp&&exp.ufSaida&&exp.ufSaida!==ufPosto){
-      add("confere","UF/local de saída do país não combina com a fronteira fiscalizada","O grupo de exportação da NF-e informa UFSaidaPais="+esc(exp.ufSaida)+(exp.local?" e xLocExporta="+esc(exp.local):"")+", mas a carga está sendo fiscalizada em Pacaraima/RR. Se a transposição da fronteira ocorrer por Pacaraima, confira a DU-E e a rota efetiva, pois UFSaidaPais/xLocExporta devem indicar a UF e o local de embarque ou de transposição de fronteira.","MOC NF-e, grupo ZA (UFSaidaPais e xLocExporta)");
+    if(ufPosto&&exp&&exp.ufSaida&&exp.local&&(exp.ufSaida.toUpperCase()!==ufPosto||!norm(exp.local).includes("pacaraima"))){
+      add("registrar","UF/local de saída do País difere de Pacaraima/RR","O XML informa UFSaidaPais="+esc(exp.ufSaida)+" e xLocExporta="+esc(exp.local)+". Se a transposição da fronteira efetivamente ocorrer por Pacaraima, o preenchimento esperado é RR / Pacaraima. Confira a DU-E, a rota e eventuais eventos de correção. Esses campos indicam o embarque ou a fronteira, não o endereço do remetente. O endereço do emitente e cMunFG não precisam ser alterados por isso. O erro, isoladamente, não gera ICMS em RR nem torna a nota inidônea.","MOC NF-e, grupo ZA (UFSaidaPais e xLocExporta)");
     }
+    if(exportacaoBens&&(!exp||!exp.ufSaida||!exp.local))add("registrar","Campos de saída do País ausentes ou incompletos","Confira UFSaidaPais e xLocExporta. xLocDespacho é facultativo; sua ausência, isoladamente, não é erro.","MOC NF-e, grupo ZA");
+    if(exportacaoBens)add("info","Prazo de exportação não é validade da NF-e","Os prazos de 180/90 dias do art. 704-U tratam da efetivação da exportação nas hipóteses disciplinadas pelo RICMS/RR, não do vencimento do documento. Não aplique esses prazos automaticamente a remetente de SC ou de outra UF.","RICMS/RR, arts. 704-Q e 704-U");
   }
   if(nfce&&emitUF&&emitUF!=="RR") add("confere","NFC-e emitida em outra UF","NFC-e acoberta só operação interna, presencial ou com entrega em domicílio no estado do emitente. Em trânsito por RR, a operação é interestadual.","Ajuste SINIEF 19/16; Guia Prático EFD (NFC-e só CFOP 5.xxx)");
   if(nfce&&vNF>=200000) add("confere","NFC-e acima de R$ 200 mil","A emissão de NFC-e é vedada nessas operações; o documento cabível é a NF-e.","Ajuste SINIEF 19/16, cl. 4ª, § 4º");
@@ -598,6 +607,13 @@ function analyze(nf,ctx){
   };
   nf.itens.forEach(i=>{
     const c=i.icms.cst,s=i.icms.csosn,f=onlyDig(i.cfop),ncm=onlyDig(i.ncm),r=stRule(ncm),st=isSTcode(i);
+    if(exportacaoBens&&isExportItem(i)&&i.ibscbs){
+      const b=i.ibscbs;
+      if(b.cst!=="410"||b.classe!=="410004"||b.vIBS>0||b.vIBSUF>0||b.vIBSMun>0||b.vCBS>0){
+        const ano2026=nf.ide.dhEmi.slice(0,4)==="2026";
+        addItem("ibscbs:"+b.cst+":"+b.classe,"registrar","IBS/CBS incompatíveis com exportação","CST "+esc(b.cst||"ausente")+" / cClassTrib "+esc(b.classe||"ausente")+"; IBS declarado "+brl(b.vIBS)+" e CBS declarada "+brl(b.vCBS)+". Exportação de bens: CST 410 / cClassTrib 410004 (imunidade/não incidência), sem débito de IBS/CBS."+(ano2026?" Em 2026, a apuração é meramente informativa, sem efeitos tributários, desde que cumpridas as obrigações acessórias.":"")+" Registre para regularização; esta inconsistência não fundamenta cobrança de IBS/CBS pelo posto de RR.","LC 214/2025, art. 79; tabela cClassTrib da SVRS"+(ano2026?"; Ato Conjunto RFB/CGIBS nº 1/2025, art. 3º, parágrafo único":""),i.n);
+      }
+    }
     if(!ncm||ncm.length!==8||/^0+$/.test(ncm)){const nlvl=i.vProd>=3000?"confere":"registrar";addItem("ncm0:"+nlvl,nlvl,"NCM inválido, incompleto ou zerado","A classificação fiscal não tem 8 dígitos válidos. Isso pode alterar alíquota, ST e benefício fiscal.","MOC NF-e; Ajuste SINIEF 07/05",i.n);}
     if(simplesPuro&&c&&!s) addItem("crt","registrar","Simples usando CST em vez de CSOSN","Emitente com CRT "+nf.emit.crt+" deveria usar CSOSN.","MOC NF-e",i.n);
     if(nf.emit.crt==="3"&&s) addItem("crt3","registrar","Regime normal usando CSOSN","Emitente com CRT 3 deveria usar CST.","MOC NF-e",i.n);
@@ -686,7 +702,8 @@ function renderNF(nf,res,contextoOverride){
     ${flagHtml}
     <div class="grid2"><span>NCM ${esc(i.ncm)}${i.cest?" · CEST "+esc(i.cest):""}${i.cBenef?" · cBenef "+esc(i.cBenef):""}</span><span>${i.q.toLocaleString("pt-BR")} ${esc(i.un)} × ${brl(i.vUn)} = <b>${brl(i.vProd)}</b></span>
     <span>CFOP ${esc(i.cfop)}: ${esc(cfopDesc(i.cfop))}</span><span><b>${esc(codeDesc(i))}</b></span>
-    <span>Origem ${esc(i.icms.orig)}: ${esc(ORIG[i.icms.orig]||"")}</span><span>BC ${brl(i.icms.vBC)} · ${pct(i.icms.pICMS)} · ICMS ${brl(i.icms.vICMS)}${i.icms.vICMSST?" · ST "+brl(i.icms.vICMSST):""}</span></div>
+    <span>Origem ${esc(i.icms.orig)}: ${esc(ORIG[i.icms.orig]||"")}</span><span>BC ${brl(i.icms.vBC)} · ${pct(i.icms.pICMS)} · ICMS ${brl(i.icms.vICMS)}${i.icms.vICMSST?" · ST "+brl(i.icms.vICMSST):""}</span>
+    ${i.ibscbs?`<span>IBS/CBS: CST ${esc(i.ibscbs.cst||"—")} · cClassTrib ${esc(i.ibscbs.classe||"—")}</span><span>BC ${brl(i.ibscbs.vBC)} · IBS ${brl(i.ibscbs.vIBS)} (UF ${pct(i.ibscbs.pIBSUF)}; município ${pct(i.ibscbs.pIBSMun)}) · CBS ${brl(i.ibscbs.vCBS)} (${pct(i.ibscbs.pCBS)})</span>`:""}</div>
     ${regimeTag}${coerencia}${matCons(i.ncm)?`<span class="tag st">Material de construção (art. 839-Q)</span>`:""}</div>`}).join("");
   const pag=nf.pag.map(p=>`${TPAG[p.tPag]||p.tPag}${p.xPag?" ("+esc(p.xPag)+")":""}: ${brl(p.vPag)}`).join("; ");
   const dups=nf.dup.map(x=>`${esc(x.n)} – ${esc(x.venc.split("-").reverse().join("/"))} – ${brl(x.v)}`).join("<br>");
@@ -706,7 +723,7 @@ function renderNF(nf,res,contextoOverride){
     <div class="metric risk"><span>Inidoneidade — regra geral</span><b>Multa no valor de 40% nominal ≈ ${brl(multaInidonea)}</b><small>CTE/RR, art. 69, III, “a” / RICMS, art. 907, III, “a”. Use para falta de documento ou inidoneidade por outra causa relevante, não apenas destinatário diverso. Art. 69-A limita ao imposto devido ou não recolhido.</small></div>
     <div class="metric"><span>Teto das penalidades</span><b>Imposto devido / não recolhido</b><small>Art. 69-A. ICMS destacado no XML: ${brl(icmsDestacado)} — este valor não é automaticamente o teto; é necessário apurar o imposto devido.</small></div>
   </div>
-  ${formais.length?`<details><summary>Inconsistências formais (${formais.length})</summary>${formalHtml}</details>`:""}
+  ${formais.length?`<details${formais.some(a=>a.titulo.includes("IBS/CBS"))?" open":""}><summary>Inconsistências formais (${formais.length})</summary>${formalHtml}</details>`:""}
   ${infos.length?`<details><summary>Informações auxiliares (${infos.length})</summary>${infoHtml}</details>`:""}
   <details open><summary>Partes e rota</summary>
     <dl class="kv"><dt>Emitente</dt><dd>${esc(nf.emit.nome)}${nf.emit.fant?" ("+esc(nf.emit.fant)+")":""}</dd><dt>CNPJ/CPF</dt><dd>${fmtDoc(nf.emit.doc)} · IE ${esc(nf.emit.ie||"—")}</dd><dt>Regime</dt><dd>CRT ${esc(nf.emit.crt)}: ${esc(CRT[nf.emit.crt]||"—")}</dd><dt>Origem</dt><dd>${esc(nf.emit.mun)}/${esc(nf.emit.uf)}</dd></dl>
@@ -716,6 +733,7 @@ function renderNF(nf,res,contextoOverride){
   <details open><summary>Itens e tributação (${nf.itens.length})</summary>${itens}</details>
   <details><summary>Valores, transporte e protocolo</summary>
     <dl class="kv"><dt>Produtos</dt><dd>${brl(nf.tot.vProd)}</dd><dt>Base ICMS</dt><dd>${brl(nf.tot.vBC)}</dd><dt>ICMS</dt><dd>${brl(nf.tot.vICMS)}</dd><dt>ICMS-ST</dt><dd>${brl(nf.tot.vST)}</dd><dt>Frete / desconto</dt><dd>${brl(nf.tot.vFrete)} / ${brl(nf.tot.vDesc)}</dd><dt>Total da nota</dt><dd><b>${brl(nf.tot.vNF)}</b></dd>
+    ${nf.ibscbsTot?`<dt>Base IBS/CBS</dt><dd>${brl(nf.ibscbsTot.vBC)}</dd><dt>IBS declarado</dt><dd>${brl(nf.ibscbsTot.vIBS)}</dd><dt>CBS declarada</dt><dd>${brl(nf.ibscbsTot.vCBS)}</dd>`:""}
     <dt>Frete</dt><dd>${esc(nf.transp.modFrete)}: ${esc(MODFRETE[nf.transp.modFrete]||"—")}${nf.transp.transp?" · "+esc(nf.transp.transp):""}${nf.transp.placa?" · placa "+esc(nf.transp.placa):""}${nf.transp.qVol?" · "+nf.transp.qVol+" volume(s)":""}</dd>
     <dt>Pagamento</dt><dd>${pag||"—"}</dd>${dups?`<dt>Parcelas</dt><dd>${dups}</dd>`:""}
     <dt>Emissão</dt><dd>${fmtDate(nf.ide.dhEmi?new Date(nf.ide.dhEmi):null)}</dd><dt>Protocolo</dt><dd>${nf.prot?esc(nf.prot.nProt)+" ("+esc(nf.prot.cStat)+" – "+esc(nf.prot.xMotivo)+")":"—"}</dd>
