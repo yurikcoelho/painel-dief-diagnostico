@@ -429,7 +429,7 @@ function analyze(nf,ctx){
   /* 0. Reutilização no próprio aparelho */
   if(nf.prevPassagem&&nf.prevPassagem.quando){
     const mins=(Date.now()-nf.prevPassagem.quando)/60000;
-    if(mins>10) add("confere","Chave já lida neste aparelho","Esta mesma chave foi lida em "+new Date(nf.prevPassagem.quando).toLocaleString("pt-BR",{timeZone:"America/Boa_Vista"})+(nf.prevPassagem.placa?" (placa registrada no XML: "+esc(nf.prevPassagem.placa)+")":"")+". Pode ser nova conferência legítima. Se ficar comprovado que o mesmo documento acobertou mais de uma vez o trânsito, a hipótese específica é multa nominal de 200% do imposto; pelo art. 69-A, a penalidade não pode superar o imposto devido ou não recolhido.","CTE/RR, art. 69, III, “d”, e art. 69-A; controle local do posto / indício operacional");
+    if(mins>10) add("confere","Chave já lida neste aparelho","Esta mesma chave foi lida em "+new Date(nf.prevPassagem.quando).toLocaleString("pt-BR",{timeZone:"America/Boa_Vista"})+(nf.prevPassagem.placa?" (placa registrada no XML: "+esc(nf.prevPassagem.placa)+")":"")+". Pode ser nova conferência legítima. Se ficar comprovado que o mesmo documento acobertou mais de uma vez o trânsito, a hipótese específica é multa nominal de 100% do imposto; pelo art. 69-A, a penalidade não pode superar o imposto devido ou não recolhido.","CTE/RR, art. 69, III, “d”, e art. 69-A; controle local do posto / indício operacional");
   }
 
   /* 1. Autorização e tempo */
