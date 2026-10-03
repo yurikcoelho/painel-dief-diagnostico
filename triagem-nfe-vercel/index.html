@@ -473,6 +473,8 @@ function copyText(txt,btn){
 function renderChave(info){
   const c=parseChave(info.ch);
   state.chave=c.ch;
+  state.nfs=[];
+  $("#out").innerHTML='<div class="empty">Consultando XML e executando a triagem…</div>';
   if(!c.dv){
     $("#chaveOut").innerHTML=`<div class="msg">A chave lida não passou no dígito verificador. Refaça a leitura do DANFE.</div>`;
     return;
