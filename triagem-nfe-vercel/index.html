@@ -196,7 +196,7 @@ details summary{cursor:pointer;font-family:var(--display);font-weight:600;font-s
     <div id="histDetalhe"></div>
   </section>
 
-  <p class="footer">Ferramenta de apoio à triagem operacional · v4.7.0. Prioriza irregularidades materiais, destino da carga e exposição tributária. As regras seguem o RICMS/RR (Decreto nº 4.335-E/2001, consolidação de referência até jan/2026), o CTE (Lei nº 59/93) e a prática do posto; listas de NCM são indicativas e precisam de calibragem. Não substitui a análise do auditor. A busca automática envia somente a chave de acesso ao endpoint serverless desta ferramenta, que consulta o serviço privado consultadanfe.com; o XML aberto manualmente é lido só neste aparelho.</p>
+  <p class="footer">Ferramenta de apoio à triagem operacional · v4.7.1. Prioriza irregularidades materiais, destino da carga e exposição tributária. As regras seguem o RICMS/RR (Decreto nº 4.335-E/2001, consolidação de referência até jan/2026), o CTE (Lei nº 59/93) e a prática do posto; listas de NCM são indicativas e precisam de calibragem. Não substitui a análise do auditor. A busca automática envia somente a chave de acesso ao endpoint serverless desta ferramenta, que consulta o serviço privado consultadanfe.com; o XML aberto manualmente é lido só neste aparelho.</p>
 </main>
 
 <div class="scanner hidden" id="scanner" role="dialog" aria-label="Leitura do código">
@@ -741,28 +741,42 @@ function renderNF(nf,res,contextoOverride){
   <details${nf.infCpl||nf.infAdFisco?" open":""}><summary>Informações complementares</summary>${nf.infCpl?`<div class="pre">${esc(nf.infCpl)}</div>`:"<p class=muted>Sem informações complementares.</p>"}${nf.infAdFisco?`<p class="muted" style="margin-top:8px">Ao fisco:</p><div class="pre">${esc(nf.infAdFisco)}</div>`:""}</details>
   </article>`;
 }
+function copiarTexto(txt,done){
+  // Copia durante o clique, antes de abrir outra aba e perder o foco da página.
+  const active=document.activeElement,x=window.scrollX,y=window.scrollY;
+  const ta=document.createElement("textarea");
+  ta.value=txt;ta.readOnly=true;ta.tabIndex=-1;ta.setAttribute("aria-hidden","true");
+  ta.style.cssText="position:fixed;top:0;left:0;width:1px;height:1px;padding:0;border:0;opacity:0;font-size:16px;pointer-events:none";
+  let copied=false;
+  try{
+    document.body.appendChild(ta);ta.focus({preventScroll:true});ta.select();ta.setSelectionRange(0,txt.length);
+    copied=document.execCommand("copy");
+  }catch(e){}finally{
+    ta.remove();
+    if(active&&active.isConnected)active.focus({preventScroll:true});
+    if(window.scrollX!==x||window.scrollY!==y)window.scrollTo(x,y);
+  }
+  if(copied){done(true);return}
+  try{
+    if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(txt).then(()=>done(true),()=>done(false));return}
+  }catch(e){}
+  done(false);
+}
 function abrirConsultaDue(chave,btn){
   const original=btn?btn.textContent:"";
-  const w=window.open(DUE_PUBLIC_URL,"_blank","noopener");
-  const ok=()=>{
-    if(btn){btn.textContent="Chave copiada ✓ · DU-E aberta";setTimeout(()=>btn.textContent=original,2600)}
-  };
-  const fail=()=>{
-    if(btn){btn.textContent="DU-E aberta · copie a chave abaixo";setTimeout(()=>btn.textContent=original,3000)}
-  };
-  try{
-    if(navigator.clipboard&&navigator.clipboard.writeText) navigator.clipboard.writeText(chave).then(ok,fail);
-    else{
-      const ta=document.createElement("textarea");ta.value=chave;ta.style.position="fixed";ta.style.opacity="0";document.body.appendChild(ta);ta.select();
-      let copied=false;try{copied=document.execCommand("copy")}catch(e){}ta.remove();copied?ok():fail();
-    }
-  }catch(e){fail()}
-  if(!w) location.href=DUE_PUBLIC_URL;
+  copiarTexto(chave,copied=>{
+    // noopener pode retornar null mesmo com a nova aba aberta: não redirecionar esta aba.
+    window.open(DUE_PUBLIC_URL,"_blank","noopener");
+    if(btn){btn.textContent=copied?"Chave copiada ✓":"Cópia bloqueada · copie a chave da nota";setTimeout(()=>btn.textContent=original,3000)}
+    if(!copied)aviso("A cópia automática foi bloqueada. Copie manualmente a chave exibida na nota: "+chave,false);
+  });
 }
 function copyText(txt,btn){
-  const done=()=>{const o=btn.textContent;btn.textContent="Chave copiada ✓";setTimeout(()=>btn.textContent=o,2200)};
-  const fb=()=>{const i=$("#chaveTxt");i.focus();i.select();i.setSelectionRange(0,99);let ok=false;try{ok=document.execCommand("copy")}catch(e){}if(ok)done();else aviso("A cópia automática foi bloqueada. A chave está selecionada no campo acima: toque e segure para copiar.",false)};
-  try{if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(txt).then(done,fb)}else fb()}catch(e){fb()}
+  const original=btn.textContent;
+  copiarTexto(txt,copied=>{
+    if(copied){btn.textContent="Chave copiada ✓";setTimeout(()=>btn.textContent=original,2200)}
+    else aviso("A cópia automática foi bloqueada. Copie manualmente a chave exibida na nota: "+txt,false);
+  });
 }
 function renderChave(info){
   const c=parseChave(info.ch);
@@ -1108,3 +1122,4 @@ window.__triagem={parseNFe,analyze,extractChave,parseChave,dvOk};
 </script>
 </body>
 </html>
+
