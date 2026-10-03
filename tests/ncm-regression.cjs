@@ -47,6 +47,19 @@ test('Diesel compatível não dispensa verificação de recolhimento',()=>{const
 test('NCM inválido não produz candidato ou cenário calculável',()=>{const n=fixture('00000000','Produto');assert.equal(ids(n).length,0);assert(has(n,'NCM inválido'));assert(alerts(n).find(x=>x.titulo.includes('Antecipação parcial')).texto.includes('Sem estimativa segura'));});
 test('Render separa declaração, condições e regra sem verde indevido',()=>{const n=fixture('02013000','Carne bovina','10','6403'),h=a.renderNF(n,a.analyze(n,ctx),ctx);assert(h.includes('Declarado na NF-e'));assert(h.includes('Regra legal candidata'));assert(!h.includes('compatível com tributação anterior'));});
 test('Sem regra não significa integral validado',()=>{const n=fixture('96081000','Caneta'),h=a.renderNF(n,a.analyze(n,ctx),ctx);assert(h.includes('Enquadramento não validado'));});
+function mortadela(){const n=fixture('16010000','MORTADELA PERDIGAO 4 PC CX 14KG','00','5102');n.emit.uf='RR';n.ide.idDest='1';n.ide.cUF='14';Object.assign(n.itens[0],{q:1470,vUn:102,vProd:149940});Object.assign(n.itens[0].icms,{vBC:149940,pICMS:20,vICMS:29988});Object.assign(n.tot,{vNF:149940,vProd:149940,vBC:149940,vICMS:29988});return n;}
+const render=n=>a.renderNF(n,a.analyze(n,ctx),ctx),flag='✓ Tratamento declarado compatível com a regra geral';
+test('Mortadela da imagem recebe flag positiva sem aviso contraditório',()=>{const h=render(mortadela());assert(h.includes(flag));assert(h.includes('legal-candidate compatible'));assert(!h.includes('Enquadramento não validado'));assert(!h.includes('regime do destinatário ainda a conferir'));assert(h.includes('RICMS/RR, art. 46, I, d'));});
+for(const [name,change] of [
+ ['alíquota incorreta',n=>n.itens[0].icms.pICMS=12],['imposto incorreto',n=>n.itens[0].icms.vICMS=1],['base reduzida',n=>n.itens[0].icms.vBC=100000],
+ ['benefício informado',n=>n.itens[0].cBenef='RR000001'],['redução declarada',n=>n.itens[0].icms.pRedBC=10],['CST60',n=>n.itens[0].icms.cst='60'],
+ ['retenção inconsistente',n=>n.itens[0].icms.vICMSST=100],['Simples',n=>n.emit.crt='1'],['origem interestadual',n=>n.emit.uf='SP'],['destino outra UF',n=>n.dest.uf='AM'],
+ ['CFOP de ST',n=>n.itens[0].cfop='5405'],['CFOP de devolução',n=>n.itens[0].cfop='5202'],['NCM zerado',n=>n.itens[0].ncm='00000000'],['descrição genérica',n=>n.itens[0].desc='Produto'],
+ ['produto diverso no mesmo NCM',n=>n.itens[0].desc='Linguiça'],['data anterior à alíquota geral de20%',n=>n.ide.dhEmi='2022-01-01T12:00:00Z'],['IPI a conferir',n=>n.itens[0].vIPI=100],
+ ['documento complementar',n=>n.ide.finNFe='2'],['dados internos contraditórios',n=>n.ide.idDest='2'],['ICMS próprio ausente',n=>delete n.itens[0].icms.vICMS]
+])test('Flag não confirma '+name,()=>{const n=mortadela();change(n);assert(!render(n).includes(flag));});
+test('Cálculo incorpora frete/seguro/desconto/outros antes da flag',()=>{const n=mortadela(),i=n.itens[0];Object.assign(i,{vFrete:100,vSeg:20,vOutro:30,vDesc:50});assert(!render(n).includes(flag));i.icms.vBC=150040;i.icms.vICMS=30008;assert(render(n).includes(flag));});
+test('Compatibilidade do ICMS não encobre nem é bloqueada por alerta IBS/CBS',()=>{const n=mortadela(),r=a.analyze(n,ctx);r.itemAlerts['1']=[{lvl:'registrar',tit:'IBS/CBS incompatíveis',txt:'Verificar IBS/CBS'}];const h=a.renderNF(n,r,ctx);assert(h.includes(flag));});
 test('Exportação válida mantém IBS/CBS e não vira benefício pendente genérico',()=>{const n=fixture('02013000','Carne bovina','41','7102');n.ide.idDest='3';n.dest.uf='EX';n.dest.indIE='9';n.emit.uf='SC';n.itens[0].ibscbs={cst:'410',classe:'410004',vBC:0,vIBS:0,vIBSUF:0,vIBSMun:0,vCBS:0};assert(!has(n,'fundamento pendente'));assert(!has(n,'IBS/CBS incompatíveis'));n.itens[0].ibscbs.cst='000';assert(has(n,'IBS/CBS incompatíveis'));});
 console.log(`${passed} cenários passaram; sintaxe e renderização verificadas.`);
 module.exports={fixture,ctx};
