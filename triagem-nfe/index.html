@@ -97,6 +97,7 @@ details summary{cursor:pointer;font-family:var(--display);font-weight:600;font-s
 @media (max-width:420px){ .actions{grid-template-columns:1fr} .grid2{grid-template-columns:1fr} h1{font-size:1.55rem} }
 @media (prefers-reduced-motion: no-preference){ .nf{animation:in .25s ease-out} @keyframes in{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}} }
 </style>
+<script src="https://cdn.jsdelivr.net/npm/zxing-wasm@3.1.4/dist/iife/reader/index.js"></script>
 </head>
 <body>
 <main>
@@ -129,14 +130,21 @@ details summary{cursor:pointer;font-family:var(--display);font-weight:600;font-s
   <section id="chaveOut"></section>
   <section id="out"><div class="empty">Nenhuma nota analisada. Leia o código do DANFE para obter a chave e baixar o XML (por exemplo, no Meu Danfe), depois abra o XML aqui.</div></section>
 
-  <p class="footer">Ferramenta de apoio à triagem · leitor móvel v2 (ZXing). As regras seguem o RICMS/RR (Decreto nº 4.335-E/2001, cópia de referência até jan/2026), o CTE (Lei nº 59/93) e a prática do posto; listas de NCM são iniciais e precisam de calibragem. Não substitui a análise do auditor. A busca automática envia a chave de acesso ao serviço privado consultadanfe.com; o XML aberto manualmente é lido só neste aparelho.</p>
+  <p class="footer">Ferramenta de apoio à triagem · leitor móvel v3 (mesmo motor do leitor DANFE funcional). As regras seguem o RICMS/RR (Decreto nº 4.335-E/2001, cópia de referência até jan/2026), o CTE (Lei nº 59/93) e a prática do posto; listas de NCM são iniciais e precisam de calibragem. Não substitui a análise do auditor. A busca automática envia a chave de acesso ao serviço privado consultadanfe.com; o XML aberto manualmente é lido só neste aparelho.</p>
 </main>
 
 <div class="scanner hidden" id="scanner" role="dialog" aria-label="Leitura do código">
   <video id="vid" playsinline muted></video>
   <div id="h5q" class="hidden"></div>
   <div class="aim" aria-hidden="true"></div>
-  <div class="bar"><span id="scanMsg">Deixe o código de barras inteiro na horizontal, com as duas margens visíveis.</span><button class="btn small" id="bStop" style="color:#fff;border-color:#fff;background:transparent">Cancelar</button></div>
+  <div class="bar">
+    <span id="scanMsg">Encaixe o código inteiro na moldura.</span>
+    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;justify-content:flex-end">
+      <button class="btn small hidden" id="bTorch" type="button" style="color:#fff;border-color:#fff;background:transparent">Lanterna</button>
+      <label id="zoomWrap" class="hidden" style="font-size:.85rem;display:flex;align-items:center;gap:6px">Zoom <input type="range" id="zoom" style="width:90px"></label>
+      <button class="btn small" id="bStop" style="color:#fff;border-color:#fff;background:transparent">Cancelar</button>
+    </div>
+  </div>
 </div>
 
 <script>
@@ -469,266 +477,214 @@ $("#fXml").addEventListener("change",async e=>{
 ["#abordagem","#posto"].forEach(s=>$(s).addEventListener("change",()=>{if(s==="#posto")store("triagem.posto",$("#posto").value);renderAll()}));
 
 /* ---------- câmera ---------- */
-let stream=null,loop=null,h5=null,zxReader=null,zxControls=null;
+/* Motor baseado no leitor que funcionou no posto: BarcodeDetector nativo + zxing-wasm (zxing-cpp/WASM). */
+const OPC_SCAN={formats:["Code128","QRCode","ITF"],tryHarder:true,tryRotate:true,tryInvert:false,maxNumberOfSymbols:1};
+let stream=null,track=null,loopTimer=null,ocupado=false,bd=null,frame=0,torch=false;
+const scanCanvas=document.createElement("canvas");
+const scanCtx=scanCanvas.getContext("2d",{willReadFrequently:true});
 
-function loadScript(src){
-  return new Promise((ok,ko)=>{
-    const existing=[...document.scripts].find(s=>s.src===src);
-    if(existing){
-      if(existing.dataset.loaded==="1") return ok();
-      existing.addEventListener("load",ok,{once:true});
-      existing.addEventListener("error",()=>ko(new Error("load")),{once:true});
-      return;
-    }
-    const s=document.createElement("script");
-    s.src=src;
-    s.async=true;
-    s.onload=()=>{s.dataset.loaded="1";ok()};
-    s.onerror=()=>{s.remove();ko(new Error("load"))};
-    document.head.appendChild(s);
-  });
-}
-
-async function ensureZX(){
-  if(window.ZXingBrowser&&window.ZXingBrowser.BrowserMultiFormatReader)return;
-  const urls=[
-    "https://unpkg.com/@zxing/browser@0.1.5",
-    "https://cdn.jsdelivr.net/npm/@zxing/browser@0.1.5/umd/zxing-browser.min.js"
-  ];
-  let last=null;
-  for(const u of urls){
-    try{
-      await loadScript(u);
-      if(window.ZXingBrowser&&window.ZXingBrowser.BrowserMultiFormatReader)return;
-    }catch(e){last=e}
-  }
-  throw last||new Error("ZXing indisponível");
-}
-
-async function ensureH5(){
-  if(window.Html5Qrcode)return;
-  await loadScript("https://cdn.jsdelivr.net/npm/html5-qrcode@2.3.8/html5-qrcode.min.js");
-}
-
-async function nativeDetector(){
-  if(!("BarcodeDetector" in window))return null;
+async function prepararBD(){
   try{
-    const f=await BarcodeDetector.getSupportedFormats();
-    const want=["code_128","qr_code","itf"].filter(x=>f.includes(x));
-    return want.length?new BarcodeDetector({formats:want}):null;
-  }catch(e){return null}
-}
-
-function tryContinuousFocus(video){
-  try{
-    const st=video&&video.srcObject;
-    const tr=st&&st.getVideoTracks&&st.getVideoTracks()[0];
-    if(!tr||!tr.getCapabilities||!tr.applyConstraints)return;
-    const caps=tr.getCapabilities();
-    if(caps.focusMode&&Array.from(caps.focusMode).includes("continuous")){
-      tr.applyConstraints({advanced:[{focusMode:"continuous"}]}).catch(()=>{});
+    if("BarcodeDetector" in window){
+      const f=await BarcodeDetector.getSupportedFormats();
+      const formatos=["code_128","qr_code","itf"].filter(x=>f.includes(x));
+      if(formatos.length) bd=new BarcodeDetector({formats:formatos});
     }
-  }catch(e){}
+  }catch(e){bd=null}
 }
+prepararBD();
 
-async function stopScan(){
-  if(loop)cancelAnimationFrame(loop);loop=null;
-  if(zxControls){try{zxControls.stop()}catch(e){}zxControls=null}
-  zxReader=null;
-  if(stream){stream.getTracks().forEach(t=>t.stop());stream=null}
-  if(h5){try{await h5.stop()}catch(e){}try{await h5.clear()}catch(e){}h5=null}
-  const vid=$("#vid");
-  if(vid&&vid.srcObject){
-    try{vid.srcObject.getTracks().forEach(t=>t.stop())}catch(e){}
-    vid.srcObject=null;
-  }
-  $("#scanner").classList.add("hidden");
-}
-
-$("#bStop").onclick=stopScan;
-
-async function startZXing(){
-  await ensureZX();
-  const vid=$("#vid");
-  vid.classList.remove("hidden");
-  $("#h5q").classList.add("hidden");
-  zxReader=new ZXingBrowser.BrowserMultiFormatReader(undefined,{
-    delayBetweenScanAttempts:70,
-    delayBetweenScanSuccess:250
-  });
-  const constraints={
-    audio:false,
-    video:{
-      facingMode:{ideal:"environment"},
-      width:{ideal:1920},
-      height:{ideal:1080}
-    }
-  };
-  zxControls=await zxReader.decodeFromConstraints(constraints,vid,async(result,error,controls)=>{
-    if(!result)return;
-    const txt=result.getText?result.getText():String(result.text||result||"");
-    const info=extractChave(txt);
-    if(!info){
-      $("#scanMsg").textContent="Código lido, mas não encontrei 44 dígitos. Continue apontando para a chave do DANFE.";
-      return;
-    }
-    try{controls&&controls.stop&&controls.stop()}catch(e){}
-    zxControls=null;
-    await stopScan();
-    onCode(txt);
-  });
-  setTimeout(()=>tryContinuousFocus(vid),700);
-}
-
-async function startHtml5Fallback(){
-  const vid=$("#vid");
-  vid.classList.add("hidden");
-  $("#h5q").classList.remove("hidden");
-  await ensureH5();
-  h5=new Html5Qrcode("h5q",{
-    formatsToSupport:[
-      Html5QrcodeSupportedFormats.CODE_128,
-      Html5QrcodeSupportedFormats.QR_CODE,
-      Html5QrcodeSupportedFormats.ITF
-    ],
-    verbose:false
-  });
-  await h5.start(
-    {facingMode:{ideal:"environment"}},
-    {
-      fps:15,
-      aspectRatio:1.777,
-      disableFlip:true,
-      qrbox:(w,h)=>({
-        width:Math.floor(w*.94),
-        height:Math.floor(Math.min(h*.32,w*.34))
-      })
-    },
-    async txt=>{
-      if(!extractChave(txt))return;
-      await stopScan();
-      onCode(txt);
-    },
-    ()=>{}
-  );
-}
-
-$("#bScan").onclick=async()=>{
-  aviso("");
-  $("#scanner").classList.remove("hidden");
-  $("#scanMsg").textContent="Deixe o código de barras inteiro na horizontal, com as duas margens visíveis.";
-  try{
-    await startZXing();
-  }catch(zxErr){
+async function decodificarFonte(fonte){
+  /* 1º: detector nativo do Android/Chrome. */
+  if(bd){
     try{
-      await startHtml5Fallback();
-      $("#scanMsg").textContent="Leitor alternativo ativo. Deixe o código inteiro, reto e sem reflexo.";
-    }catch(h5Err){
-      await stopScan();
-      camBloqueada((h5Err&&h5Err.name)||(zxErr&&zxErr.name));
-      aviso("Não consegui iniciar o leitor ao vivo. Use “Fotografar o código”: tire a foto de perto, com o código inteiro, reto e sem reflexo.",true);
-    }
-  }
-};
-
-function mkCanvas(w,h){
-  const c=document.createElement("canvas");
-  c.width=Math.max(1,Math.round(w));
-  c.height=Math.max(1,Math.round(h));
-  return c;
-}
-
-async function canvasVariants(file){
-  const bmp=await createImageBitmap(file);
-  const maxSide=2400;
-  const k=Math.min(1,maxSide/Math.max(bmp.width,bmp.height));
-  const w=Math.max(1,Math.round(bmp.width*k)),h=Math.max(1,Math.round(bmp.height*k));
-  const base=mkCanvas(w,h);
-  base.getContext("2d").drawImage(bmp,0,0,w,h);
-  const out=[base];
-  const r90=mkCanvas(h,w);
-  let x=r90.getContext("2d");x.translate(h,0);x.rotate(Math.PI/2);x.drawImage(base,0,0);
-  out.push(r90);
-  const r180=mkCanvas(w,h);
-  x=r180.getContext("2d");x.translate(w,h);x.rotate(Math.PI);x.drawImage(base,0,0);
-  out.push(r180);
-  const r270=mkCanvas(h,w);
-  x=r270.getContext("2d");x.translate(0,w);x.rotate(-Math.PI/2);x.drawImage(base,0,0);
-  out.push(r270);
-  try{bmp.close&&bmp.close()}catch(e){}
-  return out;
-}
-
-async function decodeFileZXing(file){
-  await ensureZX();
-  const reader=new ZXingBrowser.BrowserMultiFormatReader();
-  let last=null;
-  for(const canvas of await canvasVariants(file)){
-    try{
-      const r=reader.decodeFromCanvas(canvas);
-      const txt=r&&r.getText?r.getText():String(r&&r.text||r||"");
-      if(txt)return txt;
-    }catch(e){last=e}
-  }
-  throw last||new Error("Código não encontrado");
-}
-
-async function decodeFile(file){
-  /* ZXing é o motor principal porque lê CODE_128 longo do DANFE melhor no celular. */
-  try{return await decodeFileZXing(file)}catch(e){}
-
-  /* Fallback nativo, quando o navegador oferece BarcodeDetector para CODE_128. */
-  const det=await nativeDetector();
-  if(det){
-    try{
-      for(const canvas of await canvasVariants(file)){
-        const r=await det.detect(canvas);
-        const hit=r&&r.find(x=>extractChave(x.rawValue));
-        if(hit)return hit.rawValue;
-        if(r&&r.length)return r[0].rawValue;
+      const r=await bd.detect(fonte);
+      for(const x of r){
+        if(extractChave(x.rawValue)) return x.rawValue;
       }
     }catch(e){}
   }
 
-  /* Último fallback: html5-qrcode. */
-  await ensureH5();
-  const tmp=new Html5Qrcode("h5q",{
-    formatsToSupport:[
-      Html5QrcodeSupportedFormats.CODE_128,
-      Html5QrcodeSupportedFormats.QR_CODE,
-      Html5QrcodeSupportedFormats.ITF
-    ],
-    verbose:false
-  });
-  try{return await tmp.scanFile(file,false)}
-  finally{try{await tmp.clear()}catch(e){}}
+  /* 2º: ZXing-C++ compilado para WebAssembly. Muito mais robusto para o CODE 128 longo do DANFE. */
+  if(typeof ZXingWASM==="undefined") return null;
+  try{
+    const img=fonte instanceof HTMLCanvasElement
+      ? scanCtx.getImageData(0,0,scanCanvas.width,scanCanvas.height)
+      : fonte;
+    const r=await ZXingWASM.readBarcodes(img,OPC_SCAN);
+    for(const x of r){
+      if(x.text&&extractChave(x.text)) return x.text;
+    }
+  }catch(e){}
+  return null;
+}
+
+function aceitarLeitura(txt){
+  const info=extractChave(txt);
+  if(!info) return false;
+  if(navigator.vibrate) try{navigator.vibrate(80)}catch(e){}
+  onCode(txt);
+  return true;
+}
+
+async function tickScan(){
+  const v=$("#vid");
+  if(!stream||ocupado||!v||v.readyState<2) return;
+  ocupado=true;
+  try{
+    const W=v.videoWidth,H=v.videoHeight;
+    if(!W||!H) return;
+
+    /* Duas de cada três tentativas usam somente a faixa central em resolução cheia.
+       Isso deixa o CODE 128 do DANFE muito maior para o decodificador. */
+    const faixa=(frame++%3)!==2;
+    const sy=faixa?Math.floor(H*.28):0;
+    const sh=faixa?Math.floor(H*.44):H;
+    scanCanvas.width=W;
+    scanCanvas.height=sh;
+    scanCtx.drawImage(v,0,sy,W,sh,0,0,W,sh);
+
+    const txt=await decodificarFonte(scanCanvas);
+    if(txt&&aceitarLeitura(txt)) await stopScan();
+  }catch(e){}
+  finally{ocupado=false}
+}
+
+async function stopScan(){
+  clearInterval(loopTimer);loopTimer=null;
+  if(stream){try{stream.getTracks().forEach(t=>t.stop())}catch(e){}}
+  stream=null;track=null;torch=false;ocupado=false;
+  const v=$("#vid");
+  if(v){v.srcObject=null}
+  const bt=$("#bTorch"),zw=$("#zoomWrap");
+  if(bt){bt.classList.add("hidden");bt.textContent="Lanterna"}
+  if(zw)zw.classList.add("hidden");
+  $("#scanner").classList.add("hidden");
+}
+$("#bStop").onclick=stopScan;
+
+$("#bScan").onclick=async()=>{
+  aviso("");
+  if(!navigator.mediaDevices?.getUserMedia){
+    aviso("Este navegador não dá acesso à câmera. Use “Fotografar o código”.",true);
+    return;
+  }
+
+  await stopScan();
+  $("#scanner").classList.remove("hidden");
+  $("#vid").classList.remove("hidden");
+  $("#h5q").classList.add("hidden");
+  $("#scanMsg").textContent="Abrindo câmera…";
+
+  try{
+    stream=await navigator.mediaDevices.getUserMedia({
+      audio:false,
+      video:{
+        facingMode:{ideal:"environment"},
+        width:{ideal:3840},
+        height:{ideal:2160}
+      }
+    });
+  }catch(e){
+    await stopScan();
+    aviso(e&&e.name==="NotAllowedError"
+      ?"Permissão da câmera negada. Libere a câmera nas configurações do site."
+      :"A câmera não abriu. Use “Fotografar o código”.",true);
+    return;
+  }
+
+  const v=$("#vid");
+  v.srcObject=stream;
+  await v.play().catch(()=>{});
+  track=stream.getVideoTracks()[0];
+
+  const cap=track&&track.getCapabilities?track.getCapabilities():{};
+  try{
+    if(cap.focusMode&&Array.from(cap.focusMode).includes("continuous"))
+      await track.applyConstraints({advanced:[{focusMode:"continuous"}]});
+  }catch(e){}
+
+  const bt=$("#bTorch");
+  if(bt&&cap.torch){
+    bt.classList.remove("hidden");
+    bt.onclick=async()=>{
+      if(!track)return;
+      torch=!torch;
+      try{
+        await track.applyConstraints({advanced:[{torch}]});
+        bt.textContent=torch?"Lanterna ligada":"Lanterna";
+      }catch(e){torch=false}
+    };
+  }
+
+  const zw=$("#zoomWrap"),z=$("#zoom");
+  if(zw&&z&&cap.zoom){
+    z.min=cap.zoom.min;
+    z.max=Math.min(cap.zoom.max,5);
+    z.step=cap.zoom.step||.1;
+    z.value=track.getSettings().zoom||cap.zoom.min;
+    zw.classList.remove("hidden");
+    z.oninput=()=>track&&track.applyConstraints({advanced:[{zoom:Number(z.value)}]}).catch(()=>{});
+  }
+
+  const vert=v.videoHeight>v.videoWidth;
+  $("#scanMsg").textContent=vert
+    ?"Gire o celular para horizontal. Código inteiro na moldura, a uns 20 cm."
+    :"Código inteiro na moldura, a uns 20 cm. Se desfocar, afaste um pouco.";
+
+  loopTimer=setInterval(tickScan,180);
+};
+
+/* Foto: usa a mesma sequência do leitor funcional — nativo e depois zxing-wasm direto no arquivo. */
+async function decodeFoto(file){
+  if(bd){
+    try{
+      const bmp=await createImageBitmap(file);
+      const r=await bd.detect(bmp);
+      for(const x of r){
+        if(extractChave(x.rawValue)){
+          try{bmp.close&&bmp.close()}catch(e){}
+          return x.rawValue;
+        }
+      }
+      try{bmp.close&&bmp.close()}catch(e){}
+    }catch(e){}
+  }
+
+  if(typeof ZXingWASM!=="undefined"){
+    try{
+      const r=await ZXingWASM.readBarcodes(file,{...OPC_SCAN,tryDownscale:true});
+      for(const x of r){
+        if(x.text&&extractChave(x.text)) return x.text;
+      }
+    }catch(e){}
+  }
+  return null;
 }
 
 const onFoto=async e=>{
   const f=e.target.files&&e.target.files[0];if(!f)return;
-  aviso("Lendo o código da foto…",true);
+  aviso("Lendo a foto…",true);
+  await stopScan();
   try{
-    const txt=await decodeFile(f);
-    onCode(txt);
-    if(extractChave(txt))$("#chaveOut").scrollIntoView({behavior:"smooth",block:"start"});
+    const txt=await decodeFoto(f);
+    if(txt) aceitarLeitura(txt);
+    else aviso("Não achei o código na foto. Fotografe só o código de barras, reto, ocupando a largura da foto e com boa luz.",true);
   }catch(err){
-    aviso("Não consegui ler o código nessa foto. Fotografe só a área do código de barras, deixando a chave inteira, as duas margens brancas, a imagem reta e sem reflexo. Se ainda falhar, digite os 44 números.",true);
+    aviso("Não consegui ler a foto. Tente outra, mais nítida.",true);
   }
   e.target.value="";
 };
-
 $("#fFoto").addEventListener("change",onFoto);
 $("#fCam").addEventListener("change",onFoto);
 
-function camBloqueada(motivo){
+function camBloqueada(){
   const b=$("#bScan"),f=$("#bCam");
-  b.classList.add("hidden");
-  f.classList.add("primary");
+  b.classList.add("hidden");f.classList.add("primary");
   if(!$("#camHint")){
     const h=document.createElement("p");
-    h.id="camHint";
-    h.className="hint";
-    h.textContent="A leitura ao vivo não está disponível aqui. “Fotografar o código” abre a câmera do celular e tenta ler CODE 128/QR diretamente da foto.";
+    h.id="camHint";h.className="hint";
+    h.textContent="A leitura ao vivo não está disponível neste navegador. Use “Fotografar o código”.";
     document.querySelector(".actions").after(h);
   }
 }
