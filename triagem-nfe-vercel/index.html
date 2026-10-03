@@ -76,6 +76,12 @@ input[type=datetime-local],input.chave,textarea.chave{width:100%;padding:12px;bo
 .plate.libera{background:var(--sign);color:var(--sign-ink)}
 .plate .ident{font-family:var(--display);font-weight:600;font-size:1.05rem;opacity:.95;margin-bottom:6px}
 .resumo{font-size:1.02rem}
+.quick{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:10px 0 12px}
+.metric{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:11px 12px;min-width:0}
+.metric span{display:block;color:var(--muted);font-size:.8rem;text-transform:uppercase;letter-spacing:.04em}
+.metric b{display:block;margin-top:3px;font-family:var(--display);font-size:1.05rem;overflow-wrap:anywhere}
+.metric.risk{border-left:5px solid var(--red)}
+.route-ok{color:var(--sign)} .route-check{color:#9B6B00}
 .section{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px;margin-top:12px}
 .section > h3{margin-bottom:6px}
 .alert{border-left:6px solid var(--formal);padding:8px 10px 8px 12px;margin:10px 0;background:var(--bg);border-radius:4px}
@@ -94,6 +100,7 @@ details summary{cursor:pointer;font-family:var(--display);font-weight:600;font-s
 .pre{white-space:pre-wrap;overflow-wrap:anywhere;font-size:.95rem;background:var(--bg);padding:10px;border-radius:8px}
 .footer{margin-top:36px;font-size:.88rem;color:var(--muted);border-top:1px solid var(--line);padding-top:12px}
 .empty{margin-top:26px;padding:16px;border:2px dashed var(--line);border-radius:12px;color:var(--muted)}
+@media (max-width:520px){ .quick{grid-template-columns:1fr} }
 @media (max-width:420px){ .actions{grid-template-columns:1fr} .grid2{grid-template-columns:1fr} h1{font-size:1.55rem} }
 @media (prefers-reduced-motion: no-preference){ .nf{animation:in .25s ease-out} @keyframes in{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}} }
 </style>
@@ -104,33 +111,28 @@ details summary{cursor:pointer;font-family:var(--display);font-weight:600;font-s
   <header class="top">
     <div>
       <h1>Triagem de NF-e no trânsito</h1>
-      <p>Leia o código do DANFE, abra o XML e veja os sinais de alerta.</p>
+      <p>Leia o DANFE. O XML é consultado automaticamente e a triagem prioriza riscos materiais.</p>
     </div>
     <label class="posto">Posto <input id="posto" value="Pacaraima" aria-label="Município do posto fiscal"></label>
   </header>
 
-  <label class="field" for="abordagem">Início da abordagem<small>Hora de Roraima. Usada para conferir se a nota foi autorizada antes.</small></label>
+  <label class="field" for="abordagem">Início da abordagem<small>Hora de Roraima. A nota precisa estar autorizada antes da ação fiscal.</small></label>
   <input type="datetime-local" id="abordagem">
 
   <div class="actions">
-    <button class="btn primary" id="bScan">Ler código com a câmera</button>
-    <label class="btn" for="fCam" id="bCam">Fotografar o código</label>
-    <input type="file" id="fCam" accept="image/*" capture="environment" class="hidden">
-    <label class="btn" for="fFoto" id="bFoto">Escolher foto do código</label>
-    <input type="file" id="fFoto" accept="image/*" class="hidden">
-    <label class="btn" for="fXml" id="bXml">Abrir XML da nota</label>
+    <button class="btn primary wide" id="bScan">Ler DANFE com a câmera</button>
+    <label class="btn wide" for="fXml" id="bXml">Abrir XML manualmente (contingência)</label>
     <input type="file" id="fXml" accept=".xml,text/xml,application/xml" multiple class="hidden">
-  </div>
-  <div class="row">
-    <input class="chave" id="chaveManual" inputmode="numeric" placeholder="Ou digite/cole a chave ou o link do QR Code" aria-label="Chave de acesso">
-    <button class="btn small" id="bChave">Ler chave</button>
+    <!-- mantidos ocultos apenas como fallback técnico do leitor -->
+    <input type="file" id="fCam" accept="image/*" capture="environment" class="hidden">
+    <input type="file" id="fFoto" accept="image/*" class="hidden">
   </div>
   <div id="aviso" class="msg hidden" role="status"></div>
 
   <section id="chaveOut"></section>
-  <section id="out"><div class="empty">Nenhuma nota analisada. Leia o código do DANFE para obter a chave e baixar o XML (por exemplo, no Meu Danfe), depois abra o XML aqui.</div></section>
+  <section id="out"><div class="empty">Nenhuma nota analisada. Aponte a câmera para o código de barras do DANFE.</div></section>
 
-  <p class="footer">Ferramenta de apoio à triagem · leitor móvel v3 (mesmo motor do leitor DANFE funcional). As regras seguem o RICMS/RR (Decreto nº 4.335-E/2001, cópia de referência até jan/2026), o CTE (Lei nº 59/93) e a prática do posto; listas de NCM são iniciais e precisam de calibragem. Não substitui a análise do auditor. A busca automática envia somente a chave de acesso ao endpoint serverless desta ferramenta, que consulta o serviço privado consultadanfe.com; o XML aberto manualmente é lido só neste aparelho.</p>
+  <p class="footer">Ferramenta de apoio à triagem operacional · v4. Prioriza irregularidades materiais, destino da carga e exposição tributária. As regras seguem o RICMS/RR (Decreto nº 4.335-E/2001, consolidação de referência até jan/2026), o CTE (Lei nº 59/93) e a prática do posto; listas de NCM são indicativas e precisam de calibragem. Não substitui a análise do auditor. A busca automática envia somente a chave de acesso ao endpoint serverless desta ferramenta, que consulta o serviço privado consultadanfe.com; o XML aberto manualmente é lido só neste aparelho.</p>
 </main>
 
 <div class="scanner hidden" id="scanner" role="dialog" aria-label="Leitura do código">
@@ -163,6 +165,16 @@ function fmtDoc(d){d=onlyDig(d);if(d.length===14)return d.replace(/^(\d{2})(\d{3
 function fmtDate(dt){if(!dt||isNaN(dt))return "—";return dt.toLocaleString("pt-BR",{timeZone:"America/Boa_Vista",day:"2-digit",month:"2-digit",year:"numeric",hour:"2-digit",minute:"2-digit"})}
 function store(k,v){try{localStorage.setItem(k,v)}catch(e){}}
 function load(k){try{return localStorage.getItem(k)}catch(e){return null}}
+function lerPassagens(){try{return JSON.parse(localStorage.getItem("triagem.passagens")||"{}")}catch(e){return {}}}
+function passagemAnterior(ch){const h=lerPassagens();return h[ch]||null}
+function registrarPassagem(ch,nf){
+  try{
+    const h=lerPassagens(),agora=Date.now();
+    h[ch]={quando:agora,nNF:nf&&nf.ide?nf.ide.nNF:"",emit:nf&&nf.emit?nf.emit.nome:"",placa:nf&&nf.transp?nf.transp.placa:""};
+    const ord=Object.entries(h).sort((a,b)=>(b[1].quando||0)-(a[1].quando||0)).slice(0,250);
+    localStorage.setItem("triagem.passagens",JSON.stringify(Object.fromEntries(ord)));
+  }catch(e){}
+}
 
 /* ---------- tabelas ---------- */
 const UF={11:"RO",12:"AC",13:"AM",14:"RR",15:"PA",16:"AP",17:"TO",21:"MA",22:"PI",23:"CE",24:"RN",25:"PB",26:"PE",27:"AL",28:"SE",29:"BA",31:"MG",32:"ES",33:"RJ",35:"SP",41:"PR",42:"SC",43:"RS",50:"MS",51:"MT",52:"GO",53:"DF"};
@@ -217,7 +229,7 @@ function stRule(ncm){
 }
 function matCons(ncm){ncm=onlyDig(ncm);if(MATCONS_EXC.some(e=>ncm.startsWith(e)))return false;return MATCONS.some(p=>ncm.startsWith(p))}
 const A25=["93","3604","8903","7113","7114","7116","2203","2204","2205","2206","2208","3303","3304","3305","3307","24"];
-const A12=["1006","071333","110620","110814","0401","1005","110220","0407","1201","0207","0105","0201","0202","0102","1101","8702","8703","8704","8711","27101911","271119"];
+const A12=["1006","071333","110620","110814","0401","1005","110220","0407","1201","0207","0105","0201","0202","0102","8702","8703","8704","8711","27101911","271119"];
 function aliqInterna(ncm){ncm=onlyDig(ncm);let best=20,len=0;for(const p of A25)if(ncm.startsWith(p)&&p.length>len){best=25;len=p.length}for(const p of A12)if(ncm.startsWith(p)&&p.length>len){best=12;len=p.length}return best}
 
 /* ---------- chave ---------- */
@@ -239,13 +251,14 @@ function parseNFe(xml,fileName){
   const doc=new DOMParser().parseFromString(xml,"application/xml");
   if(doc.getElementsByTagName("parsererror").length) throw new Error("Arquivo não é um XML válido.");
   const inf=q(doc,"infNFe"); if(!inf) throw new Error("Não encontrei uma NF-e/NFC-e neste XML.");
-  const ide=q(inf,"ide"),emit=q(inf,"emit"),dest=q(inf,"dest"),ent=q(inf,"entrega"),tr=q(inf,"transp"),tot=q(inf,"ICMSTot"),adic=q(inf,"infAdic"),prot=q(doc,"infProt");
+  const ide=q(inf,"ide"),emit=q(inf,"emit"),dest=q(inf,"dest"),ent=q(inf,"entrega"),ret=q(inf,"retirada"),tr=q(inf,"transp"),tot=q(inf,"ICMSTot"),adic=q(inf,"infAdic"),prot=q(doc,"infProt");
   const enderEmit=q(emit,"enderEmit"),enderDest=q(dest,"enderDest");
   const nf={file:fileName,chave:(inf.getAttribute("Id")||"").replace(/^NFe/,""),
     ide:{natOp:t(ide,"natOp"),mod:t(ide,"mod"),serie:t(ide,"serie"),nNF:t(ide,"nNF"),dhEmi:t(ide,"dhEmi"),dhSaiEnt:t(ide,"dhSaiEnt"),tpNF:t(ide,"tpNF"),idDest:t(ide,"idDest"),tpEmis:t(ide,"tpEmis"),tpAmb:t(ide,"tpAmb"),finNFe:t(ide,"finNFe"),indFinal:t(ide,"indFinal"),indPres:t(ide,"indPres"),cUF:t(ide,"cUF")},
     emit:{doc:t(emit,"CNPJ")||t(emit,"CPF"),nome:t(emit,"xNome"),fant:t(emit,"xFant"),ie:t(emit,"IE"),crt:t(emit,"CRT"),mun:t(enderEmit,"xMun"),uf:t(enderEmit,"UF")},
     dest:dest?{doc:t(dest,"CNPJ")||t(dest,"CPF")||t(dest,"idEstrangeiro"),cpf:!!q(dest,"CPF"),estrangeiro:!!q(dest,"idEstrangeiro"),nome:t(dest,"xNome"),ie:t(dest,"IE"),indIE:t(dest,"indIEDest"),lgr:t(enderDest,"xLgr"),nro:t(enderDest,"nro"),bairro:t(enderDest,"xBairro"),mun:t(enderDest,"xMun"),uf:t(enderDest,"UF")}:null,
     entrega:ent?{mun:t(ent,"xMun"),uf:t(ent,"UF"),lgr:t(ent,"xLgr"),nro:t(ent,"nro"),nome:t(ent,"xNome")}:null,
+    retirada:ret?{mun:t(ret,"xMun"),uf:t(ret,"UF"),lgr:t(ret,"xLgr"),nro:t(ret,"nro"),nome:t(ret,"xNome")}:null,
     transp:{modFrete:t(tr,"modFrete"),transp:t(q(tr,"transporta"),"xNome"),transpDoc:t(q(tr,"transporta"),"CNPJ")||t(q(tr,"transporta"),"CPF"),placa:t(q(tr,"veicTransp"),"placa"),qVol:qa(tr,"vol").reduce((s,v)=>s+num(t(v,"qVol")),0),pesoB:qa(tr,"vol").reduce((s,v)=>s+num(t(v,"pesoB")),0)},
     tot:{vProd:num(t(tot,"vProd")),vNF:num(t(tot,"vNF")),vBC:num(t(tot,"vBC")),vICMS:num(t(tot,"vICMS")),vST:num(t(tot,"vST")),vBCST:num(t(tot,"vBCST")),vFrete:num(t(tot,"vFrete")),vDesc:num(t(tot,"vDesc")),vICMSUFDest:num(t(tot,"vICMSUFDest"))},
     pag:qa(inf,"detPag").map(p=>({tPag:t(p,"tPag"),vPag:num(t(p,"vPag")),xPag:t(p,"xPag")})),
@@ -256,7 +269,7 @@ function parseNFe(xml,fileName){
     itens:qa(inf,"det").map(d=>{
       const p=q(d,"prod"),imp=q(d,"imposto"),icmsWrap=q(imp,"ICMS");const g=kids(icmsWrap)[0];
       const gi=g?{grupo:g.localName,orig:t(g,"orig"),cst:t(g,"CST"),csosn:t(g,"CSOSN"),vBC:num(t(g,"vBC")),pICMS:num(t(g,"pICMS")),vICMS:num(t(g,"vICMS")),pRedBC:num(t(g,"pRedBC")),vICMSST:num(t(g,"vICMSST")),vBCST:num(t(g,"vBCST")),vICMSSTRet:num(t(g,"vICMSSTRet")),vICMSDeson:num(t(g,"vICMSDeson"))}:{};
-      return{n:d.getAttribute("nItem")||t(d,"nItem"),cod:t(p,"cProd"),desc:t(p,"xProd"),ncm:t(p,"NCM"),cest:t(p,"CEST"),cfop:t(p,"CFOP"),un:t(p,"uCom"),q:num(t(p,"qCom")),vUn:num(t(p,"vUnCom")),vProd:num(t(p,"vProd")),vFrete:num(t(p,"vFrete")),vSeg:num(t(p,"vSeg")),vDesc:num(t(p,"vDesc")),vOutro:num(t(p,"vOutro")),icms:gi,ufdest:!!q(imp,"ICMSUFDest")}
+      return{n:d.getAttribute("nItem")||t(d,"nItem"),cod:t(p,"cProd"),desc:t(p,"xProd"),ncm:t(p,"NCM"),cest:t(p,"CEST"),cBenef:t(p,"cBenef"),cfop:t(p,"CFOP"),un:t(p,"uCom"),q:num(t(p,"qCom")),vUn:num(t(p,"vUnCom")),vProd:num(t(p,"vProd")),vFrete:num(t(p,"vFrete")),vSeg:num(t(p,"vSeg")),vDesc:num(t(p,"vDesc")),vOutro:num(t(p,"vOutro")),infAdProd:t(d,"infAdProd"),icms:gi,ufdest:!!q(imp,"ICMSUFDest")}
     })};
   return nf;
 }
@@ -265,6 +278,18 @@ function parseNFe(xml,fileName){
 function isSTcode(i){const c=i.icms.cst,s=i.icms.csosn,f=onlyDig(i.cfop).slice(1);return ["10","30","60","70"].includes(c)||["201","202","203","500"].includes(s)||["401","403","404","405","408","409","411"].includes(f)}
 function isMono(i){return ["02","15","53","61"].includes(i.icms.cst)}
 function interRegiao(ufOrig){return SULSUDESTE.includes(ufOrig)?7:12}
+function rotaInfo(nf,ctx){
+  const posto=norm(ctx&&ctx.posto||""); if(!posto)return{ok:true,titulo:"Rota não configurada",detalhe:""};
+  const d=norm(nf.dest&&nf.dest.mun),e=norm(nf.entrega&&nf.entrega.mun),r=norm(nf.retirada&&nf.retirada.mun);
+  const comp=norm([nf.infCpl,nf.infAdFisco,...nf.itens.map(i=>i.infAdProd||"")].join(" "));
+  const cf904=nf.itens.some(i=>onlyDig(i.cfop).slice(1)==="904");
+  if(d===posto)return{ok:true,titulo:"Destinatário em "+ctx.posto,detalhe:"Grupo destinatário"};
+  if(e===posto)return{ok:true,titulo:"Entrega em "+ctx.posto,detalhe:"Grupo específico de entrega"};
+  if(r===posto)return{ok:true,titulo:"Retirada em "+ctx.posto,detalhe:"Grupo específico de retirada"};
+  if(comp.includes(posto))return{ok:true,titulo:ctx.posto+" citado no XML",detalhe:"Informações complementares / item; confirme se é o local de entrega"};
+  if(cf904)return{ok:true,titulo:"Venda fora do estabelecimento",detalhe:"CFOP 5/6.904: destino físico pode variar; confira o preposto"};
+  return{ok:false,titulo:"XML não aponta "+ctx.posto,detalhe:"Destinatário "+(nf.dest&&nf.dest.mun||"—")+(nf.entrega&&nf.entrega.mun?" · entrega "+nf.entrega.mun:"")};
+}
 function analyze(nf,ctx){
   const A=[];const add=(lvl,titulo,texto,base)=>A.push({lvl,titulo,texto,base});
   const emitUF=nf.emit.uf||UF[nf.ide.cUF]||"";const destUF=nf.dest?nf.dest.uf:"";
@@ -277,6 +302,12 @@ function analyze(nf,ctx){
   const abord=ctx.abordagem;
   const vNF=nf.tot.vNF||nf.tot.vProd;
   const isVenda=cf3.some(c=>/^1\d\d$/.test(c)||c==="405"||c==="403"||c==="401"||c==="404");
+
+  /* 0. Reutilização no próprio aparelho */
+  if(nf.prevPassagem&&nf.prevPassagem.quando){
+    const mins=(Date.now()-nf.prevPassagem.quando)/60000;
+    if(mins>10) add("confere","Chave já lida neste aparelho","Esta mesma chave foi lida em "+new Date(nf.prevPassagem.quando).toLocaleString("pt-BR",{timeZone:"America/Boa_Vista"})+(nf.prevPassagem.placa?" (placa registrada no XML: "+esc(nf.prevPassagem.placa)+")":"")+". Pode ser nova conferência legítima, mas vale verificar reutilização da nota.","Controle local do posto / indício operacional");
+  }
 
   /* 1. Autorização e tempo */
   if(nf.ide.tpAmb==="2") add("para","Nota de homologação, sem valor fiscal","O XML indica ambiente de testes (tpAmb = 2). Não acoberta o transporte.","RICMS/RR, art. 147; CTE, art. 69, III, “a”");
@@ -296,9 +327,9 @@ function analyze(nf,ctx){
   if(nfce&&emitUF&&emitUF!=="RR") add("confere","NFC-e emitida em outra UF","NFC-e acoberta só operação interna, presencial ou com entrega em domicílio no estado do emitente. Em trânsito por RR, a operação é interestadual.","Ajuste SINIEF 19/16; Guia Prático EFD (NFC-e só CFOP 5.xxx)");
   if(nfce&&vNF>=200000) add("confere","NFC-e acima de R$ 200 mil","A emissão de NFC-e é vedada nessas operações; o documento cabível é a NF-e.","Ajuste SINIEF 19/16, cl. 4ª, § 4º");
   if(nfce&&!nf.dest&&vNF>=10000) add("registrar","NFC-e de R$ 10 mil ou mais sem identificar o consumidor","A identificação do adquirente é obrigatória nessa faixa.","RICMS/RR, art. 186-Z, I");
-  // rota
-  const posto=norm(ctx.posto);
-  if(posto&&!cf3.includes("904")){const muns=[nf.emit.mun,nf.dest&&nf.dest.mun,nf.entrega&&nf.entrega.mun].map(norm);if(!muns.includes(posto))add("confere","Nem origem nem destino é "+esc(ctx.posto),"Origem: "+esc(nf.emit.mun||"—")+"/"+esc(emitUF)+". Destino: "+esc(nf.dest?nf.dest.mun:"—")+"/"+esc(destUF)+(nf.entrega?". Entrega: "+esc(nf.entrega.mun):"")+". Pergunte a rota. Mercadoria em local diverso do documento pode indicar destinatário diverso.","CTE, art. 60, § 1º, III; CTE, art. 69, III, “i”")}
+  // rota física no posto
+  const rota=rotaInfo(nf,ctx);
+  if(!rota.ok) add("confere","Destino/entrega não aponta "+esc(ctx.posto),esc(rota.detalhe)+". Pergunte a quem pertence a mercadoria e onde ela será entregue. Se o destinatário real divergir do documento, pode haver inidoneidade por incompatibilidade com a operação efetiva.","RICMS/RR, art. 147, III; art. 20, II, “d” e “e”")
   // transferência
   if(cf3.some(c=>TRANSF.includes(c))){const r1=onlyDig(nf.emit.doc).slice(0,8),r2=nf.dest?onlyDig(nf.dest.doc).slice(0,8):"";
     if(r2&&r1!==r2) add("para","Transferência entre empresas diferentes","CFOP de transferência, mas a raiz do CNPJ do emitente ("+r1+") difere da do destinatário ("+r2+"). Pode ser venda com CFOP de transferência.","RICMS/RR, art. 147, III");
@@ -342,11 +373,16 @@ function analyze(nf,ctx){
   const porCod={};const addItem=(k,lvl,tit,txt,base,n)=>{(porCod[k]=porCod[k]||{lvl,tit,txt,base,itens:[]}).itens.push(n)};
   nf.itens.forEach(i=>{
     const c=i.icms.cst,s=i.icms.csosn,f=onlyDig(i.cfop),ncm=onlyDig(i.ncm),r=stRule(ncm),st=isSTcode(i);
-    if(!ncm||/^0+$/.test(ncm)) addItem("ncm0","registrar","NCM inválido ou zerado","Itens sem classificação fiscal válida.","MOC NF-e; Ajuste SINIEF 07/05",i.n);
+    if(!ncm||ncm.length!==8||/^0+$/.test(ncm)){const nlvl=i.vProd>=3000?"confere":"registrar";addItem("ncm0:"+nlvl,nlvl,"NCM inválido, incompleto ou zerado","A classificação fiscal não tem 8 dígitos válidos. Isso pode alterar alíquota, ST e benefício fiscal.","MOC NF-e; Ajuste SINIEF 07/05",i.n);}
     if(simplesPuro&&c&&!s) addItem("crt","registrar","Simples usando CST em vez de CSOSN","Emitente com CRT "+nf.emit.crt+" deveria usar CSOSN.","MOC NF-e",i.n);
     if(nf.emit.crt==="3"&&s) addItem("crt3","registrar","Regime normal usando CSOSN","Emitente com CRT 3 deveria usar CST.","MOC NF-e",i.n);
     if(simplesPuro&&i.icms.vICMS>0&&s!=="900") addItem("snd","confere","Simples com destaque de ICMS próprio","Optante não destaca ICMS de operação própria (salvo sublimite).","Res. CGSN 140/2018, art. 59, § 4º, I",i.n);
-    if(f.slice(1)==="405"&&(c==="00"||s==="102"||s==="101")) addItem("405x","registrar","CFOP de ST com CST de tributação normal","CFOP 5405 pede CST 60 ou CSOSN 500.","Ajuste SINIEF 07/01",i.n);
+    const cf3i=f.slice(1),cRetem=["10","30","70"].includes(c),sRetem=["201","202","203"].includes(s),cAnterior=c==="60",sAnterior=s==="500";
+    if(["404","405"].includes(cf3i)&&!cAnterior&&!sAnterior) addItem("stcfop-ant","confere","CFOP de ST anterior incompatível com CST/CSOSN","CFOP "+f+" indica mercadoria com ST já retida, mas o item não usa CST 60 nem CSOSN 500.","RICMS/RR, arts. 748 e 755; tabela CFOP",i.n);
+    if(["401","403"].includes(cf3i)&&!cRetem&&!sRetem) addItem("stcfop-ret","confere","CFOP de substituto incompatível com CST/CSOSN","CFOP "+f+" indica retenção de ST pelo remetente, mas o CST/CSOSN não indica cobrança da substituição tributária.","RICMS/RR, arts. 727, 746 e 747; tabela CFOP",i.n);
+    if((cAnterior||sAnterior)&&["101","102"].includes(cf3i)) addItem("stcod-normal","confere","CST/CSOSN de ST com CFOP de venda comum","O item informa "+(cAnterior?"CST 60":"CSOSN 500")+" (ST anterior), mas usa CFOP "+f+". Em venda interna de mercadoria de terceiros já substituída, confira a compatibilidade com CFOP 5.405.","RICMS/RR, arts. 748 e 755; tabela CFOP",i.n);
+    if((cRetem||sRetem)&&["101","102"].includes(cf3i)) addItem("stret-normal","confere","CST/CSOSN com retenção de ST e CFOP de venda comum","O item indica retenção de ST, mas usa CFOP "+f+". Confira se o remetente deveria usar CFOP próprio de substituto (ex.: 5.401/5.403).","RICMS/RR, arts. 746 e 747; tabela CFOP",i.n);
+    if(["401","403"].includes(cf3i)&&d&&d.indIE==="1"&&i.icms.vBCST===0&&i.icms.vICMSST===0) addItem("stsemvalor","confere","CFOP de substituto sem base/ICMS-ST","Para destinatário contribuinte, a NF do substituto deve indicar a base de cálculo da ST e o imposto retido. Ambos estão zerados.","RICMS/RR, art. 747",i.n);
     if(st&&!r&&!isMono(i)&&!matCons(ncm)) addItem("stind:"+ncm.slice(0,4),"confere","Item marcado como ST sem previsão nas listas de RR","NCM "+esc(i.ncm)+" ("+esc(i.desc).slice(0,60)+") não aparece nas listas iniciais de ST do RICMS/RR. Pode ser item tratado como ST para escapar da antecipação.","RICMS/RR, Livro III, Cap. II (seções de ST); confira a lista vigente",i.n);
     // ST interna sem retenção
     if(r&&r.interna&&!st&&!isMono(i)&&emitUF==="RR"&&(destUF==="RR"||!d)&&f[0]==="5"&&!TRANSF.includes(f.slice(1))) addItem("stint:"+r.id,"confere","Produto com ST interna em RR sem retenção: "+r.nome,"Esperado CST 10/60 ou CSOSN 201/202/500. Se o emitente é industrial, importador, distribuidor ou atacadista, ele deveria reter; se é varejista, a ST já deveria ter sido paga antes."+(r.nota?" "+r.nota:""),r.art,i.n);
@@ -356,10 +392,10 @@ function analyze(nf,ctx){
     if(isMono(i)||(r&&r.mono&&st)) addItem("mono","info","Combustível com ICMS monofásico","O imposto incide uma única vez, na refinaria ou no importador. Não há ICMS a cobrar no trânsito.","RICMS/RR, art. 839-U; Conv. ICMS 199/22",i.n);
     // destaque no regime normal
     if(nf.emit.crt==="3"&&!st&&!isMono(i)){
-      if(["40","41"].includes(c)&&/^[56]1\d\d$/.test(f)) addItem("isen","confere","Venda sem débito (CST "+c+")","Confirme qual isenção ou não incidência se aplica ao produto.","CTE, arts. 32 e seguintes; Anexo de isenções do RICMS/RR",i.n);
+      if(["40","41"].includes(c)&&/^[56]1\d\d$/.test(f)) addItem("isen","confere","Venda sem débito (CST "+c+")","Confirme qual isenção ou não incidência se aplica ao produto."+(!i.cBenef?" O item não informa cBenef.":(" cBenef "+esc(i.cBenef)+".")),"RICMS/RR, arts. 4º e 5º e Anexo I; MOC NF-e",i.n);
       if(c==="00"||c==="20"){
         const esperado=f[0]==="5"?aliqInterna(ncm):(f[0]==="6"?(["1","2","3","8"].includes(i.icms.orig)?4:(SULSUDESTE.includes(emitUF)&&!SULSUDESTE.includes(destUF)?7:12)):null);
-        if(esperado&&emitUF==="RR"&&f[0]==="5"&&Math.abs(i.icms.pICMS-esperado)>0.01) addItem("aliq:"+i.icms.pICMS,"confere","Alíquota de "+pct(i.icms.pICMS)+" difere da esperada ("+esperado+"%)","Estimativa pelo NCM conforme o CTE (20% geral; 25% e 12% para listas). Confirme o enquadramento.","CTE, art. 32, I",i.n);
+        if(esperado&&emitUF==="RR"&&f[0]==="5"&&Math.abs(i.icms.pICMS-esperado)>0.01) addItem("aliq:"+i.icms.pICMS,"confere","Alíquota de "+pct(i.icms.pICMS)+" difere da esperada ("+esperado+"%)","Estimativa pelo NCM conforme o RICMS/RR (20% geral; 25% e 12% nas hipóteses específicas). Confirme o enquadramento.","RICMS/RR, art. 46, I",i.n);
         if(esperado&&f[0]==="6"&&Math.abs(i.icms.pICMS-esperado)>0.01) addItem("aliqi:"+i.icms.pICMS,"confere","Alíquota interestadual de "+pct(i.icms.pICMS)+" (esperada "+esperado+"%)","4% para importados (origem 1, 2, 3, 8); 7% de Sul/Sudeste para N/NE/CO/ES; 12% nos demais casos.","Res. Senado 22/89 e 13/2012",i.n);
         const bcEsp=i.vProd-i.vDesc+i.vFrete+i.vSeg+i.vOutro;
         if(c==="00"&&bcEsp>0&&i.icms.vBC+0.05<bcEsp) addItem("bc","confere","Base de cálculo menor que o valor da operação","CST 00 não admite redução de base. Base "+brl(i.icms.vBC)+" para operação de "+brl(bcEsp)+".","LC 87/96, art. 13; CTE",i.n);
@@ -378,30 +414,49 @@ function analyze(nf,ctx){
 
 /* ---------- renderização ---------- */
 const VERD={para:["Para e aprofunda","Há sinal material de irregularidade. Fotografe horário, carga, placa e documentos antes de qualquer providência."],confere:["Confere rápido","Algo precisa de explicação antes de liberar. Pergunte ao condutor, olhe a guia, consulte a chave."],libera:["Libera","Documento sem sinal material de irregularidade nas regras aplicadas. Confira se a carga bate com a nota."]};
-function codeDesc(i){if(i.icms.csosn)return i.icms.csosn+" – "+(CSOSN[i.icms.csosn]||"");if(i.icms.cst)return i.icms.cst+" – "+(CST[i.icms.cst]||"");return "—"}
+function codeDesc(i){if(i.icms.csosn)return "CSOSN "+i.icms.csosn+" – "+(CSOSN[i.icms.csosn]||"");if(i.icms.cst)return "CST "+i.icms.cst+" – "+(CST[i.icms.cst]||"");return "—"}
+function alertRank(a){
+  const s=norm((a.titulo||"")+" "+(a.texto||""));
+  if(/inidone|autoriz|reutil|destino|entrega|substitu|icms-st|st sem|difal|revenda/.test(s))return 0;
+  if(/ncm|aliquota|base de calculo|isenc|nao incid/.test(s))return 1;
+  return 2;
+}
 function renderNF(nf,res){
-  const v=VERD[res.lvl];const d=nf.dest;
+  const v=VERD[res.lvl],d=nf.dest,contexto=ctx(),rota=rotaInfo(nf,contexto);
   const dhRec=nf.prot&&nf.prot.dhRecbto?new Date(nf.prot.dhRecbto):null;
   const cfops=[...new Set(nf.itens.map(i=>onlyDig(i.cfop)))];
-  const groups=[["para","Para e aprofunda"],["confere","Confere"],["registrar","Registrar (formais)"],["info","Informações"]];
-  let alertsHtml="";groups.forEach(([k,lab])=>{const L=res.alerts.filter(a=>a.lvl===k);if(!L.length)return;alertsHtml+=`<p class="group-t">${lab} (${L.length})</p>`+L.map(a=>`<div class="alert ${k}"><b>${a.titulo}</b><span>${a.texto}</span>${a.base?`<div class="base">Base: ${esc(a.base)}</div>`:""}</div>`).join("")});
+  const prioritarios=res.alerts.filter(a=>a.lvl==="para"||a.lvl==="confere").sort((a,b)=>alertRank(a)-alertRank(b));
+  const formais=res.alerts.filter(a=>a.lvl==="registrar");
+  const infos=res.alerts.filter(a=>a.lvl==="info");
+  const priHtml=prioritarios.map(a=>`<div class="alert ${a.lvl}"><b>${a.titulo}</b><span>${a.texto}</span>${a.base?`<div class="base">Base: ${esc(a.base)}</div>`:""}</div>`).join("");
+  const formalHtml=formais.map(a=>`<div class="alert registrar"><b>${a.titulo}</b><span>${a.texto}</span>${a.base?`<div class="base">Base: ${esc(a.base)}</div>`:""}</div>`).join("");
+  const infoHtml=infos.map(a=>`<div class="alert info"><b>${a.titulo}</b><span>${a.texto}</span>${a.base?`<div class="base">Base: ${esc(a.base)}</div>`:""}</div>`).join("");
+  const multaRef=(nf.tot.vNF||nf.tot.vProd)*.40;
   const itens=nf.itens.map(i=>{const r=stRule(i.ncm);return `<div class="item"><div class="t">${esc(i.n)}. ${esc(i.desc)}</div>
-    <div class="grid2"><span>NCM ${esc(i.ncm)}${i.cest?" · CEST "+esc(i.cest):""}</span><span>${i.q.toLocaleString("pt-BR")} ${esc(i.un)} × ${brl(i.vUn)} = <b>${brl(i.vProd)}</b></span>
-    <span>CFOP ${esc(i.cfop)}: ${esc(cfopDesc(i.cfop))}</span><span>${esc(codeDesc(i))}</span>
+    <div class="grid2"><span>NCM ${esc(i.ncm)}${i.cest?" · CEST "+esc(i.cest):""}${i.cBenef?" · cBenef "+esc(i.cBenef):""}</span><span>${i.q.toLocaleString("pt-BR")} ${esc(i.un)} × ${brl(i.vUn)} = <b>${brl(i.vProd)}</b></span>
+    <span>CFOP ${esc(i.cfop)}: ${esc(cfopDesc(i.cfop))}</span><span><b>${esc(codeDesc(i))}</b></span>
     <span>Origem ${esc(i.icms.orig)}: ${esc(ORIG[i.icms.orig]||"")}</span><span>BC ${brl(i.icms.vBC)} · ${pct(i.icms.pICMS)} · ICMS ${brl(i.icms.vICMS)}${i.icms.vICMSST?" · ST "+brl(i.icms.vICMSST):""}</span></div>
     ${r?`<span class="tag st">ST/antecipação em RR: ${esc(r.nome)} (${esc(r.art)})</span>`:""}${matCons(i.ncm)?`<span class="tag st">Material de construção (art. 839-Q)</span>`:""}</div>`}).join("");
   const pag=nf.pag.map(p=>`${TPAG[p.tPag]||p.tPag}${p.xPag?" ("+esc(p.xPag)+")":""}: ${brl(p.vPag)}`).join("; ");
   const dups=nf.dup.map(x=>`${esc(x.n)} – ${esc(x.venc.split("-").reverse().join("/"))} – ${brl(x.v)}`).join("<br>");
   return `<article class="nf">
   <div class="plate ${res.lvl}" role="status"><div class="ident">${esc(MODELO[nf.ide.mod]||"Nota")} nº ${esc(nf.ide.nNF)} · série ${esc(nf.ide.serie)}</div><h2>${v[0]}</h2><p>${v[1]}</p></div>
-  <p class="resumo"><b>${esc(nf.ide.natOp)}</b> (CFOP ${cfops.join(", ")}), de <b>${esc(nf.emit.nome)}</b> (${esc(nf.emit.mun)}/${esc(nf.emit.uf)}) para <b>${d?esc(d.nome||"—"):"consumidor não identificado"}</b>${d?` (${esc(d.mun)}/${esc(d.uf)})`:""}. Valor ${brl(nf.tot.vNF)}. ${dhRec?"Autorizada em "+fmtDate(dhRec)+".":"Sem protocolo no XML."}</p>
-  <div class="section"><h3>Sinais de alerta</h3>${alertsHtml||"<p>Nenhum alerta pelas regras aplicadas.</p>"}</div>
-  <details open><summary>Emitente e destinatário</summary>
-    <dl class="kv"><dt>Emitente</dt><dd>${esc(nf.emit.nome)}${nf.emit.fant?" ("+esc(nf.emit.fant)+")":""}</dd><dt>CNPJ/CPF</dt><dd>${fmtDoc(nf.emit.doc)} · IE ${esc(nf.emit.ie||"—")}</dd><dt>Regime</dt><dd>CRT ${esc(nf.emit.crt)}: ${esc(CRT[nf.emit.crt]||"—")}</dd><dt>Local</dt><dd>${esc(nf.emit.mun)}/${esc(nf.emit.uf)}</dd></dl>
+  <div class="quick">
+    <div class="metric"><span>Valor da NF</span><b>${brl(nf.tot.vNF)}</b></div>
+    <div class="metric"><span>Rota no XML</span><b class="${rota.ok?"route-ok":"route-check"}">${esc(rota.titulo)}</b><small>${esc(rota.detalhe)}</small></div>
+    <div class="metric risk"><span>Se documento inidôneo</span><b>Multa 40% ≈ ${brl(multaRef)}</b><small>RICMS/RR, art. 907, III, “a”. Referência pelo vNF; base pode ser arbitrada (art. 29, XIII).</small></div>
+  </div>
+  <p class="resumo"><b>${esc(nf.ide.natOp)}</b> (CFOP ${cfops.join(", ")}), de <b>${esc(nf.emit.nome)}</b> (${esc(nf.emit.mun)}/${esc(nf.emit.uf)}) para <b>${d?esc(d.nome||"—"):"consumidor não identificado"}</b>${d?` (${esc(d.mun)}/${esc(d.uf)})`:""}. ${dhRec?"Autorizada em "+fmtDate(dhRec)+".":"Sem protocolo no XML."}</p>
+  <div class="section"><h3>Prioridades da abordagem</h3>${priHtml||"<p>Nenhum sinal material relevante pelas regras aplicadas. Confira fisicamente a carga e a identidade/rota.</p>"}</div>
+  ${formais.length?`<details><summary>Inconsistências formais (${formais.length})</summary>${formalHtml}</details>`:""}
+  ${infos.length?`<details><summary>Informações auxiliares (${infos.length})</summary>${infoHtml}</details>`:""}
+  <details open><summary>Partes e rota</summary>
+    <dl class="kv"><dt>Emitente</dt><dd>${esc(nf.emit.nome)}${nf.emit.fant?" ("+esc(nf.emit.fant)+")":""}</dd><dt>CNPJ/CPF</dt><dd>${fmtDoc(nf.emit.doc)} · IE ${esc(nf.emit.ie||"—")}</dd><dt>Regime</dt><dd>CRT ${esc(nf.emit.crt)}: ${esc(CRT[nf.emit.crt]||"—")}</dd><dt>Origem</dt><dd>${esc(nf.emit.mun)}/${esc(nf.emit.uf)}</dd></dl>
     <dl class="kv" style="margin-top:12px">${d?`<dt>Destinatário</dt><dd>${esc(d.nome)}</dd><dt>${d.cpf?"CPF":d.estrangeiro?"ID estrangeiro":"CNPJ"}</dt><dd>${fmtDoc(d.doc)}${d.ie?" · IE "+esc(d.ie):""}</dd><dt>Indicador</dt><dd>${esc(d.indIE)}: ${esc(INDIE[d.indIE]||"—")}; ${nf.ide.indFinal==="1"?"consumidor final":"não é consumidor final"}</dd><dt>Endereço</dt><dd>${esc([d.lgr,d.nro,d.bairro].filter(Boolean).join(", "))} – ${esc(d.mun)}/${esc(d.uf)}</dd>`:`<dt>Destinatário</dt><dd>Não identificado</dd>`}
-    ${nf.entrega?`<dt>Entrega</dt><dd>${esc([nf.entrega.lgr,nf.entrega.nro].filter(Boolean).join(", "))} – ${esc(nf.entrega.mun)}/${esc(nf.entrega.uf)}</dd>`:""}</dl></details>
-  <details><summary>Itens (${nf.itens.length})</summary>${itens}</details>
-  <details><summary>Imposto, transporte e pagamento</summary>
+    ${nf.entrega?`<dt>Entrega (grupo XML)</dt><dd>${esc([nf.entrega.lgr,nf.entrega.nro].filter(Boolean).join(", "))} – ${esc(nf.entrega.mun)}/${esc(nf.entrega.uf)}</dd>`:""}
+    ${nf.retirada?`<dt>Retirada (grupo XML)</dt><dd>${esc([nf.retirada.lgr,nf.retirada.nro].filter(Boolean).join(", "))} – ${esc(nf.retirada.mun)}/${esc(nf.retirada.uf)}</dd>`:""}</dl></details>
+  <details open><summary>Itens e tributação (${nf.itens.length})</summary>${itens}</details>
+  <details><summary>Valores, transporte e protocolo</summary>
     <dl class="kv"><dt>Produtos</dt><dd>${brl(nf.tot.vProd)}</dd><dt>Base ICMS</dt><dd>${brl(nf.tot.vBC)}</dd><dt>ICMS</dt><dd>${brl(nf.tot.vICMS)}</dd><dt>ICMS-ST</dt><dd>${brl(nf.tot.vST)}</dd><dt>Frete / desconto</dt><dd>${brl(nf.tot.vFrete)} / ${brl(nf.tot.vDesc)}</dd><dt>Total da nota</dt><dd><b>${brl(nf.tot.vNF)}</b></dd>
     <dt>Frete</dt><dd>${esc(nf.transp.modFrete)}: ${esc(MODFRETE[nf.transp.modFrete]||"—")}${nf.transp.transp?" · "+esc(nf.transp.transp):""}${nf.transp.placa?" · placa "+esc(nf.transp.placa):""}${nf.transp.qVol?" · "+nf.transp.qVol+" volume(s)":""}</dd>
     <dt>Pagamento</dt><dd>${pag||"—"}</dd>${dups?`<dt>Parcelas</dt><dd>${dups}</dd>`:""}
@@ -417,23 +472,17 @@ function copyText(txt,btn){
 }
 function renderChave(info){
   const c=parseChave(info.ch);
-  $("#chaveOut").innerHTML=`<div class="chavebox"><h3>Chave de acesso</h3>
-  <textarea id="chaveTxt" class="chave digits" readonly rows="2" aria-label="Chave de acesso lida" style="margin-top:8px;font-size:1.15rem;word-break:break-all;resize:none;line-height:1.4">${esc(c.ch)}</textarea>
-  ${c.dv?"":`<div class="msg">Dígito verificador não confere. A leitura pode ter falhado; leia de novo ou digite a chave.</div>`}
-  <div class="actions" style="margin-top:10px">
-    ${c.mod==="55"?`<button class="btn primary wide" id="bBusca">Buscar XML e analisar</button>`:""}
-    <button class="btn ${c.mod==="55"?"":"primary "}wide" id="bCopy">Copiar chave de acesso</button>
-    <button class="btn" id="bCopyDanfe">Copiar e abrir o Meu Danfe</button>
-    <a class="btn" href="https://www.nfe.fazenda.gov.br/portal/consultaRecaptcha.aspx?tipoConsulta=resumo&tipoConteudo=7PhJ+gAVw2g=" target="_blank" rel="noopener">Portal nacional</a>
-    ${info.url?`<a class="btn wide" href="${esc(info.url)}" target="_blank" rel="noopener">Abrir consulta do QR Code</a>`:""}
-  </div>
-  <dl class="kv"><dt>Documento</dt><dd>${esc(MODELO[c.mod]||"modelo "+c.mod)} nº ${c.nnf} · série ${c.serie}</dd><dt>UF do emitente</dt><dd>${esc(c.uf)}${c.uf==="RR"?"":" (fora de RR)"}</dd><dt>Mês de emissão</dt><dd>${esc(c.aamm)}</dd><dt>Emitente</dt><dd>${fmtDoc(c.doc)}</dd><dt>Tipo de emissão</dt><dd>${esc(TPEMIS[c.tpEmis]||c.tpEmis)}</dd></dl>
-  <p class="muted" style="margin-top:8px">${c.mod==="55"?"A busca automática usa o serviço consultadanfe.com e alcança NF-e do mês corrente (e do anterior até o dia 14). Fora disso, baixe o XML e abra em “Abrir XML da nota”.":"NFC-e não é coberta pela busca automática: use a consulta do QR Code ou baixe o XML e abra em “Abrir XML da nota”."}</p></div>`;
-  $("#bCopy").onclick=e=>copyText(c.ch,e.currentTarget);
-  $("#bCopyDanfe").onclick=e=>{copyText(c.ch,e.currentTarget);window.open("https://meudanfe.com.br/","_blank","noopener")};
   state.chave=c.ch;
-  if(c.mod==="55"){$("#bBusca").onclick=e=>buscarXml(c.ch,e.currentTarget);if(c.dv)buscarXml(c.ch,$("#bBusca"))}
-  $("#chaveOut").scrollIntoView({behavior:"smooth",block:"start"});
+  if(!c.dv){
+    $("#chaveOut").innerHTML=`<div class="msg">A chave lida não passou no dígito verificador. Refaça a leitura do DANFE.</div>`;
+    return;
+  }
+  if(c.mod!=="55"){
+    $("#chaveOut").innerHTML=`<div class="msg">${esc(MODELO[c.mod]||"Documento modelo "+c.mod)} lido. A consulta automática deste protótipo está focada em NF-e modelo 55.</div>`;
+    return;
+  }
+  $("#chaveOut").innerHTML=`<div class="chavebox"><b>NF-e nº ${c.nnf} · série ${c.serie} lida</b><p class="muted">Consultando XML e executando a triagem automática…</p></div>`;
+  buscarXml(c.ch,null);
 }
 async function buscarXml(ch,btn){
   const o=btn?btn.textContent:"";if(btn){btn.disabled=true;btn.textContent="Buscando XML…"}
@@ -447,11 +496,14 @@ async function buscarXml(ch,btn){
     const bin=atob(j.xml_base64);const bytes=Uint8Array.from(bin,c=>c.charCodeAt(0));
     const xml=new TextDecoder("utf-8").decode(bytes);
     const nf=parseNFe(xml,"consulta "+ch);
+    nf.prevPassagem=passagemAnterior(ch);
+    registrarPassagem(ch,nf);
     state.nfs=[nf].concat(state.nfs.filter(n=>n.chave!==nf.chave));renderAll();
+    $("#chaveOut").innerHTML="";
     document.querySelector(".nf")&&document.querySelector(".nf").scrollIntoView({behavior:"smooth",block:"start"});
   }catch(e){
     const rede=e instanceof TypeError;
-    aviso(rede?"Não foi possível acessar o serviço de consulta (rede ou bloqueio do navegador). Use “Copiar e abrir o Meu Danfe” e abra o XML manualmente.":"A consulta não retornou o XML: "+e.message+". Lembre que o serviço só alcança NF-e (modelo 55) do mês corrente, e do mês anterior até o dia 14. Use “Copiar e abrir o Meu Danfe” se precisar.",true);
+    aviso(rede?"Não foi possível acessar o serviço de consulta. Tente novamente ou use “Abrir XML manualmente (contingência)”.":"A consulta não retornou o XML: "+e.message+". Se necessário, use “Abrir XML manualmente (contingência)”.",true);
   }finally{if(btn){btn.disabled=false;btn.textContent=o}}
 }
 /* ---------- fluxo ---------- */
@@ -464,12 +516,10 @@ function renderAll(){
     if(state.chave&&nf.chave&&state.chave!==nf.chave&&state.nfs.length===1) r.alerts.unshift({lvl:"confere",titulo:"O XML não corresponde à chave lida",texto:"Chave lida: "+state.chave+". Chave do XML: "+nf.chave+".",base:""}),r.lvl=r.lvl==="libera"?"confere":r.lvl;
     return renderNF(nf,r)}).join("");
 }
-function onCode(txt){const info=extractChave(txt);if(!info){aviso("Não encontrei uma chave de 44 dígitos nessa leitura. Tente de novo ou digite a chave.");return}aviso("");renderChave(info);if(state.nfs.length)renderAll()}
-$("#bChave").onclick=()=>onCode($("#chaveManual").value);
-$("#chaveManual").addEventListener("keydown",e=>{if(e.key==="Enter")onCode(e.target.value)});
+function onCode(txt){const info=extractChave(txt);if(!info){aviso("Não encontrei uma chave de 44 dígitos nessa leitura. Refaça a leitura do DANFE.",true);return}aviso("");renderChave(info);if(state.nfs.length)renderAll()}
 $("#fXml").addEventListener("change",async e=>{
   const files=Array.from(e.target.files||[]);const novos=[];const erros=[];
-  for(const f of files){try{novos.push(parseNFe(await f.text(),f.name))}catch(err){erros.push(f.name+": "+err.message)}}
+  for(const f of files){try{const nf=parseNFe(await f.text(),f.name);nf.prevPassagem=passagemAnterior(nf.chave);registrarPassagem(nf.chave,nf);novos.push(nf)}catch(err){erros.push(f.name+": "+err.message)}}
   state.nfs=novos.concat(state.nfs.filter(n=>!novos.some(x=>x.chave===n.chave)));
   aviso(erros.join(" "));renderAll();e.target.value="";
   if(novos.length) document.querySelector(".nf")&&document.querySelector(".nf").scrollIntoView({behavior:"smooth",block:"start"});
@@ -566,7 +616,7 @@ $("#bStop").onclick=stopScan;
 $("#bScan").onclick=async()=>{
   aviso("");
   if(!navigator.mediaDevices?.getUserMedia){
-    aviso("Este navegador não dá acesso à câmera. Use “Fotografar o código”.",true);
+    aviso("Este navegador não dá acesso à câmera. Use “Abrir XML manualmente (contingência)”.",true);
     return;
   }
 
@@ -589,7 +639,7 @@ $("#bScan").onclick=async()=>{
     await stopScan();
     aviso(e&&e.name==="NotAllowedError"
       ?"Permissão da câmera negada. Libere a câmera nas configurações do site."
-      :"A câmera não abriu. Use “Fotografar o código”.",true);
+      :"A câmera não abriu. Use “Abrir XML manualmente (contingência)”.",true);
     return;
   }
 
@@ -679,12 +729,11 @@ $("#fFoto").addEventListener("change",onFoto);
 $("#fCam").addEventListener("change",onFoto);
 
 function camBloqueada(){
-  const b=$("#bScan"),f=$("#bCam");
-  b.classList.add("hidden");f.classList.add("primary");
+  const b=$("#bScan"); if(b)b.classList.add("hidden");
   if(!$("#camHint")){
     const h=document.createElement("p");
     h.id="camHint";h.className="hint";
-    h.textContent="A leitura ao vivo não está disponível neste navegador. Use “Fotografar o código”.";
+    h.textContent="A leitura ao vivo não está disponível neste navegador. Use “Abrir XML manualmente (contingência)”.";
     document.querySelector(".actions").after(h);
   }
 }
