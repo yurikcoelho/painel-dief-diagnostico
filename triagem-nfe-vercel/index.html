@@ -43,6 +43,22 @@ button,input,select{font:inherit;color:inherit}
 .top{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:10px 16px;border-bottom:4px solid var(--sign);padding-bottom:10px}
 .top > div{flex:1 1 280px}
 .top p{margin:4px 0 0;color:var(--muted);font-size:.95rem}
+.tabs{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:14px 0 2px}
+.tab{min-height:44px;border:1px solid var(--line);border-radius:10px;background:var(--surface);font-weight:600;cursor:pointer}
+.tab.active{background:var(--sign);border-color:var(--sign);color:var(--sign-ink)}
+.hist-head{display:flex;gap:10px;align-items:end;flex-wrap:wrap;margin-top:16px}
+.hist-head label{flex:1 1 220px;font-weight:600}
+.hist-head select{width:100%;margin-top:5px;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--surface)}
+.hist-list{margin-top:12px}
+.hist-card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin:9px 0}
+.hist-top{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}
+.hist-time{font-family:var(--display);font-size:1.1rem;font-weight:700}
+.hist-status{display:inline-block;padding:2px 8px;border-radius:999px;font-size:.82rem;font-weight:700}
+.hist-status.libera{background:var(--sign);color:var(--sign-ink)}
+.hist-status.confere{background:var(--amber);color:var(--amber-ink)}
+.hist-status.para{background:var(--red);color:var(--red-ink)}
+.hist-meta{font-size:.92rem;color:var(--muted);margin-top:5px}
+.hist-key{font-size:.78rem;color:var(--muted);overflow-wrap:anywhere;margin-top:5px}
 .posto{display:flex;align-items:center;gap:6px;font-size:.92rem;color:var(--muted)}
 .posto input{width:9.5em;padding:6px 8px;border:1px solid var(--line);border-radius:8px;background:var(--surface)}
 .field{display:block;margin:16px 0 4px;font-weight:600}
@@ -116,23 +132,42 @@ details summary{cursor:pointer;font-family:var(--display);font-weight:600;font-s
     <label class="posto">Posto <input id="posto" value="Pacaraima" aria-label="Município do posto fiscal"></label>
   </header>
 
-  <label class="field" for="abordagem">Início da abordagem<small>Hora de Roraima. A nota precisa estar autorizada antes da ação fiscal.</small></label>
-  <input type="datetime-local" id="abordagem">
+  <nav class="tabs" aria-label="Seções">
+    <button class="tab active" id="tabTriagem" type="button">Triagem</button>
+    <button class="tab" id="tabHistorico" type="button">Histórico</button>
+  </nav>
 
-  <div class="actions">
-    <button class="btn primary wide" id="bScan">Ler DANFE com a câmera</button>
-    <label class="btn wide" for="fXml" id="bXml">Abrir XML manualmente (contingência)</label>
-    <input type="file" id="fXml" accept=".xml,text/xml,application/xml" multiple class="hidden">
-    <!-- mantidos ocultos apenas como fallback técnico do leitor -->
-    <input type="file" id="fCam" accept="image/*" capture="environment" class="hidden">
-    <input type="file" id="fFoto" accept="image/*" class="hidden">
-  </div>
-  <div id="aviso" class="msg hidden" role="status"></div>
+  <section id="screenTriagem">
+    <label class="field" for="abordagem">Início da abordagem<small>Hora de Roraima. A nota precisa estar autorizada antes da ação fiscal.</small></label>
+    <input type="datetime-local" id="abordagem">
 
-  <section id="chaveOut"></section>
-  <section id="out"><div class="empty">Nenhuma nota analisada. Aponte a câmera para o código de barras do DANFE.</div></section>
+    <div class="actions">
+      <button class="btn primary wide" id="bScan">Ler DANFE com a câmera</button>
+      <label class="btn wide" for="fXml" id="bXml">Abrir XML manualmente (contingência)</label>
+      <input type="file" id="fXml" accept=".xml,text/xml,application/xml" multiple class="hidden">
+      <!-- mantidos ocultos apenas como fallback técnico do leitor -->
+      <input type="file" id="fCam" accept="image/*" capture="environment" class="hidden">
+      <input type="file" id="fFoto" accept="image/*" class="hidden">
+    </div>
+    <div id="aviso" class="msg hidden" role="status"></div>
 
-  <p class="footer">Ferramenta de apoio à triagem operacional · v4.1. Prioriza irregularidades materiais, destino da carga e exposição tributária. As regras seguem o RICMS/RR (Decreto nº 4.335-E/2001, consolidação de referência até jan/2026), o CTE (Lei nº 59/93) e a prática do posto; listas de NCM são indicativas e precisam de calibragem. Não substitui a análise do auditor. A busca automática envia somente a chave de acesso ao endpoint serverless desta ferramenta, que consulta o serviço privado consultadanfe.com; o XML aberto manualmente é lido só neste aparelho.</p>
+    <section id="chaveOut"></section>
+    <section id="out"><div class="empty">Nenhuma nota analisada. Aponte a câmera para o código de barras do DANFE.</div></section>
+  </section>
+
+  <section id="screenHistorico" class="hidden">
+    <div class="hist-head">
+      <label>Data das consultas
+        <select id="histData" aria-label="Escolha a data do histórico"></select>
+      </label>
+      <button class="btn small" id="bLimparHist" type="button">Limpar histórico</button>
+    </div>
+    <div id="histResumo" class="hint"></div>
+    <div id="histLista" class="hist-list"></div>
+    <p class="hint">O histórico fica salvo somente neste navegador/aparelho. Outros colegas terão o histórico próprio.</p>
+  </section>
+
+  <p class="footer">Ferramenta de apoio à triagem operacional · v4.2. Prioriza irregularidades materiais, destino da carga e exposição tributária. As regras seguem o RICMS/RR (Decreto nº 4.335-E/2001, consolidação de referência até jan/2026), o CTE (Lei nº 59/93) e a prática do posto; listas de NCM são indicativas e precisam de calibragem. Não substitui a análise do auditor. A busca automática envia somente a chave de acesso ao endpoint serverless desta ferramenta, que consulta o serviço privado consultadanfe.com; o XML aberto manualmente é lido só neste aparelho.</p>
 </main>
 
 <div class="scanner hidden" id="scanner" role="dialog" aria-label="Leitura do código">
@@ -174,6 +209,60 @@ function registrarPassagem(ch,nf){
     const ord=Object.entries(h).sort((a,b)=>(b[1].quando||0)-(a[1].quando||0)).slice(0,250);
     localStorage.setItem("triagem.passagens",JSON.stringify(Object.fromEntries(ord)));
   }catch(e){}
+}
+function dataBoaVista(ts){
+  const p=new Intl.DateTimeFormat("en-CA",{timeZone:"America/Boa_Vista",year:"numeric",month:"2-digit",day:"2-digit"}).formatToParts(new Date(ts));
+  const g=Object.fromEntries(p.map(x=>[x.type,x.value]));
+  return g.year+"-"+g.month+"-"+g.day;
+}
+function horaBoaVista(ts){
+  return new Intl.DateTimeFormat("pt-BR",{timeZone:"America/Boa_Vista",hour:"2-digit",minute:"2-digit",second:"2-digit"}).format(new Date(ts));
+}
+function lerHistorico(){
+  try{const a=JSON.parse(localStorage.getItem("triagem.historico")||"[]");return Array.isArray(a)?a:[]}catch(e){return []}
+}
+function registrarConsulta(nf,res){
+  try{
+    const ts=(nf.leituraEm&&nf.leituraEm.getTime?nf.leituraEm.getTime():Date.now());
+    const cfops=[...new Set(nf.itens.map(i=>onlyDig(i.cfop)))];
+    const rec={
+      id:String(ts)+"-"+nf.chave.slice(-8)+"-"+Math.random().toString(36).slice(2,6),
+      ts,data:dataBoaVista(ts),chave:nf.chave,nNF:nf.ide.nNF,serie:nf.ide.serie,
+      emit:nf.emit.nome||"",emitDoc:nf.emit.doc||"",
+      dest:nf.dest&&nf.dest.nome||"",destMun:nf.dest&&nf.dest.mun||"",destUF:nf.dest&&nf.dest.uf||"",
+      valor:nf.tot.vNF||nf.tot.vProd||0,cfops,status:res&&res.lvl||"libera",
+      placa:nf.transp&&nf.transp.placa||"",natOp:nf.ide.natOp||""
+    };
+    const a=lerHistorico();a.unshift(rec);
+    localStorage.setItem("triagem.historico",JSON.stringify(a.slice(0,1500)));
+  }catch(e){}
+}
+function datasHistorico(){
+  return [...new Set(lerHistorico().map(x=>x.data).filter(Boolean))].sort().reverse();
+}
+function fmtDataISO(s){if(!/^\d{4}-\d{2}-\d{2}$/.test(s||""))return s||"";const [y,m,d]=s.split("-");return d+"/"+m+"/"+y}
+function renderHistorico(dataEscolhida){
+  const sel=$("#histData"),lista=$("#histLista"),resumo=$("#histResumo");
+  const datas=datasHistorico();
+  const atual=dataEscolhida&&datas.includes(dataEscolhida)?dataEscolhida:(datas[0]||"");
+  sel.innerHTML=datas.length?datas.map(d=>`<option value="${d}"${d===atual?" selected":""}>${fmtDataISO(d)}</option>`).join(""):'<option value="">Sem consultas</option>';
+  const regs=lerHistorico().filter(x=>x.data===atual).sort((a,b)=>b.ts-a.ts);
+  resumo.textContent=atual?(regs.length+" consulta"+(regs.length===1?"":"s")+" em "+fmtDataISO(atual)):"Nenhuma consulta registrada.";
+  if(!regs.length){lista.innerHTML='<div class="empty">Nenhuma nota consultada nesta data.</div>';return}
+  const lab={libera:"LIBERA",confere:"CONFERE",para:"PARA"};
+  lista.innerHTML=regs.map(r=>`<article class="hist-card">
+    <div class="hist-top"><div><div class="hist-time">${horaBoaVista(r.ts)} · NF-e nº ${esc(r.nNF||"—")}</div><div><b>${esc(r.emit||"Emitente não identificado")}</b> → ${esc(r.dest||"destinatário não identificado")}${r.destMun?" · "+esc(r.destMun)+"/"+esc(r.destUF):""}</div></div><span class="hist-status ${esc(r.status)}">${lab[r.status]||r.status}</span></div>
+    <div class="hist-meta">${brl(r.valor)} · CFOP ${(r.cfops||[]).join(", ")||"—"}${r.placa?" · placa "+esc(r.placa):""}${r.natOp?" · "+esc(r.natOp):""}</div>
+    <div class="hist-key">Chave: ${esc(r.chave)}</div>
+  </article>`).join("");
+}
+function abrirAba(nome){
+  const hist=nome==="historico";
+  $("#screenTriagem").classList.toggle("hidden",hist);
+  $("#screenHistorico").classList.toggle("hidden",!hist);
+  $("#tabTriagem").classList.toggle("active",!hist);
+  $("#tabHistorico").classList.toggle("active",hist);
+  if(hist)renderHistorico($("#histData").value);
 }
 
 /* ---------- tabelas ---------- */
@@ -551,6 +640,7 @@ async function buscarXml(ch,btn){
     nf.leituraEm=state.leitura||new Date();
     nf.prevPassagem=passagemAnterior(ch);
     registrarPassagem(ch,nf);
+    registrarConsulta(nf,analyze(nf,ctx()));
     state.nfs=[nf].concat(state.nfs.filter(n=>n.chave!==nf.chave));renderAll();
     $("#chaveOut").innerHTML="";
     document.querySelector(".nf")&&document.querySelector(".nf").scrollIntoView({behavior:"smooth",block:"start"});
@@ -572,19 +662,30 @@ function renderAll(){
 function onCode(txt){const info=extractChave(txt);if(!info){aviso("Não encontrei uma chave de 44 dígitos nessa leitura. Refaça a leitura do DANFE.",true);return}aviso("");renderChave(info);if(state.nfs.length)renderAll()}
 $("#fXml").addEventListener("change",async e=>{
   const files=Array.from(e.target.files||[]);const novos=[];const erros=[];
-  for(const f of files){try{const nf=parseNFe(await f.text(),f.name);nf.leituraEm=new Date();nf.prevPassagem=passagemAnterior(nf.chave);registrarPassagem(nf.chave,nf);novos.push(nf)}catch(err){erros.push(f.name+": "+err.message)}}
+  for(const f of files){try{const nf=parseNFe(await f.text(),f.name);nf.leituraEm=new Date();nf.prevPassagem=passagemAnterior(nf.chave);registrarPassagem(nf.chave,nf);registrarConsulta(nf,analyze(nf,ctx()));novos.push(nf)}catch(err){erros.push(f.name+": "+err.message)}}
   state.nfs=novos.concat(state.nfs.filter(n=>!novos.some(x=>x.chave===n.chave)));
   aviso(erros.join(" "));renderAll();e.target.value="";
   if(novos.length) document.querySelector(".nf")&&document.querySelector(".nf").scrollIntoView({behavior:"smooth",block:"start"});
 });
 ["#abordagem","#posto"].forEach(s=>$(s).addEventListener("change",()=>{if(s==="#posto")store("triagem.posto",$("#posto").value);renderAll()}));
+$("#tabTriagem").onclick=()=>abrirAba("triagem");
+$("#tabHistorico").onclick=()=>abrirAba("historico");
+$("#histData").onchange=e=>renderHistorico(e.target.value);
+$("#bLimparHist").onclick=()=>{
+  if(confirm("Apagar todo o histórico de consultas deste aparelho?")){
+    localStorage.removeItem("triagem.historico");renderHistorico("");
+  }
+};
 
 /* ---------- câmera ---------- */
 /* Motor baseado no leitor que funcionou no posto: BarcodeDetector nativo + zxing-wasm (zxing-cpp/WASM). */
-const OPC_SCAN={formats:["Code128","QRCode","ITF"],tryHarder:true,tryRotate:true,tryInvert:false,maxNumberOfSymbols:1};
-let stream=null,track=null,loopTimer=null,ocupado=false,bd=null,frame=0,torch=false;
+const OPC_FAST={formats:["Code128"],tryHarder:true,tryRotate:false,tryInvert:false,maxNumberOfSymbols:1};
+const OPC_WIDE={formats:["Code128","QRCode","ITF"],tryHarder:true,tryRotate:true,tryInvert:true,maxNumberOfSymbols:1};
+let stream=null,track=null,loopTimer=null,ocupado=false,bd=null,frame=0,torch=false,scannerHistoryActive=false;
 const scanCanvas=document.createElement("canvas");
 const scanCtx=scanCanvas.getContext("2d",{willReadFrequently:true});
+const enhanceCanvas=document.createElement("canvas");
+const enhanceCtx=enhanceCanvas.getContext("2d",{willReadFrequently:true});
 
 async function prepararBD(){
   try{
@@ -597,29 +698,33 @@ async function prepararBD(){
 }
 prepararBD();
 
-async function decodificarFonte(fonte){
-  /* 1º: detector nativo do Android/Chrome. */
-  if(bd){
-    try{
-      const r=await bd.detect(fonte);
-      for(const x of r){
-        if(extractChave(x.rawValue)) return x.rawValue;
-      }
-    }catch(e){}
-  }
-
-  /* 2º: ZXing-C++ compilado para WebAssembly. Muito mais robusto para o CODE 128 longo do DANFE. */
-  if(typeof ZXingWASM==="undefined") return null;
+async function detectarNativo(fonte){
+  if(!bd)return null;
   try{
-    const img=fonte instanceof HTMLCanvasElement
-      ? scanCtx.getImageData(0,0,scanCanvas.width,scanCanvas.height)
-      : fonte;
-    const r=await ZXingWASM.readBarcodes(img,OPC_SCAN);
-    for(const x of r){
-      if(x.text&&extractChave(x.text)) return x.text;
-    }
+    const r=await bd.detect(fonte);
+    for(const x of r)if(extractChave(x.rawValue))return x.rawValue;
   }catch(e){}
   return null;
+}
+async function detectarZX(canvas,opts){
+  if(typeof ZXingWASM==="undefined")return null;
+  try{
+    const ctx2=canvas===enhanceCanvas?enhanceCtx:scanCtx;
+    const img=ctx2.getImageData(0,0,canvas.width,canvas.height);
+    const r=await ZXingWASM.readBarcodes(img,opts||OPC_FAST);
+    for(const x of r)if(x.text&&extractChave(x.text))return x.text;
+  }catch(e){}
+  return null;
+}
+function desenharFaixa(video,canvas,ctx2,syFrac,shFrac,maxW,enhance){
+  const W=video.videoWidth,H=video.videoHeight;
+  const sy=Math.max(0,Math.floor(H*syFrac)),sh=Math.min(H-sy,Math.floor(H*shFrac));
+  const outW=Math.min(maxW,W),scale=outW/W,outH=Math.max(1,Math.round(sh*scale));
+  canvas.width=outW;canvas.height=outH;
+  ctx2.save();
+  ctx2.filter=enhance?"grayscale(1) contrast(185%)":"none";
+  ctx2.drawImage(video,0,sy,W,sh,0,0,outW,outH);
+  ctx2.restore();
 }
 
 function aceitarLeitura(txt){
@@ -632,39 +737,62 @@ function aceitarLeitura(txt){
 
 async function tickScan(){
   const v=$("#vid");
-  if(!stream||ocupado||!v||v.readyState<2) return;
+  if(!stream||ocupado||!v||v.readyState<2)return;
   ocupado=true;
   try{
-    const W=v.videoWidth,H=v.videoHeight;
-    if(!W||!H) return;
+    const W=v.videoWidth,H=v.videoHeight;if(!W||!H)return;
+    const n=frame++;
 
-    /* Duas de cada três tentativas usam somente a faixa central em resolução cheia.
-       Isso deixa o CODE 128 do DANFE muito maior para o decodificador. */
-    const faixa=(frame++%3)!==2;
-    const sy=faixa?Math.floor(H*.28):0;
-    const sh=faixa?Math.floor(H*.44):H;
-    scanCanvas.width=W;
-    scanCanvas.height=sh;
-    scanCtx.drawImage(v,0,sy,W,sh,0,0,W,sh);
+    /* O detector nativo vê o quadro inteiro: é muito rápido e ajuda quando o
+       código do DANFE está pequeno, como ao apontar a webcam para um PDF na tela. */
+    let txt=await detectarNativo(v);
+    if(txt&&aceitarLeitura(txt)){await stopScan();return}
 
-    const txt=await decodificarFonte(scanCanvas);
-    if(txt&&aceitarLeitura(txt)) await stopScan();
+    /* Passe principal: faixa horizontal central, limitada a 1920 px para reduzir
+       o custo do WASM sem perder resolução suficiente para o CODE 128 de 44 dígitos. */
+    desenharFaixa(v,scanCanvas,scanCtx,.30,.40,1920,false);
+    txt=await detectarZX(scanCanvas,OPC_FAST);
+    if(txt&&aceitarLeitura(txt)){await stopScan();return}
+
+    /* A cada 4 ciclos, tenta quadro mais amplo: útil se o usuário não centralizou. */
+    if(n%4===2){
+      desenharFaixa(v,scanCanvas,scanCtx,.08,.84,1600,false);
+      txt=await detectarZX(scanCanvas,OPC_WIDE);
+      if(txt&&aceitarLeitura(txt)){await stopScan();return}
+    }
+
+    /* A cada 6 ciclos, uma versão em cinza/alto contraste ajuda em PDF na tela,
+       impressão clara e reflexos leves. */
+    if(n%6===4){
+      desenharFaixa(v,enhanceCanvas,enhanceCtx,.27,.46,1600,true);
+      txt=await detectarZX(enhanceCanvas,OPC_FAST);
+      if(txt&&aceitarLeitura(txt)){await stopScan();return}
+    }
   }catch(e){}
   finally{ocupado=false}
 }
 
-async function stopScan(){
+async function stopScan(fromPop=false){
   clearInterval(loopTimer);loopTimer=null;
   if(stream){try{stream.getTracks().forEach(t=>t.stop())}catch(e){}}
   stream=null;track=null;torch=false;ocupado=false;
-  const v=$("#vid");
-  if(v){v.srcObject=null}
+  const v=$("#vid");if(v)v.srcObject=null;
   const bt=$("#bTorch"),zw=$("#zoomWrap");
   if(bt){bt.classList.add("hidden");bt.textContent="Lanterna"}
   if(zw)zw.classList.add("hidden");
   $("#scanner").classList.add("hidden");
+  if(scannerHistoryActive&&!fromPop){
+    scannerHistoryActive=false;
+    try{history.back()}catch(e){}
+  }
 }
-$("#bStop").onclick=stopScan;
+window.addEventListener("popstate",()=>{
+  if(scannerHistoryActive){
+    scannerHistoryActive=false;
+    stopScan(true);
+  }
+});
+$("#bStop").onclick=()=>stopScan(false);
 
 $("#bScan").onclick=async()=>{
   aviso("");
@@ -674,6 +802,9 @@ $("#bScan").onclick=async()=>{
   }
 
   await stopScan();
+  if(!scannerHistoryActive){
+    try{history.pushState({scanner:true},"",location.href);scannerHistoryActive=true}catch(e){}
+  }
   $("#scanner").classList.remove("hidden");
   $("#vid").classList.remove("hidden");
   $("#h5q").classList.add("hidden");
@@ -684,8 +815,10 @@ $("#bScan").onclick=async()=>{
       audio:false,
       video:{
         facingMode:{ideal:"environment"},
-        width:{ideal:3840},
-        height:{ideal:2160}
+        width:{ideal:1920},
+        height:{ideal:1080},
+        aspectRatio:{ideal:1.7777778},
+        frameRate:{ideal:30}
       }
     });
   }catch(e){
@@ -731,11 +864,12 @@ $("#bScan").onclick=async()=>{
   }
 
   const vert=v.videoHeight>v.videoWidth;
-  $("#scanMsg").textContent=vert
-    ?"Gire o celular para horizontal. Código inteiro na moldura, a uns 20 cm."
-    :"Código inteiro na moldura, a uns 20 cm. Se desfocar, afaste um pouco.";
+  const desktop=matchMedia&&matchMedia("(pointer:fine)").matches;
+  $("#scanMsg").textContent=desktop
+    ?"No computador: amplie o PDF até o código ocupar boa parte da moldura e evite reflexo/moiré."
+    :(vert?"Gire o celular para horizontal. Código inteiro na moldura, a uns 20 cm.":"Código inteiro na moldura, a uns 20 cm. Se desfocar, afaste um pouco.");
 
-  loopTimer=setInterval(tickScan,180);
+  loopTimer=setInterval(tickScan,100);
 };
 
 /* Foto: usa a mesma sequência do leitor funcional — nativo e depois zxing-wasm direto no arquivo. */
@@ -756,7 +890,7 @@ async function decodeFoto(file){
 
   if(typeof ZXingWASM!=="undefined"){
     try{
-      const r=await ZXingWASM.readBarcodes(file,{...OPC_SCAN,tryDownscale:true});
+      const r=await ZXingWASM.readBarcodes(file,{...OPC_WIDE,tryDownscale:true});
       for(const x of r){
         if(x.text&&extractChave(x.text)) return x.text;
       }
@@ -794,6 +928,7 @@ function camBloqueada(){
 /* ---------- início ---------- */
 (function init(){
   const p=load("triagem.posto");if(p)$("#posto").value=p;
+  renderHistorico("");
   try{const pp=document.permissionsPolicy||document.featurePolicy;if(!(navigator.mediaDevices&&navigator.mediaDevices.getUserMedia)||(pp&&pp.allowsFeature&&!pp.allowsFeature("camera")))camBloqueada()}catch(e){}
   const now=new Date(Date.now()-4*36e5);$("#abordagem").value=now.toISOString().slice(0,16);
 })();
