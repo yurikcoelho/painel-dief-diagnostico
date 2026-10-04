@@ -187,7 +187,7 @@ details summary{cursor:pointer;font-family:var(--display);font-weight:600;font-s
     </div>
     <div id="histResumo" class="hint"></div>
     <div id="histLista" class="hist-list"></div>
-    <p class="hint">Toque em qualquer card para abrir todos os dados da NF-e e o XML completo. O histórico fica salvo somente neste navegador/aparelho.</p>
+    <p class="hint">Toque em qualquer card para abrir todos os dados da NF-e e o XML completo. O histórico fica salvo somente neste navegador/aparelho. Em “Notas com fotos”, você acessa os registros fotográficos mesmo sem recuperar o XML.</p>
   </section>
 
   <section id="screenHistDetalhe" class="hidden">
@@ -198,7 +198,7 @@ details summary{cursor:pointer;font-family:var(--display);font-weight:600;font-s
     <div id="histDetalhe"></div>
   </section>
 
-  <p class="footer">Ferramenta de apoio à triagem operacional · v4.9.0. Prioriza irregularidades materiais, destino da carga e exposição tributária. As regras seguem o RICMS/RR (Decreto nº 4.335-E/2001, consolidação de referência até jan/2026), o CTE (Lei nº 59/93) e a prática do posto; listas de NCM são indicativas e precisam de calibragem. Não substitui a análise do auditor. A busca automática envia somente a chave de acesso ao endpoint serverless desta ferramenta, que consulta o serviço privado consultadanfe.com; o XML aberto manualmente é lido só neste aparelho.</p>
+  <p class="footer">Ferramenta de apoio à triagem operacional · v4.10.0. Prioriza irregularidades materiais, destino da carga e exposição tributária. As regras seguem o RICMS/RR (Decreto nº 4.335-E/2001, consolidação de referência até jan/2026), o CTE (Lei nº 59/93) e a prática do posto; listas de NCM são indicativas e precisam de calibragem. Não substitui a análise do auditor. A busca automática envia somente a chave de acesso ao endpoint serverless desta ferramenta, que consulta o serviço privado consultadanfe.com; o XML aberto manualmente é lido só neste aparelho.</p>
 </main>
 
 <div class="scanner hidden" id="scanner" role="dialog" aria-label="Leitura do código">
@@ -289,12 +289,15 @@ function renderHistorico(dataEscolhida){
     <div class="hist-top"><div><div class="hist-time">${horaBoaVista(r.ts)} · NF-e nº ${esc(r.nNF||"—")}</div><div><b>${esc(r.emit||"Emitente não identificado")}</b> → ${esc(r.dest||"destinatário não identificado")}${r.destMun?" · "+esc(r.destMun)+"/"+esc(r.destUF):""}</div></div><span class="hist-status ${esc(r.status)}">${lab[r.status]||r.status}</span></div>
     <div class="hist-meta">${brl(r.valor)} · CFOP ${(r.cfops||[]).join(", ")||"—"}${r.placa?" · placa "+esc(r.placa):""}${r.natOp?" · "+esc(r.natOp):""}</div>
     <div class="hist-key">Chave: ${esc(r.chave)}</div>
-    <div class="hist-open">Toque para ver todos os dados →</div>
+    <div class="hist-open">Toque para ver todos os dados → <span class="photo-history-count" data-photo-count-key="${esc(r.chave)}"></span></div>
   </article>`).join("");
+  if(typeof PhotoEvidence!=="undefined")PhotoEvidence.updateCounts(lista);
 }
+let histDetalheRequest=0;
 async function abrirDetalheHistorico(id){
   const rec=lerHistorico().find(x=>x.id===id);
   if(!rec)return;
+  const request=++histDetalheRequest;
   $("#screenHistorico").classList.add("hidden");
   $("#screenTriagem").classList.add("hidden");
   $("#screenHistDetalhe").classList.remove("hidden");
@@ -304,6 +307,7 @@ async function abrirDetalheHistorico(id){
   try{
     const r=await fetch(API_URL,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({chave:rec.chave,format:"json"})});
     let j=null;try{j=await r.json()}catch(e){}
+    if(request!==histDetalheRequest)return;
     if(!r.ok||!j||j.status!=="ok"||!j.xml_base64){
       const m=(j&&(j.mensagem||j.message||j.erro||j.error))||("HTTP "+r.status);
       throw new Error(m);
@@ -322,11 +326,14 @@ async function abrirDetalheHistorico(id){
       renderNF(nf,res,contextoHist)+
       '<details><summary>XML bruto completo</summary><div class="xmlraw">'+esc(xml)+'</div></details>';
   }catch(e){
-    $("#histDetalhe").innerHTML='<div class="msg">Não consegui recuperar o XML desta consulta: '+esc(e.message||String(e))+'. O card resumido permanece no histórico.</div>';
+    if(request!==histDetalheRequest)return;
+    $("#histDetalhe").innerHTML='<div class="msg">Não consegui recuperar o XML desta consulta: '+esc(e.message||String(e))+'. O card resumido permanece no histórico.</div>'+(typeof PhotoEvidence!=="undefined"?PhotoEvidence.markup(rec):"");
   }
+  if(typeof PhotoEvidence!=="undefined")PhotoEvidence.mount($("#histDetalhe"));
 }
 
 function voltarHistorico(){
+  histDetalheRequest++;
   $("#screenHistDetalhe").classList.add("hidden");
   $("#screenHistorico").classList.remove("hidden");
   $("#screenTriagem").classList.add("hidden");
@@ -335,6 +342,7 @@ function voltarHistorico(){
 }
 
 function abrirAba(nome){
+  histDetalheRequest++;
   const hist=nome==="historico";
   $("#screenTriagem").classList.toggle("hidden",hist);
   $("#screenHistorico").classList.toggle("hidden",!hist);
@@ -954,6 +962,7 @@ function renderNF(nf,res,contextoOverride){
     <button class="btn small bCopyChave" type="button" data-chave="${esc(nf.chave)}" style="margin-top:10px;width:100%">Copiar chave de acesso</button>
     ${cfops.some(c=>c.startsWith("7"))||nf.ide.idDest==="3"?`<div class="due-action"><strong>Exportação: conferir DU-E vinculada</strong><span>A consulta pública oficial do Portal Único aceita a chave desta NF-e como parâmetro de pesquisa.</span>${nf.exporta?`<small>NF-e informa saída/embarque: <b>${esc(nf.exporta.ufSaida||"—")}</b>${nf.exporta.local?" · "+esc(nf.exporta.local):""}${nf.exporta.despacho?" · despacho: "+esc(nf.exporta.despacho):""}</small>`:""}<button class="btn small bDue" type="button" data-chave="${esc(nf.chave)}">Copiar chave e abrir consulta DU-E ↗</button><small>A chave será copiada. No Portal Único, selecione <b>NF-e</b>, cole a chave e conclua o hCaptcha.</small></div>`:""}
   </div>
+  ${typeof PhotoEvidence!=="undefined"?PhotoEvidence.markup(nf):""}
   <div class="section priority-top"><h3>O que conferir agora</h3>${priHtml||"<p>Nenhum sinal material relevante pelas regras aplicadas. Confira fisicamente a carga e a identidade/rota.</p>"}</div>
   <div class="quick">
     <div class="metric"><span>Valor da NF</span><b>${brl(nf.tot.vNF)}</b></div>
@@ -1069,6 +1078,7 @@ function renderAll(){
   $("#out").innerHTML=state.nfs.map(nf=>{const r=analyze(nf,ctx());let extra="";
     if(state.chave&&nf.chave&&state.chave!==nf.chave&&state.nfs.length===1) r.alerts.unshift({lvl:"confere",titulo:"O XML não corresponde à chave lida",texto:"Chave lida: "+state.chave+". Chave do XML: "+nf.chave+".",base:""}),r.lvl=r.lvl==="libera"?"confere":r.lvl;
     return renderNF(nf,r)}).join("");
+  if(typeof PhotoEvidence!=="undefined")PhotoEvidence.mount($("#out"));
 }
 function onCode(txt){const info=extractChave(txt);if(!info){aviso("Não encontrei uma chave de 44 dígitos nessa leitura. Refaça a leitura do DANFE.",true);return}aviso("");renderChave(info);if(state.nfs.length)renderAll()}
 $("#fXml").addEventListener("change",async e=>{
@@ -1099,7 +1109,7 @@ $("#histLista").addEventListener("keydown",e=>{
 });
 $("#bVoltarHist").onclick=voltarHistorico;
 $("#bLimparHist").onclick=()=>{
-  if(confirm("Apagar todo o histórico de consultas deste aparelho?")){
+  if(confirm("Apagar o histórico de consultas deste aparelho? As fotos serão mantidas em “Notas com fotos”.")){
     localStorage.removeItem("triagem.historico");renderHistorico("");
   }
 };
@@ -1361,5 +1371,6 @@ function camBloqueada(){
 })();
 window.__triagem={parseNFe,analyze,extractChave,parseChave,dvOk,regimesCandidatos,beneficiosCandidatos,aliquotaReferencia,tributacaoDeclarada};
 </script>
+<script src="photos.js?v=4.10.0"></script>
 </body>
 </html>

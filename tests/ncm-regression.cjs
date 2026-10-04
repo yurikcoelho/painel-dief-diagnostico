@@ -1,7 +1,8 @@
 /* Executar: node tests/ncm-regression.cjs. Cenários fiscais sintéticos, sem rede. */
 const fs=require('node:fs'),vm=require('node:vm'),assert=require('node:assert/strict'),path=require('node:path');
 const html=fs.readFileSync(path.join(__dirname,'../triagem-nfe-vercel/index.html'),'utf8');
-new vm.Script(html.slice(html.indexOf('<script>')+8,html.lastIndexOf('</script>')));
+new vm.Script(html.slice(html.indexOf('<script>')+8,html.indexOf('</script>',html.indexOf('<script>'))));
+new vm.Script(fs.readFileSync(path.join(__dirname,'../triagem-nfe-vercel/photos.js'),'utf8'));
 const box={document:{querySelector:()=>null},localStorage:{getItem:()=>null},Date,Intl,setTimeout};vm.createContext(box);
 vm.runInContext(html.slice(html.indexOf('<script>')+8,html.indexOf('/* ---------- fluxo ---------- */'))+'\nthis.api={regimesCandidatos,beneficiosCandidatos,aliquotaReferencia,tributacaoDeclarada,isSTcode,isMono,analyze,renderNF,interRegiao,baseOperacao};',box);
 const a=box.api,ctx={posto:'Pacaraima',abordagem:null};let passed=0;
