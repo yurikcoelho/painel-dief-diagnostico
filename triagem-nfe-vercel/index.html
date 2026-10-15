@@ -84,6 +84,7 @@ input[type=datetime-local],input.chave,textarea.chave{width:100%;padding:12px;bo
 .scanner .aim{position:absolute;left:8%;right:8%;top:38%;height:22%;border:3px solid rgba(255,255,255,.85);border-radius:12px;pointer-events:none}
 .msg{margin-top:12px;padding:12px 14px;border-left:6px solid var(--amber);background:var(--surface);border-radius:6px;font-weight:500}
 .hint{margin-top:8px;font-size:.95rem;color:var(--muted)}
+.manual-key .field{margin-top:0}.manual-key textarea{color:var(--ink);display:block;resize:vertical;font-family:var(--font);line-height:1.5}.manual-key .btn{width:100%;margin-top:10px}.manual-key .hint{margin-top:6px}.manual-key-error{color:var(--red);font-size:.95rem;margin-top:6px}
 .chavebox{margin-top:18px;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px}
 .kv{display:grid;grid-template-columns:auto 1fr;gap:4px 14px;margin:8px 0 0}
 .kv dt{color:var(--muted)}
@@ -150,7 +151,7 @@ details summary{cursor:pointer;font-family:var(--display);font-weight:600;font-s
   <header class="top">
     <div>
       <h1>Triagem de NF-e no trânsito</h1>
-      <p>Leia o DANFE. O XML é consultado automaticamente e a triagem prioriza riscos materiais.</p>
+      <p>Leia o DANFE ou informe a chave de acesso. O XML é consultado automaticamente e a triagem prioriza riscos materiais.</p>
     </div>
     <label class="posto">Posto <input id="posto" value="Pacaraima" aria-label="Município do posto fiscal"></label>
   </header>
@@ -172,10 +173,17 @@ details summary{cursor:pointer;font-family:var(--display);font-weight:600;font-s
       <input type="file" id="fCam" accept="image/*" capture="environment" class="hidden">
       <input type="file" id="fFoto" accept="image/*" class="hidden">
     </div>
+    <form id="manualKeyForm" class="chavebox manual-key" novalidate aria-label="Consulta por chave de acesso manual">
+      <label class="field" for="manualKey">Chave de acesso manual<small>Se o código do DANFE não puder ser lido, digite ou cole os 44 dígitos da chave.</small></label>
+      <textarea class="chave digits" id="manualKey" rows="2" inputmode="numeric" enterkeyhint="go" autocomplete="off" autocapitalize="off" spellcheck="false" maxlength="120" aria-describedby="manualKeyCount manualKeyError" placeholder="Digite ou cole a chave de acesso da NF-e"></textarea>
+      <p class="hint" id="manualKeyCount" aria-live="polite">0/44 dígitos</p>
+      <p class="manual-key-error hidden" id="manualKeyError" role="alert"></p>
+      <button class="btn primary" id="bManualKey" type="submit">Consultar chave</button>
+    </form>
     <div id="aviso" class="msg hidden" role="status"></div>
 
     <section id="chaveOut"></section>
-    <section id="out"><div class="empty">Nenhuma nota analisada. Aponte a câmera para o código de barras do DANFE.</div></section>
+    <section id="out"><div class="empty">Nenhuma nota analisada. Leia o código de barras do DANFE ou informe a chave de acesso acima.</div></section>
   </section>
 
   <section id="screenHistorico" class="hidden">
@@ -198,7 +206,7 @@ details summary{cursor:pointer;font-family:var(--display);font-weight:600;font-s
     <div id="histDetalhe"></div>
   </section>
 
-  <p class="footer">Ferramenta de apoio à triagem operacional · v4.10.1. Prioriza irregularidades materiais, destino da carga e exposição tributária. As regras seguem o RICMS/RR (Decreto nº 4.335-E/2001, consolidação de referência até jan/2026), o CTE (Lei nº 59/93) e a prática do posto; listas de NCM são indicativas e precisam de calibragem. Não substitui a análise do auditor. A busca automática envia somente a chave de acesso ao endpoint serverless desta ferramenta, que consulta o serviço privado consultadanfe.com; o XML aberto manualmente é lido só neste aparelho.</p>
+  <p class="footer">Ferramenta de apoio à triagem operacional · v4.10.2. Prioriza irregularidades materiais, destino da carga e exposição tributária. As regras seguem o RICMS/RR (Decreto nº 4.335-E/2001, consolidação de referência até jan/2026), o CTE (Lei nº 59/93) e a prática do posto; listas de NCM são indicativas e precisam de calibragem. Não substitui a análise do auditor. A busca automática envia somente a chave de acesso ao endpoint serverless desta ferramenta, que consulta o serviço privado consultadanfe.com; o XML aberto manualmente é lido só neste aparelho.</p>
 </main>
 
 <div class="scanner hidden" id="scanner" role="dialog" aria-label="Leitura do código">
@@ -1028,7 +1036,7 @@ function copyText(txt,btn){
     else aviso("A cópia automática foi bloqueada. Copie manualmente a chave exibida na nota: "+txt,false);
   });
 }
-function renderChave(info){
+function renderChave(info,btn=null){
   const c=parseChave(info.ch);
   state.chave=c.ch;
   state.leitura=new Date();
@@ -1043,7 +1051,7 @@ function renderChave(info){
     return;
   }
   $("#chaveOut").innerHTML=`<div class="chavebox"><b>NF-e nº ${c.nnf} · série ${c.serie} lida</b><p class="muted">Consultando XML e executando a triagem automática…</p></div>`;
-  buscarXml(c.ch,null);
+  buscarXml(c.ch,btn);
 }
 async function buscarXml(ch,btn){
   const o=btn?btn.textContent:"";if(btn){btn.disabled=true;btn.textContent="Buscando XML…"}
@@ -1081,6 +1089,24 @@ function renderAll(){
   if(typeof PhotoEvidence!=="undefined")PhotoEvidence.mount($("#out"));
 }
 function onCode(txt){const info=extractChave(txt);if(!info){aviso("Não encontrei uma chave de 44 dígitos nessa leitura. Refaça a leitura do DANFE.",true);return}aviso("");renderChave(info);if(state.nfs.length)renderAll()}
+function erroChaveManual(texto){
+  const campo=$("#manualKey"),erro=$("#manualKeyError");
+  erro.textContent=texto;erro.classList.toggle("hidden",!texto);
+  if(texto){campo.setAttribute("aria-invalid","true");campo.focus({preventScroll:true})}else campo.removeAttribute("aria-invalid");
+}
+$("#manualKey").addEventListener("input",e=>{
+  const limpo=e.target.value.replace(/[\s.\-]/g,"");if(e.target.value!==limpo)e.target.value=limpo;
+  $("#manualKeyCount").textContent=(limpo.match(/\d/g)||[]).length+"/44 dígitos";erroChaveManual("");
+});
+$("#manualKey").addEventListener("keydown",e=>{if(e.key==="Enter"&&!e.shiftKey&&!e.isComposing){e.preventDefault();$("#manualKeyForm").requestSubmit()}});
+$("#manualKeyForm").addEventListener("submit",e=>{
+  e.preventDefault();const btn=$("#bManualKey");if(btn.disabled)return;
+  const ch=$("#manualKey").value.replace(/[\s.\-]/g,"");
+  if(!/^\d{44}$/.test(ch)){erroChaveManual("Informe exatamente 44 dígitos numéricos. Confira a chave impressa no DANFE.");return}
+  if(!dvOk(ch)){erroChaveManual("O dígito verificador da chave não confere. Revise os números digitados.");return}
+  if(parseChave(ch).mod!=="55"){erroChaveManual("Esta consulta é para NF-e modelo 55. Confira se a chave pertence a uma NF-e.");return}
+  erroChaveManual("");aviso("");$("#manualKey").blur();renderChave({ch},btn);
+});
 $("#fXml").addEventListener("change",async e=>{
   const files=Array.from(e.target.files||[]);const novos=[];const erros=[];
   for(const f of files){try{const nf=parseNFe(await f.text(),f.name);nf.leituraEm=new Date();nf.prevPassagem=passagemAnterior(nf.chave);registrarPassagem(nf.chave,nf);registrarConsulta(nf,analyze(nf,ctx()));novos.push(nf)}catch(err){erros.push(f.name+": "+err.message)}}
@@ -1371,6 +1397,6 @@ function camBloqueada(){
 })();
 window.__triagem={parseNFe,analyze,extractChave,parseChave,dvOk,regimesCandidatos,beneficiosCandidatos,aliquotaReferencia,tributacaoDeclarada};
 </script>
-<script src="photos.js?v=4.10.1"></script>
+<script src="photos.js?v=4.10.2"></script>
 </body>
 </html>
