@@ -84,6 +84,7 @@ input[type=datetime-local],input.chave,textarea.chave{width:100%;padding:12px;bo
 .scanner .aim{position:absolute;left:8%;right:8%;top:38%;height:22%;border:3px solid rgba(255,255,255,.85);border-radius:12px;pointer-events:none}
 .msg{margin-top:12px;padding:12px 14px;border-left:6px solid var(--amber);background:var(--surface);border-radius:6px;font-weight:500}
 .hint{margin-top:8px;font-size:.95rem;color:var(--muted)}
+.check5904{display:flex;align-items:flex-start;gap:10px;margin:8px 0;padding:10px;border:1px solid var(--line);border-radius:8px;font-size:.94rem;cursor:pointer}.check5904 input{flex:none;width:22px;height:22px;margin:2px 0;accent-color:var(--sign)}.check5904 span{min-width:0;overflow-wrap:anywhere}.remessa5904 h3{margin-bottom:8px}
 .manual-key .field{margin-top:0}.manual-key textarea{color:var(--ink);display:block;resize:vertical;font-family:var(--font);line-height:1.5}.manual-key .btn{width:100%;margin-top:10px}.manual-key .hint{margin-top:6px}.manual-key-error{color:var(--red);font-size:.95rem;margin-top:6px}
 .chavebox{margin-top:18px;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px}
 .kv{display:grid;grid-template-columns:auto 1fr;gap:4px 14px;margin:8px 0 0}
@@ -206,7 +207,7 @@ details summary{cursor:pointer;font-family:var(--display);font-weight:600;font-s
     <div id="histDetalhe"></div>
   </section>
 
-  <p class="footer">Ferramenta de apoio à triagem operacional · v4.10.2. Prioriza irregularidades materiais, destino da carga e exposição tributária. As regras seguem o RICMS/RR (Decreto nº 4.335-E/2001, consolidação de referência até jan/2026), o CTE (Lei nº 59/93) e a prática do posto; listas de NCM são indicativas e precisam de calibragem. Não substitui a análise do auditor. A busca automática envia somente a chave de acesso ao endpoint serverless desta ferramenta, que consulta o serviço privado consultadanfe.com; o XML aberto manualmente é lido só neste aparelho.</p>
+  <p class="footer">Ferramenta de apoio à triagem operacional · v4.11.0. Prioriza irregularidades materiais, destino da carga e exposição tributária. As regras seguem o RICMS/RR (Decreto nº 4.335-E/2001, consolidação de referência até jan/2026), o CTE (Lei nº 59/93) e a prática do posto; listas de NCM são indicativas e precisam de calibragem. Não substitui a análise do auditor. A busca automática envia somente a chave de acesso ao endpoint serverless desta ferramenta, que consulta o serviço privado consultadanfe.com; o XML aberto manualmente é lido só neste aparelho.</p>
 </main>
 
 <div class="scanner hidden" id="scanner" role="dialog" aria-label="Leitura do código">
@@ -274,7 +275,7 @@ function registrarConsulta(nf,res){
       placa:nf.transp&&nf.transp.placa||"",natOp:nf.ide.natOp||"",
       posto:$("#posto")?$("#posto").value.trim():"Pacaraima",
       abordagem:$("#abordagem")?$("#abordagem").value:"",
-      analise:res||null
+      conferencia5904:nf.conferencia5904||null,analise:res||null
     };
     const a=lerHistorico();a.unshift(rec);
     localStorage.setItem("triagem.historico",JSON.stringify(a.slice(0,1500)));
@@ -325,6 +326,7 @@ async function abrirDetalheHistorico(id){
     const nf=parseNFe(xml,"histórico "+rec.chave);
     nf.leituraEm=new Date(rec.ts);
     nf.prevPassagem=null;
+    nf.conferencia5904=rec.conferencia5904||null;
     const contextoHist={
       posto:rec.posto||($("#posto")?$("#posto").value.trim():"Pacaraima"),
       abordagem:rec.abordagem?new Date(rec.abordagem+":00-04:00"):new Date(rec.ts)
@@ -745,6 +747,51 @@ function rotaInfo(nf,ctx){
   if(cf904)return{ok:true,titulo:"Venda fora do estabelecimento",detalhe:"CFOP 5/6.904: destino físico pode variar; confira o preposto"};
   return{ok:false,titulo:"XML não aponta "+ctx.posto,detalhe:"Destinatário "+(nf.dest&&nf.dest.mun||"—")+(nf.entrega&&nf.entrega.mun?" · entrega "+nf.entrega.mun:"")};
 }
+/* CFOP 5.904: remessa interna RR. Confirmações são do auditor, não do XML. */
+function referencias5904(texto){
+  const x=norm(texto||"");
+  const documento=/\b(?:notas? fiscais?|nf-?e?|nfs)\b/.test(x);
+  const numeros=/\b(?:n[º°o.]|numeros?|numeracao)\s*[:.º°-]*\s*\d+/.test(x)||/\b(?:notas? fiscais?|nf-?e?|nfs)\s+(?:de venda\s+)?\d+/.test(x);
+  const serie=/\bserie(?:s)?\s*[:.-]?\s*(?:\d+|unica\b|[a-z]\b)/.test(x)||/\bsem serie\b/.test(x);
+  return documento&&numeros&&serie;
+}
+function assinatura5904(nf,contexto){
+  return JSON.stringify([nf.chave,nf.ide,nf.emit,nf.dest,nf.entrega,nf.retirada,nf.itens,nf.tot,nf.infCpl,nf.infAdFisco,nf.prot,nf.transp,nf.leituraEm&&new Date(nf.leituraEm).getTime(),contexto&&contexto.posto,contexto&&contexto.abordagem?new Date(contexto.abordagem).getTime():null]);
+}
+function avaliar5904(nf,contexto){
+  if(!nf.itens.some(i=>onlyDig(i.cfop)==="5904"))return null;
+  const checks=[],check=(id,ok,texto)=>checks.push({id,ok:!!ok,texto});
+  const data=dataFiscalOperacao(nf),leitura=nf.leituraEm||new Date(),doc=onlyDig(nf.emit.doc),g=nf.itens;
+  check("operacao",nf.ide.mod==="55"&&nf.ide.tpNF==="1"&&nf.ide.finNFe==="1"&&nf.ide.idDest==="1"&&g.every(i=>onlyDig(i.cfop)==="5904"),"NF-e modelo 55, saída normal interna e todos os itens no CFOP 5.904");
+  check("partes",nf.emit.uf==="RR"&&nf.dest&&nf.dest.uf==="RR"&&doc.length===14&&nf.dest&&!nf.dest.estrangeiro&&onlyDig(nf.dest.doc)===doc,"Emitente e destinatário em RR, com o mesmo CNPJ completo do estabelecimento");
+  check("natureza",/remessa/.test(norm(nf.ide.natOp))&&/vendas? fora (?:do )?estabelecimento/.test(norm(nf.ide.natOp))&&!/consign/.test(norm(nf.ide.natOp)),"Natureza compatível com remessa para venda fora do estabelecimento");
+  check("documentos",referencias5904(nf.infCpl),"Indicação de números e séries das notas de venda nas informações complementares (conferir os documentos)");
+  check("autorizacao",dvOk(nf.chave)&&nf.chave.slice(6,20)===doc&&nf.chave.slice(20,22)==="55"&&nf.ide.tpAmb==="1"&&nf.prot&&["100","150"].includes(nf.prot.cStat)&&nf.prot.nProt&&Number.isFinite(Date.parse(nf.prot.dhRecbto))&&Date.parse(nf.prot.dhRecbto)<=new Date(leitura).getTime()+300000,"Chave válida e protocolo de autorização em produção presente no XML");
+  check("data",data&&data>="2018-05-03"&&Number.isFinite(Date.parse(nf.ide.dhEmi))&&Date.parse(nf.ide.dhEmi)<=new Date(leitura).getTime()+300000,"Data válida, a partir da consulta de 03/05/2018; para período anterior, conferir a norma histórica");
+  const somar=k=>g.reduce((s,i)=>s+Number(i.icms[k]||0),0);
+  const dados=g.every(i=>/^\d{8}$/.test(onlyDig(i.ncm))&&!/^0+$/.test(onlyDig(i.ncm))&&i.q>0&&i.vProd>0&&i.vUn>0&&Math.abs(i.q*i.vUn-i.vProd)<=.05&&((nf.emit.crt==="3"&&CST[i.icms.cst]&&!i.icms.csosn)||(["1","4"].includes(nf.emit.crt)&&CSOSN[i.icms.csosn]&&!i.icms.cst))&&[i.icms.vBC,i.icms.pICMS,i.icms.vICMS,i.icms.vBCST,i.icms.vICMSST].every(v=>v==null||Number.isFinite(v)&&v>=0));
+  const destaque=g.every(i=>{const c=i.icms,comBase=["00","10","20","70"].includes(c.cst);return (!comBase||c.vBC>0&&c.pICMS>0&&c.vICMS>0)&&(!(c.vBC>0&&c.pICMS>0)||Math.abs(c.vBC*c.pICMS/100-c.vICMS)<=.05)&&(!["00","10"].includes(c.cst)||c.vBC+.05>=baseOperacao(i,false));});
+  const totais=Math.abs(g.reduce((s,i)=>s+i.vProd,0)-nf.tot.vProd)<=.05&&Math.abs(somar("vICMS")-nf.tot.vICMS)<=.05&&Math.abs(somar("vBC")-nf.tot.vBC)<=.05;
+  check("valores",dados&&destaque&&totais,"Itens, códigos tributários, destaque declarado e totais coerentes; isenção/ST/Simples não dispensam conferir o fundamento");
+  const manual=[
+    {id:"situacao",texto:"Consultei a situação atual da NF-e: autorizada e sem evento impeditivo"},
+    {id:"carga",texto:"Conferi carga e quantidades com a remessa e, se já houve vendas, com as notas emitidas e o saldo transportado"},
+    {id:"preposto",texto:"Conferi quem realiza as vendas: preposto com documento comprobatório ou próprio titular identificado"},
+    {id:"notas",texto:"Conferi os documentos para as vendas, números/séries e a autorização aplicável; não presumi permissão geral para usar modelo 1"},
+    {id:"icms",texto:"Conferi NCM, descrição, CST/CSOSN e tratamento do ICMS: destaque quando devido, ST/benefício/Simples com fundamento e recolhimento quando exigível"}
+  ];
+  if(data&&data.slice(0,7)!==dataBoaVista(new Date(leitura).getTime()).slice(0,7))manual.push({id:"apuracao",texto:"Remessa de outro período de apuração: conferi apuração do ICMS, vendas e eventual retorno; a virada do mês não torna a NF-e automaticamente inválida"});
+  const assinatura=assinatura5904(nf,contexto),registro=nf.conferencia5904;
+  const valido=registro&&registro.versao===1&&registro.assinatura===assinatura&&Number.isFinite(Date.parse(registro.quando));
+  manual.forEach(m=>m.ok=!!(valido&&registro.confirmacoes&&registro.confirmacoes[m.id]===true));
+  return {checks,manual,automaticoOk:checks.every(c=>c.ok),manualOk:manual.every(m=>m.ok),quando:valido?registro.quando:null,assinatura};
+}
+function render5904(nf,res,historico){
+  const r=res.remessa5904;if(!r)return "";
+  const liberado=r.automaticoOk&&r.manualOk&&res.lvl==="libera";
+  return `<section class="section remessa5904"><h3>CFOP 5.904 · venda fora do estabelecimento</h3><p><b>${liberado?"✓ Requisitos conferidos · Libera":r.automaticoOk&&r.manualOk?"Conferência preenchida; veja os demais alertas":"Conferência específica pendente"}</b></p><p class="hint">Consulta SEFAZ/RR nº 011/2018 e RICMS/RR, arts. 523 a 527. A remessa deve cobrir toda a carga. Os sinais do XML não comprovam os fatos no veículo.</p><details><summary>Verificações do XML (${r.checks.filter(c=>c.ok).length}/${r.checks.length})</summary>${r.checks.map(c=>`<p>${c.ok?"✓":"⚠"} ${esc(c.texto)}</p>`).join("")}</details><p class="hint">${historico?"Conferências registradas nesta consulta histórica; não comprovam a situação atual.":"Marque apenas o que você conferiu nesta abordagem:"}</p>${r.manual.map(m=>`<label class="check5904"><input type="checkbox" data-check5904="${m.id}" data-chave="${esc(nf.chave)}"${m.ok?" checked":""}${historico?" disabled":""}><span>${esc(m.texto)}</span></label>`).join("")}${r.quando?`<p class="hint">Última atualização da conferência: ${esc(fmtDate(new Date(r.quando)))}. Registro local do aparelho.</p>`:""}<details><summary>Vendas, retorno e apuração</summary><p>Nas vendas efetivas, emitir o documento cabível e referenciar número, série e data da remessa (art. 525). Conferir 5.103/5.104 conforme produção própria ou de terceiros e o regime aplicável. Modelo 1 mencionado na consulta depende da autorização pertinente à empresa.</p><p>No retorno, conferir NF-e de entrada 1.904 e os dados/documentos exigidos pelo art. 526. Se não houver retorno no mesmo período, conferir a apuração do ICMS; prazo de apuração e validade no trânsito são verificações distintas. Venda por preço maior exige avaliar complemento (art. 523, § 1º).</p></details></section>`;
+}
+
 function analyze(nf,ctx){
   const A=[];const add=(lvl,titulo,texto,base)=>A.push({lvl,titulo,texto,base});
   const emitUF=nf.emit.uf||UF[nf.ide.cUF]||"";const destUF=nf.dest?nf.dest.uf:"";
@@ -811,12 +858,8 @@ function analyze(nf,ctx){
   if(cf3.some(c=>TRANSF.includes(c))){const r1=onlyDig(nf.emit.doc).slice(0,8),r2=nf.dest?onlyDig(nf.dest.doc).slice(0,8):"";
     if(r2&&r1!==r2) add("para","Transferência entre empresas diferentes","CFOP de transferência, mas a raiz do CNPJ do emitente ("+r1+") difere da do destinatário ("+r2+"). Pode ser venda com CFOP de transferência.","RICMS/RR, art. 147, III");
     else add("info","Transferência entre estabelecimentos do mesmo titular","Não há fato gerador; o destaque é opcional (equiparação ou transferência de crédito).","LC 87/96, art. 12, § 4º (LC 204/2023); STF, ADC 49; Conv. ICMS 109/24");}
-  // venda fora do estabelecimento
-  if(cf3.includes("904")){
-    if(nf.dest&&onlyDig(nf.dest.doc)!==onlyDig(nf.emit.doc)) add("confere","Remessa para venda fora com destinatário diferente do emitente","Na venda fora do estabelecimento, o destinatário é o próprio emitente. Confirme se quem transporta é preposto ou se é venda/consignação a terceiro.","RICMS/RR, arts. 523 e 527; Consulta SEFAZ/RR nº 011/2018");
-    if(!/s[ée]rie/i.test(nf.infCpl)) add("registrar","Faltam as séries e números das notas de venda","A remessa deve indicar, nas informações complementares, os documentos que serão usados nas vendas efetivas.","RICMS/RR, art. 523; Consulta nº 011/2018");
-    if(/consign/i.test(nf.infCpl)) add("registrar","Remessa 5904 descrita como consignação","Preposto não é consignatário; consignação tem CFOP próprio (5917).","RICMS/RR, arts. 523 e 527");
-    add("info","Peça o documento do preposto","Quem transporta deve portar comprovante da condição de preposto. Na volta, a empresa emite a nota de retorno (CFOP 1.904).","RICMS/RR, arts. 526 e 527");}
+  // A Consulta nº 011/2018 fundamenta o checklist da remessa interna 5.904 em RR.
+  if(cfops.includes("6904"))add("confere","Remessa interestadual para venda fora: conferir norma aplicável","O CFOP 6.904 não recebe a liberação do checklist de remessa interna 5.904. Confira legislação de origem/destino, documentos, preposto, carga e ICMS; não transponha automaticamente a autorização específica de modelo 1 da Consulta nº 011/2018.","Consulta SEFAZ/RR nº 011/2018 (operação interna); RICMS/RR, art. 523, § 2º, quando aplicável");
   if(cf3.includes("910")&&nf.emit.crt==="3"&&nf.itens.some(i=>onlyDig(i.cfop).endsWith("910")&&i.icms.vICMS===0&&!isSTcode(i)&&!["40","41"].includes(i.icms.cst))) add("confere","Bonificação sem destaque de ICMS","Bonificação é saída tributada.","RICMS/RR, art. 2º; CTE, art. 5º");
   const naoVenda=cf3.every(c=>c[0]==="9"||TRANSF.includes(c));
   if(naoVenda&&nf.pag.some(p=>p.tPag!=="90"&&p.vPag>0)) add("registrar","Pagamento informado em operação sem venda","Remessas e transferências devem informar “sem pagamento”.","MOC NF-e (grupo pag)");
@@ -915,8 +958,14 @@ function analyze(nf,ctx){
   /* 5. Transporte */
   if(nf.transp.modFrete==="9"&&(nf.transp.placa||nf.transp.qVol>0||/placa/i.test(nf.infCpl))) add("registrar","“Sem frete” com veículo ou volumes informados","Modalidade 9 indica que não há transporte, mas a nota traz placa ou volumes.","MOC NF-e (modFrete)");
 
+  const remessa5904=avaliar5904(nf,ctx);
+  if(remessa5904){
+    const faltam=remessa5904.checks.filter(c=>!c.ok);
+    if(faltam.length)add("confere","CFOP 5.904: requisitos do XML a conferir",faltam.map(c=>c.texto).join("; ")+". Não concluir liberação apenas pelo CFOP.","RICMS/RR, arts. 523 a 527; Consulta nº 011/2018");
+    if(!remessa5904.manualOk)add("confere","CFOP 5.904: concluir a conferência da abordagem","Use o checklist específico: situação atual, carga/saldo, preposto/titular, documentos de venda e ICMS. A declaração do contribuinte não confirma esses fatos.","RICMS/RR, arts. 523, 525, 526 e 527; Consulta nº 011/2018");
+  }
   const lvl=A.some(a=>a.lvl==="para")?"para":A.some(a=>a.lvl==="confere")?"confere":"libera";
-  return{alerts:A,lvl,itemAlerts};
+  return{alerts:A,lvl,itemAlerts,remessa5904};
 }
 
 /* ---------- renderização ---------- */
@@ -970,6 +1019,7 @@ function renderNF(nf,res,contextoOverride){
     <button class="btn small bCopyChave" type="button" data-chave="${esc(nf.chave)}" style="margin-top:10px;width:100%">Copiar chave de acesso</button>
     ${cfops.some(c=>c.startsWith("7"))||nf.ide.idDest==="3"?`<div class="due-action"><strong>Exportação: conferir DU-E vinculada</strong><span>A consulta pública oficial do Portal Único aceita a chave desta NF-e como parâmetro de pesquisa.</span>${nf.exporta?`<small>NF-e informa saída/embarque: <b>${esc(nf.exporta.ufSaida||"—")}</b>${nf.exporta.local?" · "+esc(nf.exporta.local):""}${nf.exporta.despacho?" · despacho: "+esc(nf.exporta.despacho):""}</small>`:""}<button class="btn small bDue" type="button" data-chave="${esc(nf.chave)}">Copiar chave e abrir consulta DU-E ↗</button><small>A chave será copiada. No Portal Único, selecione <b>NF-e</b>, cole a chave e conclua o hCaptcha.</small></div>`:""}
   </div>
+  ${render5904(nf,res,!!contextoOverride)}
   ${typeof PhotoEvidence!=="undefined"?PhotoEvidence.markup(nf):""}
   <div class="section priority-top"><h3>O que conferir agora</h3>${priHtml||"<p>Nenhum sinal material relevante pelas regras aplicadas. Confira fisicamente a carga e a identidade/rota.</p>"}</div>
   <div class="quick">
@@ -1089,6 +1139,17 @@ function renderAll(){
   if(typeof PhotoEvidence!=="undefined")PhotoEvidence.mount($("#out"));
 }
 function onCode(txt){const info=extractChave(txt);if(!info){aviso("Não encontrei uma chave de 44 dígitos nessa leitura. Refaça a leitura do DANFE.",true);return}aviso("");renderChave(info);if(state.nfs.length)renderAll()}
+document.addEventListener("change",e=>{
+  const campo=e.target.closest("#out input[data-check5904]");if(!campo)return;
+  const nf=state.nfs.find(n=>n.chave===campo.dataset.chave);if(!nf)return;
+  const contexto=ctx(),r=avaliar5904(nf,contexto);if(!r||!r.manual.some(m=>m.id===campo.dataset.check5904))return;
+  const confirmacoes=Object.fromEntries(r.manual.map(m=>[m.id,m.ok]));confirmacoes[campo.dataset.check5904]=campo.checked;
+  nf.conferencia5904={versao:1,assinatura:r.assinatura,quando:new Date().toISOString(),confirmacoes};
+  const res=analyze(nf,contexto);
+  try{const registros=lerHistorico(),rec=registros.find(x=>x.chave===nf.chave&&x.ts===(nf.leituraEm&&nf.leituraEm.getTime()));if(rec){rec.conferencia5904=nf.conferencia5904;rec.analise=res;rec.status=res.lvl;localStorage.setItem("triagem.historico",JSON.stringify(registros));}}
+  catch(err){aviso("A conferência está nesta tela, mas não foi possível atualizar o histórico deste aparelho.",false)}
+  const id=campo.dataset.check5904;renderAll();const novo=Array.from(document.querySelectorAll('#out input[data-check5904]')).find(x=>x.dataset.chave===nf.chave&&x.dataset.check5904===id);if(novo)novo.focus({preventScroll:true});
+});
 function erroChaveManual(texto){
   const campo=$("#manualKey"),erro=$("#manualKeyError");
   erro.textContent=texto;erro.classList.toggle("hidden",!texto);
