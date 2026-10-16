@@ -110,7 +110,7 @@ function remessa5904(){
  const n=fixture('16010000','Mortadela','00','5904');Object.assign(n.ide,{natOp:'Remessa para venda fora do estabelecimento',idDest:'1',cUF:'14'});n.emit.uf='RR';n.emit.mun='Boa Vista';n.dest.doc=n.emit.doc;n.dest.uf='RR';n.dest.mun='Boa Vista';n.infCpl='Notas fiscais de venda nº 100 a 150, série 1.';n.itens[0].icms.pICMS=20;n.itens[0].icms.vICMS=200;Object.assign(n.tot,{vBC:1000,vICMS:200});
  let k='1426101111111100011155001000000101112345678',sum=0,w=2;for(let i=42;i>=0;i--){sum+=Number(k[i])*w;w=w===9?2:w+1;}const r=sum%11;n.chave=k+(r<2?0:11-r);return n;
 }
-test('5904: três verificações do XML sem confirmação manual',()=>{const n=remessa5904(),r=a.analyze(n,ctx);assert.equal(r.remessa5904.checks.length,3);assert(r.remessa5904.ok);assert.equal(r.lvl,'libera');assert(!a.renderNF(n,r,ctx).includes('data-check5904'));});
+test('5904: verificações do XML e mês sem confirmação manual',()=>{const n=remessa5904(),r=a.analyze(n,ctx);assert.equal(r.remessa5904.checks.length,4);assert(r.remessa5904.ok);assert.equal(r.lvl,'libera');assert(!a.renderNF(n,r,ctx).includes('data-check5904'));});
 for(const text of ['série 1','Placa 123, série 1','Notas fiscais série 1','Notas fiscais nº 100','Notas fiscais sem números e séries'])test('5904: referência incompleta não basta — '+text,()=>assert(!a.referencias5904(text)));
 for(const text of ['Notas fiscais nº 100 a 150, série 1','NF-e número 123 série 2','Notas fiscais 100 a 150, série única','Notas fiscais nº 100, sem série'])test('5904: identifica indicação documental — '+text,()=>assert(a.referencias5904(text)));
 for(const [name,edit] of [
@@ -121,5 +121,19 @@ test('5904: autorização após abordagem continua Para',()=>{const n=remessa590
 test('5904: ST anterior não exige destaque próprio artificial',()=>{const n=remessa5904(),i=n.itens[0];i.ncm='22021000';i.desc='Refrigerante';i.icms.cst='60';i.icms.vBC=0;i.icms.vICMS=0;i.icms.pICMS=0;n.tot.vBC=0;n.tot.vICMS=0;assert(a.avaliar5904(n).ok);assert.equal(a.analyze(n,ctx).lvl,'libera');});
 test('5904: benefício pendente conserva o alerta fiscal existente',()=>{const n=remessa5904();n.itens[0].icms.cst='40';n.itens[0].icms.vBC=0;n.itens[0].icms.vICMS=0;n.itens[0].icms.pICMS=0;n.tot.vICMS=0;n.tot.vBC=0;assert.equal(a.analyze(n,ctx).lvl,'confere');});
 test('6904 não recebe as novas verificações de 5904',()=>{const n=remessa5904();n.itens[0].cfop='6904';assert.equal(a.avaliar5904(n),null);assert(!('remessa5904' in a.analyze(n,ctx)));});
+function mes5904(emissao,verificacao){const n=remessa5904();n.ide.dhEmi=emissao;n.leituraEm=new Date(verificacao);return a.avaliar5904(n).checks.find(c=>c.id==='mes');}
+for(const [name,emi,ver,ok] of [
+ ['mesmo mês e ano','2026-10-01T00:00:00-04:00','2026-10-31T23:59:59-04:00',true],
+ ['mês anterior','2026-09-30T23:59:59-04:00','2026-10-01T00:00:00-04:00',false],
+ ['mesmo número do mês em outro ano','2025-10-15T12:00:00-04:00','2026-10-15T12:00:00-04:00',false],
+ ['virada de ano','2026-12-31T23:59:59-04:00','2027-01-01T00:00:00-04:00',false],
+ ['UTC em outubro ainda é setembro em RR','2026-10-01T02:00:00Z','2026-09-30T23:00:00-04:00',true],
+ ['UTC mudou mês mas RR ainda não','2026-09-30T23:00:00-04:00','2026-10-01T03:59:59Z',true],
+ ['virada local de mês em RR','2026-10-01T03:59:59Z','2026-10-01T04:00:00Z',false],
+ ['emissão ausente','','2026-10-15T12:00:00-04:00',false],
+ ['data civil inválida','2026-02-30T12:00:00-04:00','2026-03-01T12:00:00-04:00',false],
+ ['verificação inválida','2026-10-15T12:00:00-04:00','inválida',false],
+ ['emissão sem fuso','2026-10-15T12:00:00','2026-10-15T12:00:00-04:00',false]
+])test('5904 mês: '+name,()=>assert.equal(mes5904(emi,ver).ok,ok));
 console.log(`${passed} cenários passaram; sintaxe e renderização verificadas.`);
 module.exports={fixture,ctx};

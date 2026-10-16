@@ -206,7 +206,7 @@ details summary{cursor:pointer;font-family:var(--display);font-weight:600;font-s
     <div id="histDetalhe"></div>
   </section>
 
-  <p class="footer">Ferramenta de apoio à triagem operacional · v4.11.1. Prioriza irregularidades materiais, destino da carga e exposição tributária. As regras seguem o RICMS/RR (Decreto nº 4.335-E/2001, consolidação de referência até jan/2026), o CTE (Lei nº 59/93) e a prática do posto; listas de NCM são indicativas e precisam de calibragem. Não substitui a análise do auditor. A busca automática envia somente a chave de acesso ao endpoint serverless desta ferramenta, que consulta o serviço privado consultadanfe.com; o XML aberto manualmente é lido só neste aparelho.</p>
+  <p class="footer">Ferramenta de apoio à triagem operacional · v4.11.2. Prioriza irregularidades materiais, destino da carga e exposição tributária. As regras seguem o RICMS/RR (Decreto nº 4.335-E/2001, consolidação de referência até jan/2026), o CTE (Lei nº 59/93) e a prática do posto; listas de NCM são indicativas e precisam de calibragem. Não substitui a análise do auditor. A busca automática envia somente a chave de acesso ao endpoint serverless desta ferramenta, que consulta o serviço privado consultadanfe.com; o XML aberto manualmente é lido só neste aparelho.</p>
 </main>
 
 <div class="scanner hidden" id="scanner" role="dialog" aria-label="Leitura do código">
@@ -760,6 +760,11 @@ function avaliar5904(nf){
   check("documentos",referencias5904(nf.infCpl),"Indicação dos números e séries das notas para vendas efetivas nas informações complementares");
   const destaque=itens.every(i=>{const c=i.icms;if(nf.emit.crt!=="3"||!["00","10","20","70","90"].includes(c.cst))return true;if(c.cst==="90"&&!(c.vBC>0))return c.vICMSST>0;return c.vBC>0&&c.pICMS>0&&c.vICMS>0&&Math.abs(c.vBC*c.pICMS/100-c.vICMS)<=.05&&(!["00","10"].includes(c.cst)||c.vBC+.05>=baseOperacao(i,false));});
   check("icms",destaque,"Destaque próprio coerente quando declarado devido; alíquota, ST, benefícios e Simples continuam sujeitos às regras fiscais existentes");
+  const emi=Date.parse(nf.ide.dhEmi||""),leitura=new Date(nf.leituraEm==null?new Date():nf.leituraEm).getTime();
+  const temEmissao=!!dataFiscalOperacao(nf)&&Number.isFinite(emi)&&/T.*(?:Z|[+-]\d{2}:\d{2})$/.test(nf.ide.dhEmi||""),temLeitura=Number.isFinite(leitura);
+  const mesEmissao=temEmissao?dataBoaVista(emi).slice(0,7):"",mesVerificacao=temLeitura?dataBoaVista(leitura).slice(0,7):"";
+  const periodo=mes=>mes?mes.slice(5,7)+"/"+mes.slice(0,4):"data ausente/inválida";
+  check("mes",mesEmissao&&mesVerificacao&&mesEmissao===mesVerificacao,"Emissão no mesmo mês/ano da verificação (Roraima): emissão "+periodo(mesEmissao)+" · verificação "+periodo(mesVerificacao)+(mesEmissao&&mesVerificacao&&mesEmissao!==mesVerificacao?". Conferir a apuração do ICMS e eventual retorno; mudança de mês não é vencimento automático da NF-e":""));
   return {checks,ok:checks.every(c=>c.ok)};
 }
 function render5904(nf,res){
