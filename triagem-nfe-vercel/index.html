@@ -57,6 +57,11 @@ button,input,select{font:inherit;color:inherit}
 .hist-open{margin-top:7px;font-size:.86rem;color:var(--info);font-weight:600}
 .hist-detail-head{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin:12px 0}
 .xmlraw{white-space:pre-wrap;overflow-wrap:anywhere;font:12px/1.45 ui-monospace,SFMono-Regular,Consolas,monospace;background:var(--bg);padding:12px;border-radius:8px;max-height:520px;overflow:auto}
+.copy-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:10px}
+.copy-actions>.btn{min-width:0;width:100%;overflow-wrap:anywhere}
+.xml-copy-fallback{grid-column:1/-1;padding:10px;background:var(--bg);border:1px solid var(--line);border-radius:8px}
+.xml-copy-fallback p{margin:0 0 8px;font-size:.94rem}
+.xml-copy-fallback textarea{display:block;width:100%;min-height:140px;box-sizing:border-box;font:12px/1.4 ui-monospace,monospace;overflow:auto;resize:vertical}
 .hist-top{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}
 .hist-time{font-family:var(--display);font-size:1.1rem;font-weight:700}
 .hist-status{display:inline-block;padding:2px 8px;border-radius:999px;font-size:.82rem;font-weight:700}
@@ -215,7 +220,7 @@ details summary{cursor:pointer;font-family:var(--display);font-weight:600;font-s
     <div id="histDetalhe"></div>
   </section>
 
-  <p class="footer">Ferramenta de apoio à triagem operacional · v4.11.3. Prioriza irregularidades materiais, destino da carga e exposição tributária. As regras seguem o RICMS/RR (Decreto nº 4.335-E/2001, consolidação de referência até jan/2026), o CTE (Lei nº 59/93) e a prática do posto; listas de NCM são indicativas e precisam de calibragem. Não substitui a análise do auditor. A busca automática envia somente a chave de acesso ao endpoint serverless desta ferramenta, que consulta o serviço privado consultadanfe.com; o XML aberto manualmente é lido só neste aparelho.</p>
+  <p class="footer">Ferramenta de apoio à triagem operacional · v4.11.4. Prioriza irregularidades materiais, destino da carga e exposição tributária. As regras seguem o RICMS/RR (Decreto nº 4.335-E/2001, consolidação de referência até jan/2026), o CTE (Lei nº 59/93) e a prática do posto; listas de NCM são indicativas e precisam de calibragem. Não substitui a análise do auditor. A busca automática envia somente a chave de acesso ao endpoint serverless desta ferramenta, que consulta o serviço privado consultadanfe.com; o XML aberto manualmente é lido só neste aparelho.</p>
 </main>
 
 <div class="scanner hidden" id="scanner" role="dialog" aria-label="Leitura do código">
@@ -311,10 +316,12 @@ function renderHistorico(dataEscolhida){
   if(typeof PhotoEvidence!=="undefined")PhotoEvidence.updateCounts(lista);
 }
 let histDetalheRequest=0;
+let histDetalheNf=null; // Apenas na memória: o XML integral não entra no histórico persistente.
 async function abrirDetalheHistorico(id){
   const rec=lerHistorico().find(x=>x.id===id);
   if(!rec)return;
   const request=++histDetalheRequest;
+  histDetalheNf=null;
   $("#screenHistorico").classList.add("hidden");
   $("#screenTriagem").classList.add("hidden");
   $("#screenHistDetalhe").classList.remove("hidden");
@@ -332,6 +339,7 @@ async function abrirDetalheHistorico(id){
     const bin=atob(j.xml_base64),bytes=Uint8Array.from(bin,c=>c.charCodeAt(0));
     const xml=new TextDecoder("utf-8").decode(bytes);
     const nf=parseNFe(xml,"histórico "+rec.chave);
+    histDetalheNf=nf;
     nf.leituraEm=new Date(rec.ts);
     nf.prevPassagem=null;
     const contextoHist={
@@ -351,6 +359,7 @@ async function abrirDetalheHistorico(id){
 
 function voltarHistorico(){
   histDetalheRequest++;
+  histDetalheNf=null;
   $("#screenHistDetalhe").classList.add("hidden");
   $("#screenHistorico").classList.remove("hidden");
   $("#screenTriagem").classList.add("hidden");
@@ -360,6 +369,7 @@ function voltarHistorico(){
 
 function abrirAba(nome){
   histDetalheRequest++;
+  histDetalheNf=null;
   const hist=nome==="historico";
   $("#screenTriagem").classList.toggle("hidden",hist);
   $("#screenHistorico").classList.toggle("hidden",!hist);
@@ -718,7 +728,7 @@ function parseNFe(xml,fileName){
   const inf=q(doc,"infNFe"); if(!inf) throw new Error("Não encontrei uma NF-e/NFC-e neste XML.");
   const ide=q(inf,"ide"),emit=q(inf,"emit"),dest=q(inf,"dest"),ent=q(inf,"entrega"),ret=q(inf,"retirada"),tr=q(inf,"transp"),tot=q(inf,"ICMSTot"),adic=q(inf,"infAdic"),prot=q(doc,"infProt"),exp=q(inf,"exporta");
   const enderEmit=q(emit,"enderEmit"),enderDest=q(dest,"enderDest"),ibscbsTot=q(q(inf,"total"),"IBSCBSTot");
-  const nf={file:fileName,chave:(inf.getAttribute("Id")||"").replace(/^NFe/,""),
+  const nf={file:fileName,xmlBruto:xml,chave:(inf.getAttribute("Id")||"").replace(/^NFe/,""),
     ide:{natOp:t(ide,"natOp"),mod:t(ide,"mod"),serie:t(ide,"serie"),nNF:t(ide,"nNF"),dhEmi:t(ide,"dhEmi"),dhSaiEnt:t(ide,"dhSaiEnt"),tpNF:t(ide,"tpNF"),idDest:t(ide,"idDest"),tpEmis:t(ide,"tpEmis"),tpAmb:t(ide,"tpAmb"),finNFe:t(ide,"finNFe"),indFinal:t(ide,"indFinal"),indPres:t(ide,"indPres"),cUF:t(ide,"cUF")},
     emit:{doc:t(emit,"CNPJ")||t(emit,"CPF"),nome:t(emit,"xNome"),fant:t(emit,"xFant"),ie:t(emit,"IE"),crt:t(emit,"CRT"),mun:t(enderEmit,"xMun"),uf:t(enderEmit,"UF")},
     dest:dest?{doc:t(dest,"CNPJ")||t(dest,"CPF")||t(dest,"idEstrangeiro"),cpf:!!q(dest,"CPF"),estrangeiro:!!q(dest,"idEstrangeiro"),nome:t(dest,"xNome"),ie:t(dest,"IE"),indIE:t(dest,"indIEDest"),lgr:t(enderDest,"xLgr"),nro:t(enderDest,"nro"),bairro:t(enderDest,"xBairro"),mun:t(enderDest,"xMun"),uf:t(enderDest,"UF")}:null,
@@ -1077,7 +1087,10 @@ function renderNF(nf,res,contextoOverride){
   <div class="plate ${res.lvl}" role="status"><div class="ident">${esc(MODELO[nf.ide.mod]||"Nota")} nº ${esc(nf.ide.nNF)} · série ${esc(nf.ide.serie)}</div><h2>${v[0]}</h2><p>${v[1]}</p></div>
   ${resumoRegimeHtml(nf)}
   <div class="top-summary"><p class="resumo"><b>${esc(nf.ide.natOp)}</b> (CFOP ${cfops.join(", ")}), de <b>${esc(nf.emit.nome)}</b> (${esc(nf.emit.mun)}/${esc(nf.emit.uf)}) para <b>${d?esc(d.nome||"—"):"consumidor não identificado"}</b>${d?` (${esc(d.mun)}/${esc(d.uf)})`:""}. ${dhRec?"Autorizada em "+fmtDate(dhRec)+".":"Sem protocolo no XML."}</p>
-    <button class="btn small bCopyChave" type="button" data-chave="${esc(nf.chave)}" style="margin-top:10px;width:100%">Copiar chave de acesso</button>
+    <div class="copy-actions">
+      <button class="btn small bCopyChave" type="button" data-chave="${esc(nf.chave)}">Copiar chave de acesso</button>
+      ${nf.xmlBruto?`<button class="btn small bCopyXml" type="button" data-chave="${esc(nf.chave)}" aria-label="Copiar XML bruto completo desta NF-e">Copiar XML bruto</button>`:""}
+    </div>
     ${cfops.some(c=>c.startsWith("7"))||nf.ide.idDest==="3"?`<div class="due-action"><strong>Exportação: conferir DU-E vinculada</strong><span>A consulta pública oficial do Portal Único aceita a chave desta NF-e como parâmetro de pesquisa.</span>${nf.exporta?`<small>NF-e informa saída/embarque: <b>${esc(nf.exporta.ufSaida||"—")}</b>${nf.exporta.local?" · "+esc(nf.exporta.local):""}${nf.exporta.despacho?" · despacho: "+esc(nf.exporta.despacho):""}</small>`:""}<button class="btn small bDue" type="button" data-chave="${esc(nf.chave)}">Copiar chave e abrir consulta DU-E ↗</button><small>A chave será copiada. No Portal Único, selecione <b>NF-e</b>, cole a chave e conclua o hCaptcha.</small></div>`:""}
   </div>
   ${render5904(nf,res)}
@@ -1145,6 +1158,38 @@ function copyText(txt,btn){
   copiarTexto(txt,copied=>{
     if(copied){btn.textContent="Chave copiada ✓";setTimeout(()=>btn.textContent=original,2200)}
     else aviso("A cópia automática foi bloqueada. Copie manualmente a chave exibida na nota: "+txt,false);
+  });
+}
+function copiarXmlBruto(btn){
+  const chave=btn.dataset.chave||"";
+  // Histórico e triagem podem mostrar a mesma chave; usar a NF-e da tela do botão.
+  const nf=btn.closest("#histDetalhe")?histDetalheNf:state.nfs.find(n=>n.chave===chave);
+  if(!nf||nf.chave!==chave||typeof nf.xmlBruto!=="string"||!nf.xmlBruto){
+    btn.textContent="XML indisponível";
+    return;
+  }
+  const original=btn.textContent;
+  copiarTexto(nf.xmlBruto,copiado=>{
+    if(copiado){
+      btn.textContent="XML copiado ✓";
+      setTimeout(()=>{if(btn.isConnected)btn.textContent=original},2500);
+      return;
+    }
+    btn.textContent="Cópia bloqueada";
+    let fallback=btn.nextElementSibling;
+    if(!fallback||!fallback.classList.contains("xml-copy-fallback")){
+      fallback=document.createElement("div");
+      fallback.className="xml-copy-fallback";
+      const dica=document.createElement("p");
+      dica.textContent="O navegador bloqueou a cópia automática. Selecione todo o texto abaixo para copiar manualmente.";
+      const campo=document.createElement("textarea");
+      campo.readOnly=true;
+      campo.rows=5;
+      campo.setAttribute("aria-label","XML bruto completo para cópia manual");
+      campo.value=nf.xmlBruto;
+      fallback.append(dica,campo);
+      btn.insertAdjacentElement("afterend",fallback);
+    }
   });
 }
 function renderChave(info,btn=null){
@@ -1227,6 +1272,8 @@ $("#fXml").addEventListener("change",async e=>{
 });
 ["#abordagem","#posto"].forEach(s=>$(s).addEventListener("change",()=>{if(s==="#posto")store("triagem.posto",$("#posto").value);renderAll()}));
 document.addEventListener("click",e=>{
+  const xml=e.target.closest(".bCopyXml");
+  if(xml){e.preventDefault();copiarXmlBruto(xml);return}
   const copy=e.target.closest(".bCopyChave");
   if(copy){e.preventDefault();copyText(copy.dataset.chave||"",copy);return}
   const b=e.target.closest(".bDue");
