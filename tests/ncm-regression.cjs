@@ -4,7 +4,7 @@ const html=fs.readFileSync(path.join(__dirname,'../triagem-nfe-vercel/index.html
 new vm.Script(html.slice(html.indexOf('<script>')+8,html.indexOf('</script>',html.indexOf('<script>'))));
 new vm.Script(fs.readFileSync(path.join(__dirname,'../triagem-nfe-vercel/photos.js'),'utf8'));
 const box={document:{querySelector:()=>null},localStorage:{getItem:()=>null},Date,Intl,setTimeout};vm.createContext(box);
-vm.runInContext(html.slice(html.indexOf('<script>')+8,html.indexOf('/* ---------- fluxo ---------- */'))+'\nthis.api={regimesCandidatos,beneficiosCandidatos,aliquotaReferencia,tributacaoDeclarada,isSTcode,isMono,analyze,renderNF,interRegiao,baseOperacao,avaliar5904,referencias5904};',box);
+vm.runInContext(html.slice(html.indexOf('<script>')+8,html.indexOf('/* ---------- fluxo ---------- */'))+'\nthis.api={regimesCandidatos,beneficiosCandidatos,aliquotaReferencia,tributacaoDeclarada,isSTcode,isMono,analyze,renderNF,interRegiao,baseOperacao,avaliar5904,referencias5904,classificarRegimeOperacional,maiorQuantidadePorUnidade,resumoRegimeHtml};',box);
 const a=box.api,ctx={posto:'Pacaraima',abordagem:null};let passed=0;
 function fixture(ncm,desc,cst='00',cfop='6102'){
  const now=new Date();const i={n:'1',cod:'teste',desc,ncm,cest:'',cBenef:'',cfop,un:'UN',q:1,vUn:1000,vProd:1000,vFrete:0,vSeg:0,vDesc:0,vOutro:0,vIPI:0,infAdProd:'',icms:{orig:'0',cst,csosn:'',vBC:1000,pICMS:7,vICMS:70,vBCST:0,vICMSST:0,vICMSSTRet:0,pRedBC:0},ufdest:false};
@@ -135,5 +135,50 @@ for(const [name,emi,ver,ok] of [
  ['verificação inválida','2026-10-15T12:00:00-04:00','inválida',false],
  ['emissão sem fuso','2026-10-15T12:00:00','2026-10-15T12:00:00-04:00',false]
 ])test('5904 mês: '+name,()=>assert.equal(mes5904(emi,ver).ok,ok));
+// Regressões v4.11.3: classificação legal da carne e unidades não contáveis.
+function carneRevendaRR(){
+ const n=fixture('02013000','MAMINHA DA ALCATRA KG','60','5405');
+ n.emit.uf='RR';n.emit.mun='Boa Vista';n.ide.idDest='1';n.ide.cUF='14';n.ide.indFinal='1';
+ n.dest.cpf=true;n.dest.ie='';n.dest.indIE='9';
+ Object.assign(n.itens[0],{un:'KG',q:21.36,vProd:1174.59,vUn:54.990169,cest:'1708400'});
+ Object.assign(n.itens[0].icms,{vBC:0,pICMS:0,vICMS:0});
+ const pic={...n.itens[0],n:'2',desc:'PICANHA MATURADA KG',ncm:'02023000',q:112.68,vProd:10647.13,vUn:94.489972,icms:{...n.itens[0].icms}};
+ n.itens.push(pic);Object.assign(n.tot,{vNF:11821.72,vProd:11821.72,vBC:0,vICMS:0});
+ return n;
+}
+test('ST carne: maminha/picanha em revenda interna RR com encerramento',()=>{
+ const n=carneRevendaRR();
+ assert(n.itens.every(i=>a.classificarRegimeOperacional(i,n).tipo==='confirmado'));
+ assert(n.itens.every(i=>a.classificarRegimeOperacional(i,n).semNovaAntecipacao));
+ const html=render(n);
+ assert(html.includes('ST/ANTECIPAÇÃO COM ENCERRAMENTO — TODOS OS ITENS'));
+ assert(html.includes('ENQUADRAMENTO LEGAL CONFIRMADO'));
+ assert(!html.includes('Regra legal candidata: Gado'));
+});
+test('Quantidades preservam KG e soma do peso, sem 0 artificial',()=>{
+ const n=carneRevendaRR(),q=a.maiorQuantidadePorUnidade(n.itens);
+ assert(q.includes('112,68 KG (item 2)'));assert(q.includes('134,04 KG'));
+ const achado=alerts(n).find(x=>x.titulo.includes('Comprador sem inscrição'));
+ assert(achado);assert.equal(achado.lvl,'registrar');
+ assert(achado.texto.includes('112,68 KG'));assert(achado.texto.includes('134,04 KG'));
+ assert(achado.texto.includes('NÃO gera nova antecipação'));
+ assert(!achado.texto.includes('um item: 0'));
+});
+test('Mistura de KG e UN lista cada unidade sem comparação falsa',()=>{
+ const n=carneRevendaRR(),extra={...n.itens[0],n:'3',ncm:'96081000',desc:'Caneta',un:'UN',q:40,cfop:'5102',vProd:200,icms:{...n.itens[0].icms,cst:'00'}};
+ n.itens.push(extra);const q=a.maiorQuantidadePorUnidade(n.itens);
+ assert(q.includes('112,68 KG'));assert(q.includes('40 UN'));assert.equal(a.classificarRegimeOperacional(extra,n).tipo,'nao_identificado');
+ assert.equal(alerts(n).find(x=>x.titulo.includes('Comprador sem inscrição')).lvl,'confere');
+});
+test('Entrada interestadual de carne aplica regime mas não presume guia paga',()=>{
+ const n=fixture('02013000','Carne bovina resfriada','60','6404');
+ const c=a.classificarRegimeOperacional(n.itens[0],n);
+ assert.equal(c.tipo,'pendente');assert.equal(c.semNovaAntecipacao,false);
+ assert(c.nota.includes('NÃO está comprovado'));assert(has(n,'Antecipação de RR a conferir'));
+});
+test('ST fora de carne continua pendente, não verde por CST isolado',()=>{
+ const n=interna('22030000','Cerveja','60','5405'),c=a.classificarRegimeOperacional(n.itens[0],n);
+ assert.equal(c.tipo,'pendente');assert(!render(n).includes('ST/ANTECIPAÇÃO COM ENCERRAMENTO — TODOS OS ITENS'));
+});
 console.log(`${passed} cenários passaram; sintaxe e renderização verificadas.`);
 module.exports={fixture,ctx};
