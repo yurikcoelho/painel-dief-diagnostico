@@ -239,5 +239,27 @@ test('Sem regime confirmado não apresenta antecipação total para outros produ
  assert(!h.includes('✓ ANTECIPAÇÃO TOTAL — ICMS COM ENCERRAMENTO'));
  assert(h.includes('Regime pendente para parte ou todos os itens'));
 });
+// v4.11.6 — a consulta externa não pode ficar visualmente travada após erro.
+test('Consulta em timeout mostra botão de nova tentativa sem exigir reler DANFE',()=>{
+ assert(html.includes('bRetryXml'));
+ assert(html.includes('Tentar novamente'));
+ assert(html.includes('Consulta não concluída: nenhum XML recuperado e nenhuma triagem realizada.'));
+ assert(html.includes('O serviço externo não retornou o XML dentro do prazo.'));
+ assert(html.includes('const tempoMaximo=setTimeout(()=>controller.abort(),25000)'));
+});
+test('Falha de consulta mantém feedback correto e nunca exibe resultado de consulta antiga',()=>{
+ assert(html.includes('const id=++state.consultaId'));
+ assert(html.includes('if(id!==state.consultaId)return'));
+ assert(html.includes('if(state.consultaController)state.consultaController.abort()'));
+ assert(html.includes('$("#chaveOut").innerHTML=""'));
+ assert(html.includes('registrarPassagem(ch,nf)'));
+});
+test('Validação de chave ocorre antes de mostrar consulta em progresso',()=>{
+ const inicio=html.indexOf('function renderChave(info,btn=null){');
+ const fim=html.indexOf('async function buscarXml(ch,btn){',inicio);
+ const trecho=html.slice(inicio,fim);
+ assert(trecho.indexOf('if(!c.dv)')<trecho.indexOf('Aguardando o XML do serviço externo'));
+ assert(trecho.includes('Nenhuma nota analisada nesta consulta.'));
+});
 console.log(`${passed} cenários passaram; sintaxe e renderização verificadas.`);
 module.exports={fixture,ctx};
