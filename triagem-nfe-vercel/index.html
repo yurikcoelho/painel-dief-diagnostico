@@ -162,16 +162,6 @@ details summary{cursor:pointer;font-family:var(--display);font-weight:600;font-s
 .st-status-line .st-detail{font-size:.88rem;margin-top:2px}
 .st-status-line .st-valid{color:#197d48}
 .st-status-line .st-pending{color:#996300}
-.st-evidence{border:1px solid var(--line);border-radius:9px;padding:10px 12px;margin-top:12px;background:var(--surface);color:var(--ink)}
-.st-evidence summary{font-size:.97rem}
-.st-evidence label{display:block;font-size:.94rem;font-weight:600;margin-top:12px}
-.st-evidence input[type=text]{display:block;width:100%;min-height:40px;background:var(--surface);color:var(--ink);border:1px solid var(--line);border-radius:7px;padding:8px;margin-top:5px}
-.st-evidence .st-proof-affirm{display:flex;align-items:flex-start;gap:10px;font-weight:400}
-.st-evidence .st-proof-affirm input{flex:0 0 auto;margin-top:4px}
-.st-evidence .btn{width:100%;min-height:42px;margin-top:12px}
-.st-evidence .st-proof-error{font-size:.9rem;color:var(--red);margin-top:7px}
-.st-evidence .st-proof-hint{font-size:.82rem;color:var(--muted);margin-top:8px}
-
 .legal-candidate.st-confirmed{border-left-color:#198d49;background:#e9f6ed;color:#15492b}
 .legal-candidate.st-confirmed b{color:#14552b}
 </style>
@@ -584,33 +574,12 @@ function maiorQuantidadePorUnidade(itens){
   const peso=itens.filter(i=>(i.un||"").toUpperCase()==="KG").reduce((total,i)=>total+(Number(i.q)||0),0);
   return (maior||"quantidades não informadas")+(peso>0?" · peso comercial total: "+peso.toLocaleString("pt-BR",{maximumFractionDigits:4})+" KG":"");
 }
-function lerComprovacoesST(){
-  try{const dados=JSON.parse(load("triagem.st.comprovacoes.v1")||"{}");return dados&&typeof dados==="object"&&!Array.isArray(dados)?dados:{};}catch(e){return {}}
-}
-function comprovacaoST(chave){
-  const prova=lerComprovacoesST()[chave];
-  return prova&&/^\d{5,15}$/.test(prova.passe||"")&&prova.fonte==="Conferência manual do auditor no SIAT"?prova:null;
-}
-function salvarComprovacaoST(chave,passe){
-  if(!/^\d{44}$/.test(chave)||!/^\d{5,15}$/.test(passe))return false;
-  const dados=lerComprovacoesST();
-  dados[chave]={passe,fonte:"Conferência manual do auditor no SIAT",em:new Date().toISOString()};
-  store("triagem.st.comprovacoes.v1",JSON.stringify(dados));
-  return !!comprovacaoST(chave);
-}
-function apagarComprovacaoST(chave){
-  const dados=lerComprovacoesST();
-  delete dados[chave];
-  store("triagem.st.comprovacoes.v1",JSON.stringify(dados));
-  return !comprovacaoST(chave);
-}
 function resumoRegimeHtml(nf){
   if(!nf.itens.length)return "";
   const cls=nf.itens.map(i=>({item:i.n,reg:classificarRegimeOperacional(i,nf)}));
   const all=cls.length,confirmados=cls.filter(x=>x.reg.tipo==="confirmado").length;
   const legal=confirmados===all,declarados=cls.filter(x=>x.reg.declaracaoCompativel).length;
   const declaracao=legal&&declarados===all;
-  const prova=declaracao?comprovacaoST(nf.chave):null;
   const titulo=legal?"✓ ANTECIPAÇÃO TOTAL — ICMS COM ENCERRAMENTO":
     confirmados?"ANTECIPAÇÃO TOTAL EM "+confirmados+" DE "+all+" ITENS":"ENQUADRAMENTO DE ST/ANTECIPAÇÃO — TRIAGEM";
   const texto=legal?"Regime legal identificado para carne bovina. Na revenda interna, não cabe nova antecipação das etapas já alcançadas pelo recolhimento regular.":
@@ -618,20 +587,6 @@ function resumoRegimeHtml(nf){
   const declaredText=declaracao?"✓ Tributação anterior declarada na NF-e":
     declarados?"⚠ Declaração compatível em "+declarados+" de "+all+" itens":
     "⚠ Tributação anterior não confirmada pelos campos fiscais";
-  const details=declaracao&&/^\d{44}$/.test(nf.chave)?(
-    prova?`<details class="st-evidence"><summary>Ver comprovante registrado manualmente</summary>
-        <p>Conferência do auditor: passe fiscal ${esc(prova.passe)}.</p>
-        <p class="st-proof-hint">Registro local, sem consulta ou validação automática pelo SIAT.</p>
-        <button type="button" class="btn small bApagarST" data-chave="${esc(nf.chave)}">Apagar anotação manual</button></details>`:
-    `<details class="st-evidence"><summary>Registrar conferência manual no SIAT</summary>
-       <form class="st-evidence-form" data-chave="${esc(nf.chave)}">
-        <label>Passe fiscal <input type="text" name="passe" inputmode="numeric" pattern="[0-9]{5,15}" maxlength="15" placeholder="Nº do passe fiscal" required></label>
-        <label class="st-proof-affirm"><input type="checkbox" name="conferido" required><span>Verifiquei no SIAT o pagamento, a memória de cálculo e o vínculo da entrada com esta saída.</span></label>
-        <button class="btn small" type="submit">Registrar conferência</button>
-        <p class="st-proof-error" role="alert"></p>
-        <p class="st-proof-hint">Apenas o passe e a anotação ficam neste navegador. Não há acesso automático ao banco da SEFAZ/RR.</p>
-       </form>
-     </details>`):"";
   return `<section class="st-overview ${legal?"ok":"check"}" aria-label="Situação de antecipação tributária">
     <div class="st-title">${titulo}</div><p>${texto}</p>
     <div class="st-three-status">
@@ -647,11 +602,10 @@ function resumoRegimeHtml(nf){
       </div>
       <div class="st-status-line">
         <div class="st-label">3 · Recolhimento anterior</div>
-        <div class="st-value ${prova?"st-valid":"st-pending"}">${prova?"✓ CONFERÊNCIA MANUAL REGISTRADA":"⚠ NÃO COMPROVADO PELO XML"}</div>
-        <div class="st-detail">${prova?"Auditor registrou a conferência do passe fiscal "+esc(prova.passe)+". Não é confirmação automática do SIAT.":"Exige conferir o recolhimento, memória de cálculo e vínculo no SIAT."}</div>
+        <div class="st-value st-pending">— NÃO VERIFICADO NO SIAT</div>
+        <div class="st-detail">O XML não comprova o pagamento. Se necessário, consulte posteriormente o passe fiscal, o débito e a memória de cálculo; a triagem não acessa o banco da SEFAZ/RR.</div>
       </div>
     </div>
-    ${details}
     ${cls.map(x=>`<div class="st-line"><b>${x.reg.tipo==="confirmado"?"✓":x.reg.tipo==="pendente"?"⚠":"—"} Item ${esc(x.item)}: ${esc(x.reg.nome)}</b><div>${esc(x.reg.nota||x.reg.detalhe)}</div></div>`).join("")}
     <p class="st-source">Enquadramento legal ≠ declaração na NF-e ≠ pagamento comprovado. ${legal?"RICMS/RR, arts. 612 a 614 e 618; Consulta SEFAZ/RR nº 011/2017.":"Catálogo operacional parcial do RICMS/RR."}</p>
   </section>`;
@@ -1343,17 +1297,6 @@ $("#fXml").addEventListener("change",async e=>{
 });
 ["#abordagem","#posto"].forEach(s=>$(s).addEventListener("change",()=>{if(s==="#posto")store("triagem.posto",$("#posto").value);renderAll()}));
 document.addEventListener("click",e=>{
-  const clear=e.target.closest(".bApagarST");
-  if(clear){
-    e.preventDefault();
-    const chave=clear.dataset.chave||"";
-    if(apagarComprovacaoST(chave)){
-      const nf=clear.closest("#histDetalhe")?histDetalheNf:state.nfs.find(n=>n.chave===chave);
-      const pane=clear.closest(".st-overview");
-      if(nf&&pane)pane.outerHTML=resumoRegimeHtml(nf);
-    }
-    return;
-  }
   const xml=e.target.closest(".bCopyXml");
   if(xml){e.preventDefault();copiarXmlBruto(xml);return}
   const copy=e.target.closest(".bCopyChave");
@@ -1361,24 +1304,6 @@ document.addEventListener("click",e=>{
   const b=e.target.closest(".bDue");
   if(b){e.preventDefault();abrirConsultaDue(b.dataset.chave||"",b)}
 });
-function registrarConferenciaST(event){
-  const form=event.target.closest(".st-evidence-form");
-  if(!form)return;
-  event.preventDefault();
-  const chave=form.dataset.chave||"",passe=(form.querySelector('[name="passe"]')?.value||"").trim();
-  const confirmado=!!form.querySelector('[name="conferido"]')?.checked;
-  const erro=form.querySelector(".st-proof-error");
-  const nf=form.closest("#histDetalhe")?histDetalheNf:state.nfs.find(n=>n.chave===chave);
-  if(!/^\d{5,15}$/.test(passe)){erro.textContent="Informe o número do passe fiscal (5 a 15 dígitos).";return;}
-  if(!confirmado){erro.textContent="Confirme que a consulta ao SIAT foi realizada.";return;}
-  if(!nf||nf.chave!==chave||!nf.itens.length||!nf.itens.every(i=>classificarRegimeOperacional(i,nf).semNovaAntecipacao)){
-    erro.textContent="Esta NF-e não atende aos critérios de registro de antecipação anterior.";return;
-  }
-  if(!salvarComprovacaoST(chave,passe)){erro.textContent="Não foi possível gravar no navegador.";return;}
-  const pane=form.closest(".st-overview");
-  if(pane)pane.outerHTML=resumoRegimeHtml(nf);
-}
-document.addEventListener("submit",registrarConferenciaST);
 $("#tabTriagem").onclick=()=>abrirAba("triagem");
 $("#tabHistorico").onclick=()=>abrirAba("historico");
 $("#histData").onchange=e=>renderHistorico(e.target.value);
