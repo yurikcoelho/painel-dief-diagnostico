@@ -151,8 +151,8 @@ test('ST carne: maminha/picanha em revenda interna RR com encerramento',()=>{
  assert(n.itens.every(i=>a.classificarRegimeOperacional(i,n).tipo==='confirmado'));
  assert(n.itens.every(i=>a.classificarRegimeOperacional(i,n).semNovaAntecipacao));
  const html=render(n);
- assert(html.includes('ST/ANTECIPAÇÃO COM ENCERRAMENTO — TODOS OS ITENS'));
- assert(html.includes('ENQUADRAMENTO LEGAL CONFIRMADO'));
+ assert(html.includes('ANTECIPAÇÃO TOTAL — ICMS COM ENCERRAMENTO'));
+ assert(html.includes('ENQUADRAMENTO LEGAL'));
  assert(!html.includes('Regra legal candidata: Gado'));
 });
 test('Quantidades preservam KG e soma do peso, sem 0 artificial',()=>{
@@ -178,7 +178,7 @@ test('Entrada interestadual de carne aplica regime mas não presume guia paga',(
 });
 test('ST fora de carne continua pendente, não verde por CST isolado',()=>{
  const n=interna('22030000','Cerveja','60','5405'),c=a.classificarRegimeOperacional(n.itens[0],n);
- assert.equal(c.tipo,'pendente');assert(!render(n).includes('ST/ANTECIPAÇÃO COM ENCERRAMENTO — TODOS OS ITENS'));
+ assert.equal(c.tipo,'pendente');assert(!render(n).includes('✓ ANTECIPAÇÃO TOTAL — ICMS COM ENCERRAMENTO'));
 });
 // v4.11.4 — copiar XML bruto após consulta automática, upload e abertura do histórico.
 test('XML bruto: botão existe na NF real sem inserir XML no HTML',()=>{
@@ -214,6 +214,30 @@ test('XML bruto: se clipboard bloquear, exibe conteúdo integral para seleção 
  fn(b);
  assert.equal(b.textContent,'Cópia bloqueada');assert.equal(elems.filter(x=>x.tag==='textarea').length,1);
  assert.equal(elems.find(x=>x.tag==='textarea').value,raw);
+});
+// v4.11.5 — distinguir regime, declaração e recolhimento sem consulta obrigatória.
+test('Antecipação total exibe três estados independentes na revenda de carne',()=>{
+ const n=carneRevendaRR(),h=render(n);
+ assert(h.includes('✓ ANTECIPAÇÃO TOTAL — ICMS COM ENCERRAMENTO'));
+ assert(h.includes('1 · Enquadramento legal'));
+ assert(h.includes('2 · Tributação anterior declarada'));
+ assert(h.includes('3 · Recolhimento anterior'));
+ assert(h.includes('✓ Tributação anterior declarada na NF-e'));
+ assert(h.includes('NÃO VERIFICADO NO SIAT'));
+ assert(!h.includes('CONFERÊNCIA MANUAL REGISTRADA'));
+ assert(!h.includes('Registrar conferência manual'));
+});
+test('Regime de carne não valida CFOP/CST alterados nem pagamento',()=>{
+ const n=carneRevendaRR();n.itens[0].cfop='5102';n.itens[0].icms.cst='00';
+ const h=render(n);
+ assert(h.includes('✓ ANTECIPAÇÃO TOTAL — ICMS COM ENCERRAMENTO'));
+ assert(h.includes('Declaração compatível em 1 de 2 itens'));
+ assert(h.includes('NÃO VERIFICADO NO SIAT'));
+});
+test('Sem regime confirmado não apresenta antecipação total para outros produtos',()=>{
+ const n=interna('22030000','Cerveja','60','5405'),h=render(n);
+ assert(!h.includes('✓ ANTECIPAÇÃO TOTAL — ICMS COM ENCERRAMENTO'));
+ assert(h.includes('Regime pendente para parte ou todos os itens'));
 });
 console.log(`${passed} cenários passaram; sintaxe e renderização verificadas.`);
 module.exports={fixture,ctx};
