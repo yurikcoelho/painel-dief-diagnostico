@@ -173,7 +173,7 @@ test('Mistura de KG e UN lista cada unidade sem comparação falsa',()=>{
 test('Entrada interestadual de carne aplica regime mas não presume guia paga',()=>{
  const n=fixture('02013000','Carne bovina resfriada','60','6404');
  const c=a.classificarRegimeOperacional(n.itens[0],n);
- assert.equal(c.tipo,'confirmado');assert.equal(c.semNovaAntecipacao,false);
+ assert.equal(c.tipo,'pendente');assert.equal(c.semNovaAntecipacao,false);
  assert(c.nota.includes('NÃO está comprovado'));assert(has(n,'Antecipação de RR a conferir'));
 });
 test('ST fora de carne continua pendente, não verde por CST isolado',()=>{
