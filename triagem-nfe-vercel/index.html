@@ -227,7 +227,7 @@ details summary{cursor:pointer;font-family:var(--display);font-weight:600;font-s
     <div id="histDetalhe"></div>
   </section>
 
-  <p class="footer">Ferramenta de apoio à triagem operacional · v4.11.5. Prioriza irregularidades materiais, destino da carga e exposição tributária. As regras seguem o RICMS/RR (Decreto nº 4.335-E/2001, consolidação de referência até jan/2026), o CTE (Lei nº 59/93) e a prática do posto; listas de NCM são indicativas e precisam de calibragem. Não substitui a análise do auditor. A busca automática envia somente a chave de acesso ao endpoint serverless desta ferramenta, que consulta o serviço privado consultadanfe.com; o XML aberto manualmente é lido só neste aparelho.</p>
+  <p class="footer">Ferramenta de apoio à triagem operacional · v4.11.6. Prioriza irregularidades materiais, destino da carga e exposição tributária. As regras seguem o RICMS/RR (Decreto nº 4.335-E/2001, consolidação de referência até jan/2026), o CTE (Lei nº 59/93) e a prática do posto; listas de NCM são indicativas e precisam de calibragem. Não substitui a análise do auditor. A busca automática envia somente a chave de acesso ao endpoint serverless desta ferramenta, que consulta o serviço privado consultadanfe.com; o XML aberto manualmente é lido só neste aparelho.</p>
 </main>
 
 <div class="scanner hidden" id="scanner" role="dialog" aria-label="Leitura do código">
@@ -1222,7 +1222,7 @@ function renderChave(info,btn=null){
   state.chave=c.ch;
   state.leitura=new Date();
   state.nfs=[];
-  $("#out").innerHTML='<div class="empty">Consultando XML e executando a triagem…</div>';
+  $("#out").innerHTML='<div class="empty">Nenhuma nota analisada nesta consulta.</div>';
   if(!c.dv){
     $("#chaveOut").innerHTML=`<div class="msg">A chave lida não passou no dígito verificador. Refaça a leitura do DANFE.</div>`;
     return;
@@ -1231,35 +1231,59 @@ function renderChave(info,btn=null){
     $("#chaveOut").innerHTML=`<div class="msg">${esc(MODELO[c.mod]||"Documento modelo "+c.mod)} lido. A consulta automática deste protótipo está focada em NF-e modelo 55.</div>`;
     return;
   }
-  $("#chaveOut").innerHTML=`<div class="chavebox"><b>NF-e nº ${c.nnf} · série ${c.serie} lida</b><p class="muted">Consultando XML e executando a triagem automática…</p></div>`;
+  $("#chaveOut").innerHTML=`<div class="chavebox"><b>NF-e nº ${c.nnf} · série ${c.serie} lida</b><p class="muted">Aguardando o XML do serviço externo (limite de 20 segundos)…</p></div>`;
+  $("#out").innerHTML='<div class="empty">Consultando XML. A triagem será executada quando o arquivo chegar.</div>';
   buscarXml(c.ch,btn);
 }
 async function buscarXml(ch,btn){
-  const o=btn?btn.textContent:"";if(btn){btn.disabled=true;btn.textContent="Buscando XML…"}
+  // Nunca sobrepor o resultado de uma consulta antiga à nota que está sendo lida agora.
+  const id=++state.consultaId;
+  if(state.consultaController)state.consultaController.abort();
+  const controller=new AbortController();
+  state.consultaController=controller;
+  const tempoMaximo=setTimeout(()=>controller.abort(),25000);
+  const textoOriginal=btn?btn.textContent:"";
+  if(btn){btn.disabled=true;btn.textContent="Buscando XML…"}
   aviso("");
   try{
-    const r=await fetch(API_URL,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({chave:ch,format:"json"})});
+    const r=await fetch(API_URL,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({chave:ch,format:"json"}),signal:controller.signal});
     let j=null;try{j=await r.json()}catch(e){}
+    if(id!==state.consultaId)return;
     if(!r.ok||!j||j.status!=="ok"||!j.xml_base64){
       const m=(j&&(j.mensagem||j.message||j.erro||j.error))||("HTTP "+r.status);
-      throw new Error(m)}
-    const bin=atob(j.xml_base64);const bytes=Uint8Array.from(bin,c=>c.charCodeAt(0));
+      throw new Error(m);
+    }
+    const bin=atob(j.xml_base64),bytes=Uint8Array.from(bin,c=>c.charCodeAt(0));
     const xml=new TextDecoder("utf-8").decode(bytes);
     const nf=parseNFe(xml,"consulta "+ch);
     nf.leituraEm=state.leitura||new Date();
     nf.prevPassagem=passagemAnterior(ch);
     registrarPassagem(ch,nf);
     registrarConsulta(nf,analyze(nf,ctx()));
-    state.nfs=[nf].concat(state.nfs.filter(n=>n.chave!==nf.chave));renderAll();
+    if(id!==state.consultaId)return;
+    state.nfs=[nf].concat(state.nfs.filter(n=>n.chave!==nf.chave));
+    renderAll();
     $("#chaveOut").innerHTML="";
     document.querySelector(".nf")&&document.querySelector(".nf").scrollIntoView({behavior:"smooth",block:"start"});
   }catch(e){
-    const rede=e instanceof TypeError;
-    aviso(rede?"Não foi possível acessar o serviço de consulta. Tente novamente ou use “Abrir XML manualmente (contingência)”.":"A consulta não retornou o XML: "+e.message+". Se necessário, use “Abrir XML manualmente (contingência)”.",true);
-  }finally{if(btn){btn.disabled=false;btn.textContent=o}}
+    if(id!==state.consultaId)return;
+    const semConexao=e instanceof TypeError;
+    const timeout=e&&e.name==="AbortError"||/excedeu o tempo limite|timeout|timed out/i.test(String(e&&e.message||""));
+    const descricao=timeout?"O serviço externo não retornou o XML dentro do prazo. A NF-e não foi analisada.":
+      semConexao?"Não foi possível acessar o serviço externo. A NF-e não foi analisada.":
+      "Não foi possível obter ou processar o XML: "+String(e&&e.message||e)+". A NF-e não foi analisada.";
+    const c=parseChave(ch);
+    $("#chaveOut").innerHTML=`<div class="chavebox"><b>NF-e nº ${esc(c.nnf)} · série ${esc(c.serie)}</b><p class="muted">${esc(descricao)}</p><button class="btn small bRetryXml" type="button" data-chave="${esc(ch)}">Tentar novamente</button><p class="hint">Alternativa: “Abrir XML manualmente (contingência)”. Não há irregularidade fiscal presumida por falha de consulta.</p></div>`;
+    $("#out").innerHTML='<div class="empty">Consulta não concluída: nenhum XML recuperado e nenhuma triagem realizada.</div>';
+    aviso(timeout?"A consulta externa excedeu 20 segundos. Você pode tentar novamente sem reler o DANFE.":descricao,false);
+  }finally{
+    clearTimeout(tempoMaximo);
+    if(id===state.consultaId)state.consultaController=null;
+    if(btn){btn.disabled=false;btn.textContent=textoOriginal}
+  }
 }
 /* ---------- fluxo ---------- */
-const state={chave:null,nfs:[],leitura:null};
+const state={chave:null,nfs:[],leitura:null,consultaId:0,consultaController:null};
 function aviso(txt,scroll){const a=$("#aviso");if(!txt){a.classList.add("hidden");return}a.textContent=txt;a.classList.remove("hidden");if(scroll)a.scrollIntoView({behavior:"smooth",block:"center"})}
 function ctx(){const v=$("#abordagem").value;return{posto:$("#posto").value.trim(),abordagem:v?new Date(v+":00-04:00"):null}}
 function renderAll(){
@@ -1297,6 +1321,19 @@ $("#fXml").addEventListener("change",async e=>{
 });
 ["#abordagem","#posto"].forEach(s=>$(s).addEventListener("change",()=>{if(s==="#posto")store("triagem.posto",$("#posto").value);renderAll()}));
 document.addEventListener("click",e=>{
+  const retry=e.target.closest(".bRetryXml");
+  if(retry){
+    e.preventDefault();
+    const chave=retry.dataset.chave||"";
+    if(!/^\d{44}$/.test(chave)||retry.disabled)return;
+    const c=parseChave(chave);
+    $("#chaveOut").innerHTML=`<div class="chavebox"><b>NF-e nº ${esc(c.nnf)} · série ${esc(c.serie)} lida</b><p class="muted">Nova tentativa: aguardando o XML externo (limite de 20 segundos)…</p></div>`;
+    $("#out").innerHTML='<div class="empty">Consultando XML. A triagem será executada quando o arquivo chegar.</div>';
+    state.chave=chave;
+    state.leitura=new Date();
+    buscarXml(chave);
+    return;
+  }
   const xml=e.target.closest(".bCopyXml");
   if(xml){e.preventDefault();copiarXmlBruto(xml);return}
   const copy=e.target.closest(".bCopyChave");
