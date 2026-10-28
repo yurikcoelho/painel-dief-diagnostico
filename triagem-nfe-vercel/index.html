@@ -533,7 +533,7 @@ function classificarRegimeOperacional(i,nf){
   const anterior=i.icms.cst==="60"||i.icms.csosn==="500";
   if(/^020[12]\d{4}$/.test(n)&&(internaRR||entradaRR)){
     const declaracaoCompativel=internaRR&&anterior&&cfop==="5405";
-    return {tipo:"confirmado",id:"carne_bovina",nome:"Carne bovina — ST/antecipação com encerramento",
+    return {tipo:internaRR?"confirmado":"pendente",id:"carne_bovina",nome:"Carne bovina — ST/antecipação com encerramento",
       base:internaRR?"RICMS/RR, art. 612; Consulta SEFAZ/RR nº 011/2017":"RICMS/RR, arts. 612, II, 613, 614 e 618, II",
       detalhe:internaRR?"Revenda interna de carne bovina após abate/entrada tributados. O recolhimento anterior encerra as operações subsequentes.":"Entrada interestadual de carne bovina: antecipação na primeira repartição fiscal de RR, com encerramento, salvo entrada destinada a estabelecimento industrial (art. 614).",
       declaracaoCompativel,semNovaAntecipacao:declaracaoCompativel,
