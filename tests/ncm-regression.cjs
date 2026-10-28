@@ -180,5 +180,40 @@ test('ST fora de carne continua pendente, não verde por CST isolado',()=>{
  const n=interna('22030000','Cerveja','60','5405'),c=a.classificarRegimeOperacional(n.itens[0],n);
  assert.equal(c.tipo,'pendente');assert(!render(n).includes('ST/ANTECIPAÇÃO COM ENCERRAMENTO — TODOS OS ITENS'));
 });
+// v4.11.4 — copiar XML bruto após consulta automática, upload e abertura do histórico.
+test('XML bruto: botão existe na NF real sem inserir XML no HTML',()=>{
+ const n=fixture('02013000','Carne bovina'),raw='<?xml version="1.0"?><nfeProc><NFe>conteúdo integral &amp; completo</NFe></nfeProc>';
+ n.xmlBruto=raw;const h=render(n);
+ assert(h.includes('bCopyXml'));assert(h.includes('Copiar XML bruto'));assert(h.includes('bCopyChave'));
+ assert(!h.includes(raw)); // XML mantido em memória e não em atributo HTML.
+});
+test('XML bruto: botão não aparece sem texto original disponível',()=>{
+ const n=fixture('02013000','Carne bovina');assert(!render(n).includes('bCopyXml'));
+});
+test('XML bruto: cópia usa nota da tela; histórico não troca por NF com mesma chave',()=>{
+ const code=html.slice(html.indexOf('function copiarXmlBruto(btn){'),html.indexOf('function renderChave(info,btn=null){'));
+ assert(code.includes('function copiarXmlBruto'));
+ const key='1'.repeat(44),xmlAtual='<nfeProc>triagem &amp; final</nfeProc>',xmlHistorico='<nfeProc>histórico original</nfeProc>';
+ const atuais=[{chave:key,xmlBruto:xmlAtual}],historica={chave:key,xmlBruto:xmlHistorico};
+ const copias=[];
+ const make=new Function('state','histDetalheNf','copiarTexto','setTimeout','document',code+'return copiarXmlBruto');
+ const fn=make({nfs:atuais},historica,(txt,cb)=>{copias.push(txt);cb(true)},()=>{},{});
+ function btn(hist){return {dataset:{chave:key},textContent:'Copiar XML bruto',isConnected:true,closest:sel=>hist&&sel==='#histDetalhe'?{}:null};}
+ const a=btn(false),b=btn(true);fn(a);fn(b);
+ assert.equal(copias[0],xmlAtual);assert.equal(copias[1],xmlHistorico);
+ assert.equal(a.textContent,'XML copiado ✓');assert.equal(b.textContent,'XML copiado ✓');
+});
+test('XML bruto: se clipboard bloquear, exibe conteúdo integral para seleção manual',()=>{
+ const code=html.slice(html.indexOf('function copiarXmlBruto(btn){'),html.indexOf('function renderChave(info,btn=null){'));
+ const raw='<nfeProc>'+('carne bovina &amp; '.repeat(50))+'</nfeProc>';
+ const area={};const elems=[];
+ const document={createElement:tag=>{const e={tag,readOnly:false,rows:0,attributes:{},setAttribute(k,v){this.attributes[k]=v},append(...children){this.children=children}};elems.push(e);return e}};
+ const make=new Function('state','histDetalheNf','copiarTexto','setTimeout','document',code+'return copiarXmlBruto');
+ const fn=make({nfs:[{chave:'44',xmlBruto:raw}]},null,(txt,cb)=>cb(false),()=>{},document);
+ const b={dataset:{chave:'44'},textContent:'Copiar XML bruto',closest:()=>null,nextElementSibling:null,insertAdjacentElement:(pos,el)=>{b.nextElementSibling=el}};
+ fn(b);
+ assert.equal(b.textContent,'Cópia bloqueada');assert.equal(elems.filter(x=>x.tag==='textarea').length,1);
+ assert.equal(elems.find(x=>x.tag==='textarea').value,raw);
+});
 console.log(`${passed} cenários passaram; sintaxe e renderização verificadas.`);
 module.exports={fixture,ctx};
