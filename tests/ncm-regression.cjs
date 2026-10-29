@@ -32,7 +32,7 @@ test('Suco da posição 2202 não é refrigerante por prefixo',()=>assert(!ids(f
 test('Lubrificante CST60 não vira monofásico',()=>{const n=fixture('27101932','Óleo lubrificante','60','6404');assert(!a.isMono(n.itens[0]));assert(ids(n).includes('combustiveis'));assert(!ids(n).includes('monofasico'));assert(has(n,'ST de RR a conferir'));assert(!alerts(n).some(x=>x.texto.includes('Não há ICMS a cobrar')));});
 test('Carne com CST02 mantém conferência e revela conflito',()=>{const n=fixture('02013000','Carne bovina','02');assert(!a.isMono(n.itens[0]));assert(has(n,'CST monofásico sem combustível'));assert(has(n,'Antecipação de RR a conferir'));});
 for(const [cst,cfop] of [['60','6404'],['00','6403'],['10','6403']])test('Declaração '+cst+'/'+cfop+' não esconde ST',()=>assert(has(fixture('22030000','Cerveja',cst,cfop),'ST de RR a conferir')));
-test('Retenção atual reconhecida, não chamada anterior',()=>{const n=fixture('02013000','Carne bovina','10','6403');n.itens[0].icms.vICMSST=180;n.itens[0].icms.vBCST=2000;assert(a.tributacaoDeclarada(n.itens[0]).includes('nesta operação'));assert(!a.tributacaoDeclarada(n.itens[0]).includes('anterior'));assert(alerts(n).find(x=>x.titulo.includes('Antecipação de RR')).texto.includes('beneficiário RR'));});
+test('Retenção atual reconhecida, não chamada anterior',()=>{const n=fixture('02013000','Carne bovina','10','6403');n.itens[0].icms.vICMSST=180;n.itens[0].icms.vBCST=2000;assert(a.tributacaoDeclarada(n.itens[0]).includes('nesta operação'));assert(!a.tributacaoDeclarada(n.itens[0]).includes('anterior'));assert(alerts(n).find(x=>x.titulo.includes('Antecipação de RR')).texto.includes('Retenção nesta operação declarada'));});
 test('CST90 com imposto retido é sinal de ST atual',()=>{const n=fixture('22030000','Cerveja','90','6403');n.itens[0].icms.vICMSST=180;n.itens[0].icms.vBCST=2000;assert(a.isSTcode(n.itens[0]));assert(!has(n,'CFOP de substituto incompatível'));});
 test('Importado usa 4% no cenário art75, componentes incluídos',()=>{const n=fixture('96081000','Caneta');const i=n.itens[0];Object.assign(i,{vFrete:100,vSeg:20,vOutro:30,vDesc:50,vIPI:100});i.icms.orig='1';i.icms.pICMS=4;i.icms.vICMS=40;assert.equal(a.interRegiao('SP',i),4);assert.equal(a.baseOperacao(i),1200);assert(alerts(n).find(x=>x.titulo.includes('Antecipação parcial')).texto.includes('192,00'));});
 test('Benefício/redução pendente não recebe estimativa automática',()=>{const n=fixture('96081000','Caneta','20');n.itens[0].icms.pRedBC=50;assert(has(n,'fundamento pendente'));assert(alerts(n).find(x=>x.titulo.includes('Antecipação parcial')).texto.includes('Sem estimativa segura'));});
@@ -251,14 +251,14 @@ test('XML bruto: se clipboard bloquear, exibe conteúdo integral para seleção 
  assert.equal(elems.find(x=>x.tag==='textarea').value,raw);
 });
 // v4.11.5 — distinguir regime, declaração e recolhimento sem consulta obrigatória.
-test('Antecipação total exibe três estados independentes na revenda de carne',()=>{
+test('Antecipação total exibe enquadramento e declaração sem alerta de pagamento de ST',()=>{
  const n=carneRevendaRR(),h=render(n);
  assert(h.includes('✓ ANTECIPAÇÃO TOTAL — ICMS COM ENCERRAMENTO'));
  assert(h.includes('1 · Enquadramento legal'));
  assert(h.includes('2 · Tributação anterior declarada'));
- assert(h.includes('3 · Recolhimento anterior'));
+ assert(!h.includes('3 · Recolhimento anterior'));
  assert(h.includes('✓ Tributação anterior declarada na NF-e'));
- assert(h.includes('NÃO VERIFICADO NO SIAT'));
+ assert(!h.includes('NÃO VERIFICADO NO SIAT'));
  assert(!h.includes('CONFERÊNCIA MANUAL REGISTRADA'));
  assert(!h.includes('Registrar conferência manual'));
 });
@@ -267,12 +267,12 @@ test('Regime de carne não valida CFOP/CST alterados nem pagamento',()=>{
  const h=render(n);
  assert(h.includes('✓ ANTECIPAÇÃO TOTAL — ICMS COM ENCERRAMENTO'));
  assert(h.includes('Declaração compatível em 1 de 2 itens'));
- assert(h.includes('NÃO VERIFICADO NO SIAT'));
+ assert(!h.includes('NÃO VERIFICADO NO SIAT'));
 });
 test('Sem regime confirmado não apresenta antecipação total para outros produtos',()=>{
  const n=interna('22030000','Cerveja','60','5405'),h=render(n);
  assert(!h.includes('✓ ANTECIPAÇÃO TOTAL — ICMS COM ENCERRAMENTO'));
- assert(h.includes('Regime pendente para parte ou todos os itens'));
+ assert(h.includes('Condições do regime a conferir'));
 });
 // v4.11.6 — a consulta externa não pode ficar visualmente travada após erro.
 test('Consulta em timeout mostra botão de nova tentativa sem exigir reler DANFE',()=>{
