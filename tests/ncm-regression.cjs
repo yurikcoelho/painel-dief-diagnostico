@@ -174,11 +174,46 @@ test('Entrada interestadual de carne aplica regime mas não presume guia paga',(
  const n=fixture('02013000','Carne bovina resfriada','60','6404');
  const c=a.classificarRegimeOperacional(n.itens[0],n);
  assert.equal(c.tipo,'pendente');assert.equal(c.semNovaAntecipacao,false);
- assert(c.nota.includes('NÃO está comprovado'));assert(has(n,'Antecipação de RR a conferir'));
+ assert(c.nota.includes('responsabilidade tributária'));assert(has(n,'Antecipação de RR a conferir'));
 });
 test('ST fora de carne continua pendente, não verde por CST isolado',()=>{
  const n=interna('22030000','Cerveja','60','5405'),c=a.classificarRegimeOperacional(n.itens[0],n);
  assert.equal(c.tipo,'pendente');assert(!render(n).includes('✓ ANTECIPAÇÃO TOTAL — ICMS COM ENCERRAMENTO'));
+});
+// v4.11.7 — autopeças NCM 8511 / CEST 01.054.00 e triagem sem comprovante de ST.
+function motorPartidaST(){
+ const n=fixture('85114000','(8000158P) MOTOR PART PG260D 12V-Ped Anex:436','60','5405');
+ n.emit.uf='RR';n.emit.mun='Boa Vista';n.ide.idDest='1';n.ide.cUF='14';n.ide.indFinal='1';
+ n.dest.indIE='9';n.dest.ie='';n.itens[0].cest='0105400';
+ Object.assign(n.itens[0].icms,{orig:'5',vBC:0,pICMS:0,vICMS:0,vBCST:0,vICMSST:0,vICMSSTRet:0});
+ n.tot.vICMS=0;n.tot.vNF=585;n.tot.vProd=585;
+ return n;
+}
+test('NCM 8511.40.00/CEST 01.054.00 reconhece ST do motor de partida na NF 42474',()=>{
+ const n=motorPartidaST(),reg=a.classificarRegimeOperacional(n.itens[0],n),h=render(n);
+ assert(ids(n).includes('autopecas'));assert.equal(reg.id,'autopecas_st');
+ assert.equal(reg.tipo,'confirmado');assert(reg.semNovaAntecipacao);
+ assert(h.includes('✓ AUTOPEÇAS — ST ANTERIOR DECLARADA'));
+ assert(!has(n,'ST interna de RR a conferir'));
+ assert(!h.includes('NÃO VERIFICADO NO SIAT'));assert(!h.includes('3 · Recolhimento anterior'));
+});
+for(const [nome,alterar] of [
+ ['CEST ausente',n=>n.itens[0].cest=''],
+ ['CEST divergente',n=>n.itens[0].cest='0109900'],
+ ['NCM divergente',n=>n.itens[0].ncm='85124000'],
+ ['descrição genérica',n=>n.itens[0].desc='Equipamento genérico'],
+ ['CFOP venda comum',n=>n.itens[0].cfop='5102'],
+ ['CST sem ST anterior',n=>n.itens[0].icms.cst='00'],
+ ['saída interestadual',n=>{n.dest.uf='AM';n.ide.idDest='2';n.itens[0].cfop='6404'}]
+])test('Motor de partida não recebe ST confirmada com '+nome,()=>{
+ const n=motorPartidaST();alterar(n);
+ assert.notEqual(a.classificarRegimeOperacional(n.itens[0],n).tipo,'confirmado');
+});
+test('Triagem ST não solicita comprovante de arrecadação',()=>{
+ for(const n of [motorPartidaST(),carneRevendaRR()]){
+  const h=render(n);assert(!h.includes('NÃO VERIFICADO NO SIAT'));assert(!h.includes('3 · Recolhimento anterior'));
+  assert(!alerts(n).some(x=>/comprovante de (?:arrecadação|pagamento)|olhe a guia/i.test(x.texto)));
+ }
 });
 // v4.11.4 — copiar XML bruto após consulta automática, upload e abertura do histórico.
 test('XML bruto: botão existe na NF real sem inserir XML no HTML',()=>{
