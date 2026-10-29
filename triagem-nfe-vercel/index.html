@@ -227,7 +227,7 @@ details summary{cursor:pointer;font-family:var(--display);font-weight:600;font-s
     <div id="histDetalhe"></div>
   </section>
 
-  <p class="footer">Ferramenta de apoio à triagem operacional · v4.11.6. Prioriza irregularidades materiais, destino da carga e exposição tributária. As regras seguem o RICMS/RR (Decreto nº 4.335-E/2001, consolidação de referência até jan/2026), o CTE (Lei nº 59/93) e a prática do posto; listas de NCM são indicativas e precisam de calibragem. Não substitui a análise do auditor. A busca automática envia somente a chave de acesso ao endpoint serverless desta ferramenta, que consulta o serviço privado consultadanfe.com; o XML aberto manualmente é lido só neste aparelho.</p>
+  <p class="footer">Ferramenta de apoio à triagem operacional · v4.11.7. Prioriza irregularidades materiais, destino da carga e exposição tributária. As regras seguem o RICMS/RR (Decreto nº 4.335-E/2001, consolidação de referência até jan/2026), o CTE (Lei nº 59/93) e a prática do posto; listas de NCM são indicativas e precisam de calibragem. Não substitui a análise do auditor. A busca automática envia somente a chave de acesso ao endpoint serverless desta ferramenta, que consulta o serviço privado consultadanfe.com; o XML aberto manualmente é lido só neste aparelho.</p>
 </main>
 
 <div class="scanner hidden" id="scanner" role="dialog" aria-label="Leitura do código">
@@ -407,7 +407,7 @@ function cfopDesc(c){c=onlyDig(c);if(CFOPD[c])return CFOPD[c];const m={"1":"Entr
 const TRANSF=["151","152","153","155","156","408","409","552","557","658","659"];
 
 /* Listas de ST/antecipação em RR (prefixos de NCM, sem pontos) */
-const AUTOPECAS="381512 391810 392330 392630 40103 5910 401693 48239 401610 401699 570500 590390 590900 63061 650610 700711 700721 700910 701400 731100 7320 7325 780600 80070090 830120 830160 830170 830210 830230 8310 84073 840820 84099 84122 841330 841410 841480 841391 841490 842123 842129 84219 842410 842131 842139 842542 8431 843149 843390 848110 84812 848180 8482 850520 850710 851220 851240 851290 85171213 8518 851981 852550 852560 85272 852910 853400 853530 85365 853610 853620 85364 853650 853910 85392 854420 854430 8708 87141 871690 902610 902620 9029 903033 903180 903289 910400 940120 940190 961380 4009 450490 681299 482340 391910 391990 841231 841319 841350 841381 841360 841370 841459 842139 850110 850131 850450 850720 850730 851230 902710 400811 491110 560122 570320 570330 591190 690390 700729 731450 731511 841899 841950 842490 842549 843141 850161 853110 901410 902519 902590 902690 903210 903220 391620 5902 681290 732210 840910".split(" ");
+const AUTOPECAS="381512 391810 392330 392630 40103 5910 401693 48239 401610 401699 570500 590390 590900 63061 650610 700711 700721 700910 701400 731100 7320 7325 780600 80070090 830120 830160 830170 830210 830230 8310 84073 840820 84099 84122 841330 841410 841480 841391 841490 842123 842129 84219 842410 842131 842139 842542 8431 843149 843390 848110 84812 848180 8482 850520 850710 8511 851220 851240 851290 85171213 8518 851981 852550 852560 85272 852910 853400 853530 85365 853610 853620 85364 853650 853910 85392 854420 854430 8708 87141 871690 902610 902620 9029 903033 903180 903289 910400 940120 940190 961380 4009 450490 681299 482340 391910 391990 841231 841319 841350 841381 841360 841370 841459 842139 850110 850131 850450 850720 850730 851230 902710 400811 491110 560122 570320 570330 591190 690390 700729 731450 731511 841899 841950 842490 842549 843141 850161 853110 901410 902519 902590 902690 903210 903220 391620 5902 681290 732210 840910".split(" ");
 const MATCONS="2522 38160011 38160012 38160019 38244000 38245000 391000 3916 3917 3918 3919 3920 3921 3922 3924 3925 39269010 40059190 4009 40169100 4814 6805 68071000 6809 6810 6811 6907 6908 6910 7003 7004 7005 70060000 70071 7007190 70072 700729 70080000 70200000 72 7310 7324 7325 7411 7412 74182000 76071990 7608 76090000 76152000 84191 8481 8516 8535 8536 8537 8538 85434000 8544 8546 8547 9019 910700".split(" ");
 const MATCONS_EXC=["39173221","39173251","85365090"];
 const ST_RULES=[
@@ -458,7 +458,7 @@ function qualificarRegra(r,i){
     case "fumo":evidencia=/cigar|fumo|tabaco/.test(d);break;
     case "cimento":evidencia=/cimento/.test(d);break;
     case "cosmeticos":evidencia=/cosmetic|perfume|shampoo|xampu|maquiagem|desodorante|capilar|creme|locao|esmalte/.test(d);break;
-    case "alcoolicas":evidencia=/vinho|licor|vodka|rum\b|cachaca|whisk|alcoolic|destilad|conhaque/.test(d);condicao="Confira bebida alcoólica da lista e finalidade comercial. O art. 831 também atribui responsabilidade ao estabelecimento de RR que recebe de outra UF para comercialização; confira guia e exceções.";break;
+    case "alcoolicas":evidencia=/vinho|licor|vodka|rum\b|cachaca|whisk|alcoolic|destilad|conhaque/.test(d);condicao="Confira bebida alcoólica da lista e finalidade comercial. O art. 831 também atribui responsabilidade ao estabelecimento de RR que recebe de outra UF para comercialização; conferir exceções.";break;
     case "bebidas":
       evidencia=/agua|gelo|refrigerante|cerveja|chope|isotonic|energetic/.test(d);
       if(/suco|nectar|bebida lactea/.test(d)&&!evidencia)return null;
@@ -476,13 +476,13 @@ function qualificarRegra(r,i){
       if(/^392|^401490|^701020/.test(n)){evidencia=/mamadeira|chupeta|intrauter|\bdiu\b/.test(d);if(/prato|cop[oas]|talher|pote|cozinha|mesa|embalagem industrial/.test(d)&&!evidencia)return null;}
       if(n==="90189099"){evidencia=/intrauter|\bdiu\b/.test(d);if(/cirurgic|endoscop/.test(d)&&!evidencia)return null;}
       if(!/^392|^401490|^701020|^90189099/.test(n))evidencia=/medicament|soro|vacina|algodao|atadura|absorvente|fralda|preservativo|seringa|agulha|dent|vitamina|contraceptivo|contraste/.test(d);
-      condicao="Compare produto e NCM completo com o quadro atual do art. 798: mamadeiras/chupetas/DIU não abrangem qualquer artefato plástico. Observe exclusão de medicamentos/soros de uso veterinário. O art. 798 atribui responsabilidade ao importador/adquirente/destinatário na entrada; confira recolhimento de RR e condições.";
+      condicao="Compare produto e NCM completo com o quadro atual do art. 798: mamadeiras/chupetas/DIU não abrangem qualquer artefato plástico. Observe exclusão de medicamentos/soros de uso veterinário. O art. 798 atribui responsabilidade ao importador/adquirente/destinatário na entrada; confira condições e responsabilidade.";
       if(/^300[45]/.test(n)){evidencia=false;condicao="NCM de medicamentos/material médico com correspondência ambígua no quadro convertido em Markdown. Valide a redação/tabela oficial vigente antes de definir ST; não usar a redação anterior automaticamente.";}break;
     case "combustiveis":
       if(monoNome(i))return null;
       evidencia=/combustiv|lubrific|graxa|fluido de freio|anticongel|aditivo|hidratad|querosene/.test(d);
       if(/solvente|asfalto|betume/.test(d)&&!evidencia)return null;
-      condicao="Confirme produto e descrição da lista dos arts. 802/803. Lubrificantes, querosene e álcool hidratado não são monofásicos pelo art. 839-U. Retenção e recolhimento de RR exigem conferência.";break;
+      condicao="Confirme produto e descrição da lista dos arts. 802/803. Lubrificantes, querosene e álcool hidratado não são monofásicos pelo art. 839-U. Verificar regime aplicável em RR.";break;
     case "tintas":
       if(["35061090","35069190"].includes(n)&&/cola.*escolar|escolar.*cola/.test(d))return null;
       if(n==="32061119")return null;
@@ -492,11 +492,11 @@ function qualificarRegra(r,i){
     case "carnes_gado":
       if(/equino|cavalo|coelho|peru|pato/.test(d))return null;
       evidencia=/bovin|bufalin|suin|porc|caprin|ovin|cordeiro|gado|boi\b|vaca\b/.test(d);
-      condicao="Entrada interestadual: confira antecipação com encerramento e guia de RR, mesmo com CST 60. Destino industrial é exceção do art. 614. Gado vivo tem regras de diferimento e exceções próprias (art. 612), inclusive recria; não confundir com carne abatida.";break;
+      condicao="Entrada interestadual: conferir hipótese de antecipação com encerramento em RR, mesmo com CST 60. Destino industrial é exceção do art. 614. Gado vivo tem regras de diferimento e exceções próprias (art. 612), inclusive recria; não confundir com carne abatida.";break;
     case "frango":
       if(n.startsWith("0207")){if(/peru|pato|ganso|codorna|avestruz/.test(d))return null;evidencia=/frango/.test(d);}
       else {if(/industrial|nao comestivel/.test(d))return null;evidencia=/comestivel|aliment|cozinha|refinad/.test(d);}
-      condicao="Art. 836: frango/partes e óleo comestível provenientes de outra UF/exterior, com responsabilidade do destinatário na entrada. Confira espécie, finalidade e guia; não abrange toda ave ou óleo industrial.";break;
+      condicao="Art. 836: frango/partes e óleo comestível provenientes de outra UF/exterior, com responsabilidade do destinatário na entrada. Confira espécie, finalidade e responsabilidade tributária; não abrange toda ave ou óleo industrial.";break;
     case "lampadas":
       evidencia=/barbear|lamina|lampada|reator|starter|arrancador/.test(d);
       if(n.startsWith("853650")){evidencia=/starter|arrancador/.test(d);if(/interruptor|automotiv/.test(d)&&!evidencia)return null;}
@@ -506,8 +506,8 @@ function qualificarRegra(r,i){
       condicao="Somente telhas, cumeeiras, caixas d’água e respectivas tampas nos NCM do art. 839-B. Não aplicar o prazo genérico de material de construção a esses produtos; sem retenção, confira recolhimento do destinatário na entrada (§ 1º).";break;
     case "autopecas":
       if(n==="73259100")return null;
-      evidencia=autoDesc.test(d);if(/construc|obra civil|predial|industrial|moinho/.test(d)&&!evidencia)return null;
-      condicao="Exige uso automotivo ou hipótese cadastral do art. 839-E, § 2º. CNAE do destinatário não consta do XML padrão: consulte o cadastro. Confira exceções do § 3º (destino industrial, transferências e outras) e exclusão 7325.91.00.";break;
+      evidencia=autoDesc.test(d)||(n.startsWith("8511")&&/motor\s+(?:de\s+)?(?:part(?:ida)?|arranq(?:ue)?)\b|alternador|dinamo|magneto|bobina.*ignicao|vela.*ignicao/.test(d));if(/construc|obra civil|predial|industrial|moinho/.test(d)&&!evidencia)return null;
+      condicao="Exige uso automotivo ou hipótese cadastral do art. 839-E, § 2º. NCM 8511 e CEST 01.054.00 incluem motores de partida. Confira exceções do § 3º (destino industrial, transferências e outras) e exclusão 7325.91.00.";break;
     case "racoes":
       if(/bovin|suin|avicola|frango|gado|equino/.test(d))return null;
       evidencia=/\bpet\b|cao|caes|gato|animais domesticos|passaro|hamster|coelho de estimacao/.test(d);
@@ -554,12 +554,22 @@ function classificarRegimeOperacional(i,nf){
       base:internaRR?"RICMS/RR, art. 612; Consulta SEFAZ/RR nº 011/2017":"RICMS/RR, arts. 612, II, 613, 614 e 618, II",
       detalhe:internaRR?"Revenda interna de carne bovina após abate/entrada tributados. O recolhimento anterior encerra as operações subsequentes.":"Entrada interestadual de carne bovina: antecipação na primeira repartição fiscal de RR, com encerramento, salvo entrada destinada a estabelecimento industrial (art. 614).",
       declaracaoCompativel,semNovaAntecipacao:declaracaoCompativel,
-      nota:internaRR?(declaracaoCompativel?"CFOP 5.405 e CST 60/CSOSN 500 coerentes; o XML não comprova pagamento anterior.":"O documento não apresenta a combinação usual de revenda já tributada (CFOP 5.405 e CST 60/CSOSN 500); confira a etapa anterior."):
-        "O enquadramento legal é claro, mas recolhimento em favor de RR na entrada NÃO está comprovado apenas pelo XML."};
+      nota:internaRR?(declaracaoCompativel?"CFOP 5.405 e CST 60/CSOSN 500 coerentes com tributação anterior declarada.":"O documento não apresenta a combinação usual de revenda já tributada (CFOP 5.405 e CST 60/CSOSN 500); confira a etapa anterior."):
+        "Na entrada interestadual, conferir responsabilidade tributária e condições legais do regime; a triagem não exige comprovante de ST."};
+  }
+  // Confirma a coerência documental da ST de motores de partida, sem validação financeira.
+  const motorPartida=n==="85114000"&&onlyDig(i.cest)==="0105400"&&/motor\s+(?:de\s+)?(?:part(?:ida)?|arranq(?:ue)?)\b/.test(descricaoFiscal(i));
+  if(internaRR&&motorPartida){
+    const declaracaoCompativel=anterior&&cfop==="5405";
+    return {tipo:declaracaoCompativel?"confirmado":"pendente",id:"autopecas_st",nome:"Autopeças — motor de partida (ST)",
+      base:"RICMS/RR, art. 839-E; Convênio ICMS 142/2018, Anexo II, item 54.0, CEST 01.054.00",
+      detalhe:"NCM 8511.40.00, CEST 01.054.00 e descrição de motor de partida compatíveis com a lista de ST de autopeças. Operação interna em RR.",
+      declaracaoCompativel,semNovaAntecipacao:declaracaoCompativel,
+      nota:declaracaoCompativel?"CFOP 5.405 e CST 60/CSOSN 500 coerentes com ST anterior declarada; não se exige comprovante de arrecadação na triagem.":"Regime de autopeças identificado, mas CFOP/CST não indicam ST anterior de forma coerente; confira os campos fiscais."};
   }
   const regras=regimesCandidatos(i,nf).filter(r=>r.regime!=="mono");
   if(regras.length)return {tipo:"pendente",nome:"ST/antecipação possível",base:regras.map(r=>r.art).join("; "),detalhe:"Candidato(s): "+regras.map(r=>r.nome).join(", ")+". Exceções, descrição e finalidade ainda não confirmadas.",semNovaAntecipacao:false};
-  if(isSTcode(i))return {tipo:"pendente",nome:"ST declarada, regra de RR não confirmada",base:"CST/CSOSN/CFOP do emitente",detalhe:"A declaração fiscal não basta para demonstrar enquadramento ou recolhimento em RR.",semNovaAntecipacao:false};
+  if(isSTcode(i))return {tipo:"pendente",nome:"ST declarada, regra de RR não confirmada",base:"CST/CSOSN/CFOP do emitente",detalhe:"A declaração fiscal não basta para identificar o regime de RR; confronte NCM, CEST, descrição e condições legais.",semNovaAntecipacao:false};
   return {tipo:"nao_identificado",nome:"ST não identificada na base do aplicativo",base:"Catálogo fiscal parcial",detalhe:"Não equivale a declaração definitiva de ausência de ST, benefício ou antecipação.",semNovaAntecipacao:false};
 }
 function maiorQuantidadePorUnidade(itens){
@@ -580,34 +590,36 @@ function resumoRegimeHtml(nf){
   const all=cls.length,confirmados=cls.filter(x=>x.reg.tipo==="confirmado").length;
   const legal=confirmados===all,declarados=cls.filter(x=>x.reg.declaracaoCompativel).length;
   const declaracao=legal&&declarados===all;
-  const titulo=legal?"✓ ANTECIPAÇÃO TOTAL — ICMS COM ENCERRAMENTO":
-    confirmados?"ANTECIPAÇÃO TOTAL EM "+confirmados+" DE "+all+" ITENS":"ENQUADRAMENTO DE ST/ANTECIPAÇÃO — TRIAGEM";
-  const texto=legal?"Regime legal identificado para carne bovina. Na revenda interna, não cabe nova antecipação das etapas já alcançadas pelo recolhimento regular.":
+  const soCarne=legal&&cls.every(x=>x.reg.id==="carne_bovina");
+  const soAutopecas=legal&&cls.every(x=>x.reg.id==="autopecas_st");
+  const titulo=soCarne?"✓ ANTECIPAÇÃO TOTAL — ICMS COM ENCERRAMENTO":
+    soAutopecas?"✓ AUTOPEÇAS — ST ANTERIOR DECLARADA":
+    legal?"✓ REGIMES DE ST/ANTECIPAÇÃO IDENTIFICADOS":
+    confirmados?"REGIME IDENTIFICADO EM "+confirmados+" DE "+all+" ITENS":"ENQUADRAMENTO DE ST/ANTECIPAÇÃO — TRIAGEM";
+  const texto=soCarne?"Revenda interna de carne bovina: regime de encerramento identificado nos documentos.":
+    soAutopecas?"Motor(es) de partida compatíveis com o regime de ST de autopeças; CFOP/CST indicam tributação anterior. Não gerar nova antecipação apenas pela circulação interna.":
+    legal?"Enquadramentos fiscais documentais identificados. Examine as condições específicas das mercadorias.":
     "As condições do regime ainda precisam ser verificadas para um ou mais itens.";
   const declaredText=declaracao?"✓ Tributação anterior declarada na NF-e":
     declarados?"⚠ Declaração compatível em "+declarados+" de "+all+" itens":
-    "⚠ Tributação anterior não confirmada pelos campos fiscais";
-  return `<section class="st-overview ${legal?"ok":"check"}" aria-label="Situação de antecipação tributária">
+    "⚠ Declaração de ST anterior não compatível em todos os itens";
+  const baseLegal=legal?[...new Set(cls.map(x=>x.reg.base))].join("; "):"Catálogo operacional parcial do RICMS/RR.";
+  return `<section class="st-overview ${legal?"ok":"check"}" aria-label="Situação de substituição tributária">
     <div class="st-title">${titulo}</div><p>${texto}</p>
     <div class="st-three-status">
       <div class="st-status-line">
         <div class="st-label">1 · Enquadramento legal</div>
-        <div class="st-value ${legal?"st-valid":"st-pending"}">${legal?"✓ ANTECIPAÇÃO TOTAL — REGIME IDENTIFICADO":"⚠ Regime pendente para parte ou todos os itens"}</div>
-        <div class="st-detail">${legal?"Carne bovina NCM 0201/0202 · RICMS/RR, arts. 612, 613 e 618.":"Consultar condições e exceções das mercadorias."}</div>
+        <div class="st-value ${legal?"st-valid":"st-pending"}">${legal?"✓ REGIME IDENTIFICADO PELOS DADOS FISCAIS":"⚠ Condições do regime a conferir"}</div>
+        <div class="st-detail">${esc(baseLegal)}</div>
       </div>
       <div class="st-status-line">
         <div class="st-label">2 · Tributação anterior declarada</div>
         <div class="st-value ${declaracao?"st-valid":"st-pending"}">${declaredText}</div>
-        <div class="st-detail">CFOP 5.405 + CST 60/CSOSN 500 são declarações do emitente, não recibo de pagamento.</div>
-      </div>
-      <div class="st-status-line">
-        <div class="st-label">3 · Recolhimento anterior</div>
-        <div class="st-value st-pending">— NÃO VERIFICADO NO SIAT</div>
-        <div class="st-detail">O XML não comprova o pagamento. Se necessário, consulte posteriormente o passe fiscal, o débito e a memória de cálculo; a triagem não acessa o banco da SEFAZ/RR.</div>
+        <div class="st-detail">CFOP 5.405 e CST 60/CSOSN 500 são declarações da NF-e. A triagem não acessa a arrecadação nem solicita guias de ST.</div>
       </div>
     </div>
     ${cls.map(x=>`<div class="st-line"><b>${x.reg.tipo==="confirmado"?"✓":x.reg.tipo==="pendente"?"⚠":"—"} Item ${esc(x.item)}: ${esc(x.reg.nome)}</b><div>${esc(x.reg.nota||x.reg.detalhe)}</div></div>`).join("")}
-    <p class="st-source">Enquadramento legal ≠ declaração na NF-e ≠ pagamento comprovado. ${legal?"RICMS/RR, arts. 612 a 614 e 618; Consulta SEFAZ/RR nº 011/2017.":"Catálogo operacional parcial do RICMS/RR."}</p>
+    <p class="st-source">Triagem documental de NCM, CEST, CFOP, CST e descrição, sem certificação de pagamento. ${esc(baseLegal)}</p>
   </section>`;
 }
 function beneficioDeclarado(i){return !!i.cBenef||["20","30","40","41","50","51","70"].includes(i.icms.cst)||["103","203","300","400"].includes(i.icms.csosn)||i.icms.pRedBC>0||i.icms.vICMSDeson>0}
@@ -786,8 +798,8 @@ function interRegiao(ufOrig,i){return i&&["1","2","3","8"].includes(i.icms.orig)
 function tributacaoDeclarada(i){
   const c=i.icms.cst,s=i.icms.csosn;
   if(declaraMono(i))return "Monofasia declarada; produto e etapa a conferir";
-  if(c==="60"||s==="500")return "ST/antecipação anterior declarada; recolhimento em favor de RR não comprovado";
-  if(["10","30","70"].includes(c)||["201","202","203"].includes(s)||i.icms.vICMSST>0)return "Retenção de ST declarada nesta operação; confira valores e guia";
+  if(c==="60"||s==="500")return "ST/antecipação anterior declarada no XML";
+  if(["10","30","70"].includes(c)||["201","202","203"].includes(s)||i.icms.vICMSST>0)return "Retenção de ST declarada nesta operação; verificar consistência dos campos";
   if(c==="00")return "Tributação integral própria declarada; regime do destinatário ainda a conferir";
   return "Tratamento declarado pelo emitente; fundamento e condições a conferir";
 }
@@ -1012,7 +1024,7 @@ function analyze(nf,ctx){
     if((cRetem||sRetem)&&["101","102"].includes(cf3i)) addItem("stret-normal","confere","CST/CSOSN com retenção de ST e CFOP de venda comum","O item indica retenção de ST, mas usa CFOP "+f+". Confira se o remetente deveria usar CFOP próprio de substituto (ex.: 5.401/5.403).","RICMS/RR, arts. 746 e 747; tabela CFOP",i.n);
     if(["401","403"].includes(cf3i)&&d&&d.indIE==="1"&&i.icms.vBCST===0&&i.icms.vICMSST===0) addItem("stsemvalor","confere","CFOP de substituto sem base/ICMS-ST","Para destinatário contribuinte, a NF do substituto deve indicar a base de cálculo da ST e o imposto retido. Ambos estão zerados.","RICMS/RR, art. 747",i.n);
     if(declaraMono(i)&&!monoCandidato(i))addItem("mono-incomp:"+ncm,"confere","CST monofásico sem combustível compatível","CST "+esc(c)+" declarado para "+esc(i.desc)+". O código de combustível não valida o produto nem afasta ST/antecipação de RR. Confira NCM, natureza da carga e art. 839-U; lubrificantes não se tornam monofásicos pelo CST.","RICMS/RR, art. 839-U",i.n);
-    if(st&&!candidatos.length)addItem("stind:"+ncm.slice(0,4),"confere","ST declarada sem enquadramento validado","A NF-e declara ST, mas a tabela/descrição não identificou fundamento específico suficiente. Confira regra vigente, uso, atividade e recolhimento em favor de RR; a declaração não comprova pagamento.","RICMS/RR, arts. 727 a 730 e regimes específicos",i.n);
+    if(st&&!candidatos.length)addItem("stind:"+ncm.slice(0,4),"confere","ST declarada sem enquadramento validado","A NF-e declara ST, mas a tabela/descrição não identificou fundamento específico suficiente. Confira NCM, CEST, uso, atividade e regra legal aplicável; não presumir irregularidade de pagamento.","RICMS/RR, arts. 727 a 730 e regimes específicos",i.n);
     candidatos.forEach(r=>{
       if(r.regime==="mono"){
         const data=nf.ide.dhEmi.slice(0,10),inicio=/Gasolina|Etanol/.test(r.nome)?"2023-06-01":"2023-05-01";
@@ -1023,9 +1035,18 @@ function analyze(nf,ctx){
       if(r.id==="frango"&&!entradaRR)return;
       if(r.id==="carnes_gado"&&classificarRegimeOperacional(i,nf).id==="carne_bovina"&&internaRR){
         addItem("regime:carne_bovina","info","✓ Carne bovina: ST/antecipação com encerramento",
-          "Art. 612 alcança as saídas subsequentes com carne após tributação no abate; para carne entrada de outra UF, arts. 613 e 618, II. Nesta revenda interna, CST/CFOP coerentes não provam recolhimento anterior. Sem nova cobrança por simples volume de revenda, se tributo anterior regular.",
+          "Art. 612 alcança as saídas subsequentes com carne após tributação no abate; para carne entrada de outra UF, arts. 613 e 618, II. Nesta revenda interna, CFOP/CST são compatíveis com o regime; não cobrar nova antecipação por simples volume sem obrigação tributária adicional demonstrada.",
           "RICMS/RR, arts. 612, 613 e 618; Consulta SEFAZ/RR nº 011/2017",i.n);
         return;
+      }
+      if(r.id==="autopecas"){
+        const enquadramento=classificarRegimeOperacional(i,nf);
+        if(enquadramento.id==="autopecas_st"&&enquadramento.tipo==="confirmado"){
+          addItem("regime:autopecas","info","✓ Autopeças: ST anterior declarada",
+            "Motor de partida NCM 8511.40.00 / CEST 01.054.00, CFOP 5.405 e CST 60/CSOSN 500 coerentes com ST de autopeças na operação interna. A conferência é documental, sem exigir guia de recolhimento.",
+            "RICMS/RR, art. 839-E; Conv. ICMS 142/2018, Anexo II, item 54.0",i.n);
+          return;
+        }
       }
       if((r.id==="trigo"||r.id==="carnes_gado"||r.id==="matcons")&&!entradaRR)return;
       if(!d||d.indIE!=="1"||!isVenda){
@@ -1036,7 +1057,7 @@ function analyze(nf,ctx){
       }
       const titulo=entradaRR?(r.regime==="antecipacao"||r.regime==="antecipacao-st"||r.id==="frango"?"Antecipação de RR a conferir: ":"ST de RR a conferir: "):"ST interna de RR a conferir: ";
       const retAtual=i.icms.vICMSST>0&&(["10","30","70","90"].includes(c)||["201","202","203","900"].includes(s));
-      const texto=r.condicao+" "+(retAtual?"Retenção nesta operação declarada: "+brl(i.icms.vICMSST)+"; confira base, valor, beneficiário RR e guia/inscrição do substituto.":(cAnterior||sAnterior)?"Tributação anterior declarada não comprova imposto devido a RR; retenção para outra UF não dispensa a conferência (art. 727, § 1º).":"Sem retenção atual suficiente demonstrada no XML; confira o responsável legal e a guia antes de concluir inadimplência.")+" "+(r.nota||"");
+      const texto=r.condicao+" "+(retAtual?"Retenção nesta operação declarada: "+brl(i.icms.vICMSST)+"; conferir coerência de NCM, CEST, base e valor.":(cAnterior||sAnterior)?"Tributação anterior declarada; confira aplicabilidade do regime à operação em RR, sem exigir comprovante de arrecadação no trânsito.":"Retenção não indicada nesta NF-e; verificar a hipótese legal e o responsável tributário antes de concluir irregularidade.")+" "+(r.nota||"");
       addItem("regime:"+r.id,retAtual?"info":"confere",titulo+r.nome,texto,r.art+(entradaRR?"; art. 727, § 1º, e art. 728":"; art. 730, § 9º"),i.n);
     });
     const beneficios=beneficiosCandidatos(i,nf);
@@ -1064,7 +1085,7 @@ function analyze(nf,ctx){
 }
 
 /* ---------- renderização ---------- */
-const VERD={para:["Para e aprofunda","Há sinal material de irregularidade. Fotografe horário, carga, placa e documentos antes de qualquer providência."],confere:["Confere rápido","Algo precisa de explicação antes de liberar. Pergunte ao condutor, olhe a guia, consulte a chave."],libera:["Libera","Sem sinal material nas regras aplicadas. Enquadramento e recolhimento não certificados; confira a carga e as condições pendentes."]};
+const VERD={para:["Para e aprofunda","Há sinal material de irregularidade. Fotografe horário, carga, placa e documentos antes de qualquer providência."],confere:["Confere rápido","Algo precisa de explicação antes de liberar. Pergunte ao condutor, confira o XML e consulte a chave."],libera:["Libera","Sem sinal material nas regras aplicadas. Enquadramento baseado nos dados documentais; confira a carga e as condições pendentes."]};
 function codeDesc(i){if(i.icms.csosn)return "CSOSN "+i.icms.csosn+" – "+(CSOSN[i.icms.csosn]||"");if(i.icms.cst)return "CST "+i.icms.cst+" – "+(CST[i.icms.cst]||"");return "—"}
 function alertRank(a){
   const s=norm((a.titulo||"")+" "+(a.texto||""));
@@ -1097,7 +1118,7 @@ function renderNF(nf,res,contextoOverride){
     const compatibilidade=tratamentoCompativel(i,nf,ia);
     const crit=ia.filter(a=>a.lvl==="para"||a.lvl==="confere");
     const flagHtml=crit.map(a=>`<div class="item-flag ${a.lvl}"><b>⚠ ${esc(a.tit)}</b><span>${a.txt}</span>${a.base?`<div class="base">Base: ${esc(a.base)}</div>`:""}</div>`).join("");
-    const regimeTag=regimeOperacional.tipo==="confirmado"?`<div class="legal-candidate st-confirmed"><b>✓ ANTECIPAÇÃO TOTAL — ICMS COM ENCERRAMENTO · ENQUADRAMENTO LEGAL</b><div>${esc(regimeOperacional.detalhe)}</div><div>${esc(regimeOperacional.nota)}</div><div>${esc(regimeOperacional.base)}</div></div>`:compatibilidade?`<div class="legal-candidate compatible"><b>✓ Tratamento declarado compatível com a regra geral</b><div>${esc(compatibilidade.nome)}, NCM ${esc(i.ncm)}: operação interna em RR, regime normal, CST 00 e alíquota de ${pct(compatibilidade.aliquota)}. Base e ICMS declarados conferem. ${esc(compatibilidade.art)}.</div><div>Compatibilidade do ICMS próprio nos dados analisados; benefício ou regime especial específico do contribuinte e recolhimento efetivo exigem conferência.</div></div>`:candidatos.length?candidatos.map(r=>`<div class="legal-candidate"><b>Regra legal candidata: ${esc(r.nome)}</b><div>${esc(r.art)} · ${esc(r.status)}. ${esc(r.condicao)}</div></div>`).join(""):beneficios.length?`<div class="legal-candidate"><b>Tratamento da operação a conferir</b><div>A tabela identificou hipótese legal abaixo; confira sua aplicação antes de confirmar o CST declarado.</div></div>`:`<div class="legal-candidate"><b>Enquadramento não validado</b><div>Sem regra específica suficiente na tabela. Confira NCM, descrição, atividade e benefícios; CST 00 não comprova tributação integral.</div></div>`;
+    const regimeTag=regimeOperacional.tipo==="confirmado"?`<div class="legal-candidate st-confirmed"><b>${regimeOperacional.id==="autopecas_st"?"✓ AUTOPEÇAS — ST ANTERIOR DECLARADA · ENQUADRAMENTO LEGAL":"✓ ANTECIPAÇÃO TOTAL — ICMS COM ENCERRAMENTO · ENQUADRAMENTO LEGAL"}</b><div>${esc(regimeOperacional.detalhe)}</div><div>${esc(regimeOperacional.nota)}</div><div>${esc(regimeOperacional.base)}</div></div>`:compatibilidade?`<div class="legal-candidate compatible"><b>✓ Tratamento declarado compatível com a regra geral</b><div>${esc(compatibilidade.nome)}, NCM ${esc(i.ncm)}: operação interna em RR, regime normal, CST 00 e alíquota de ${pct(compatibilidade.aliquota)}. Base e ICMS declarados conferem. ${esc(compatibilidade.art)}.</div><div>Compatibilidade do ICMS próprio nos dados analisados; benefício ou regime especial específico do contribuinte e recolhimento efetivo exigem conferência.</div></div>`:candidatos.length?candidatos.map(r=>`<div class="legal-candidate"><b>Regra legal candidata: ${esc(r.nome)}</b><div>${esc(r.art)} · ${esc(r.status)}. ${esc(r.condicao)}</div></div>`).join(""):beneficios.length?`<div class="legal-candidate"><b>Tratamento da operação a conferir</b><div>A tabela identificou hipótese legal abaixo; confira sua aplicação antes de confirmar o CST declarado.</div></div>`:`<div class="legal-candidate"><b>Enquadramento não validado</b><div>Sem regra específica suficiente na tabela. Confira NCM, descrição, atividade e benefícios; CST 00 não comprova tributação integral.</div></div>`;
     const beneficioHtml=beneficios.map(b=>`<div class="legal-candidate"><b>Hipótese de ${esc(b.tipo.toLowerCase())}: ${esc(b.nome)}</b><div>${esc(b.art)}. ${esc(b.condicao)}</div><div><b>Vigência:</b> ${esc(b.vigencia)}</div></div>`).join("");
     return `<div class="item${crit.length?" item-risk":""}"><div class="t">${esc(i.n)}. ${esc(i.desc)}</div>
     ${flagHtml}
@@ -1105,7 +1126,7 @@ function renderNF(nf,res,contextoOverride){
     <span>CFOP ${esc(i.cfop)}: ${esc(cfopDesc(i.cfop))}</span><span><b>Declarado na NF-e: ${esc(codeDesc(i))}</b></span>
     <span>Origem ${esc(i.icms.orig)}: ${esc(ORIG[i.icms.orig]||"")}</span><span>BC ${brl(i.icms.vBC)} · ${pct(i.icms.pICMS)} · ICMS ${brl(i.icms.vICMS)}${i.icms.vICMSST?" · ST "+brl(i.icms.vICMSST):""}</span>
     ${i.ibscbs?`<span>IBS/CBS: CST ${esc(i.ibscbs.cst||"—")} · cClassTrib ${esc(i.ibscbs.classe||"—")}</span><span>BC ${brl(i.ibscbs.vBC)} · IBS ${brl(i.ibscbs.vIBS)} (UF ${pct(i.ibscbs.pIBSUF)}; município ${pct(i.ibscbs.pIBSMun)}) · CBS ${brl(i.ibscbs.vCBS)} (${pct(i.ibscbs.pCBS)})</span>`:""}</div>
-    <div class="base">${compatibilidade?"Tributação integral própria declarada compatível com a regra geral identificada":esc(tributacaoDeclarada(i))}. NCM, CEST e descrição também são declarados; confronte com a carga.</div><div class="base">${regimeOperacional.tipo==="confirmado"?"ICMS na etapa anterior: a alíquota e a efetividade do recolhimento não são demonstradas por esta NF-e.":("Alíquota interna de referência: "+(aliquota.valor===null?"pendente":pct(aliquota.valor))+" · "+esc(aliquota.condicao)+". Benefícios e vigência exigem conferência.")}</div>${regimeTag}${beneficioHtml}</div>`}).join("");
+    <div class="base">${compatibilidade?"Tributação integral própria declarada compatível com a regra geral identificada":esc(tributacaoDeclarada(i))}. NCM, CEST e descrição também são declarados; confronte com a carga.</div><div class="base">${regimeOperacional.tipo==="confirmado"?"Tributação anterior declarada: conferência documental, sem acesso à arrecadação pelo aplicativo.":("Alíquota interna de referência: "+(aliquota.valor===null?"pendente":pct(aliquota.valor))+" · "+esc(aliquota.condicao)+". Benefícios e vigência exigem conferência.")}</div>${regimeTag}${beneficioHtml}</div>`}).join("");
   const pag=nf.pag.map(p=>`${TPAG[p.tPag]||p.tPag}${p.xPag?" ("+esc(p.xPag)+")":""}: ${brl(p.vPag)}`).join("; ");
   const dups=nf.dup.map(x=>`${esc(x.n)} – ${esc(x.venc.split("-").reverse().join("/"))} – ${brl(x.v)}`).join("<br>");
   return `<article class="nf">
