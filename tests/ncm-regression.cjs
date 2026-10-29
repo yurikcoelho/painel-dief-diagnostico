@@ -32,7 +32,7 @@ test('Suco da posição 2202 não é refrigerante por prefixo',()=>assert(!ids(f
 test('Lubrificante CST60 não vira monofásico',()=>{const n=fixture('27101932','Óleo lubrificante','60','6404');assert(!a.isMono(n.itens[0]));assert(ids(n).includes('combustiveis'));assert(!ids(n).includes('monofasico'));assert(has(n,'ST de RR a conferir'));assert(!alerts(n).some(x=>x.texto.includes('Não há ICMS a cobrar')));});
 test('Carne com CST02 mantém conferência e revela conflito',()=>{const n=fixture('02013000','Carne bovina','02');assert(!a.isMono(n.itens[0]));assert(has(n,'CST monofásico sem combustível'));assert(has(n,'Antecipação de RR a conferir'));});
 for(const [cst,cfop] of [['60','6404'],['00','6403'],['10','6403']])test('Declaração '+cst+'/'+cfop+' não esconde ST',()=>assert(has(fixture('22030000','Cerveja',cst,cfop),'ST de RR a conferir')));
-test('Retenção atual reconhecida, não chamada anterior',()=>{const n=fixture('02013000','Carne bovina','10','6403');n.itens[0].icms.vICMSST=180;n.itens[0].icms.vBCST=2000;assert(a.tributacaoDeclarada(n.itens[0]).includes('nesta operação'));assert(!a.tributacaoDeclarada(n.itens[0]).includes('anterior'));assert(alerts(n).find(x=>x.titulo.includes('Antecipação de RR')).texto.includes('beneficiário RR'));});
+test('Retenção atual reconhecida, não chamada anterior',()=>{const n=fixture('02013000','Carne bovina','10','6403');n.itens[0].icms.vICMSST=180;n.itens[0].icms.vBCST=2000;assert(a.tributacaoDeclarada(n.itens[0]).includes('nesta operação'));assert(!a.tributacaoDeclarada(n.itens[0]).includes('anterior'));assert(alerts(n).find(x=>x.titulo.includes('Antecipação de RR')).texto.includes('Retenção nesta operação declarada'));});
 test('CST90 com imposto retido é sinal de ST atual',()=>{const n=fixture('22030000','Cerveja','90','6403');n.itens[0].icms.vICMSST=180;n.itens[0].icms.vBCST=2000;assert(a.isSTcode(n.itens[0]));assert(!has(n,'CFOP de substituto incompatível'));});
 test('Importado usa 4% no cenário art75, componentes incluídos',()=>{const n=fixture('96081000','Caneta');const i=n.itens[0];Object.assign(i,{vFrete:100,vSeg:20,vOutro:30,vDesc:50,vIPI:100});i.icms.orig='1';i.icms.pICMS=4;i.icms.vICMS=40;assert.equal(a.interRegiao('SP',i),4);assert.equal(a.baseOperacao(i),1200);assert(alerts(n).find(x=>x.titulo.includes('Antecipação parcial')).texto.includes('192,00'));});
 test('Benefício/redução pendente não recebe estimativa automática',()=>{const n=fixture('96081000','Caneta','20');n.itens[0].icms.pRedBC=50;assert(has(n,'fundamento pendente'));assert(alerts(n).find(x=>x.titulo.includes('Antecipação parcial')).texto.includes('Sem estimativa segura'));});
@@ -174,11 +174,46 @@ test('Entrada interestadual de carne aplica regime mas não presume guia paga',(
  const n=fixture('02013000','Carne bovina resfriada','60','6404');
  const c=a.classificarRegimeOperacional(n.itens[0],n);
  assert.equal(c.tipo,'pendente');assert.equal(c.semNovaAntecipacao,false);
- assert(c.nota.includes('NÃO está comprovado'));assert(has(n,'Antecipação de RR a conferir'));
+ assert(c.nota.includes('responsabilidade tributária'));assert(has(n,'Antecipação de RR a conferir'));
 });
 test('ST fora de carne continua pendente, não verde por CST isolado',()=>{
  const n=interna('22030000','Cerveja','60','5405'),c=a.classificarRegimeOperacional(n.itens[0],n);
  assert.equal(c.tipo,'pendente');assert(!render(n).includes('✓ ANTECIPAÇÃO TOTAL — ICMS COM ENCERRAMENTO'));
+});
+// v4.11.7 — autopeças NCM 8511 / CEST 01.054.00 e triagem sem comprovante de ST.
+function motorPartidaST(){
+ const n=fixture('85114000','(8000158P) MOTOR PART PG260D 12V-Ped Anex:436','60','5405');
+ n.emit.uf='RR';n.emit.mun='Boa Vista';n.ide.idDest='1';n.ide.cUF='14';n.ide.indFinal='1';
+ n.dest.indIE='9';n.dest.ie='';n.itens[0].cest='0105400';
+ Object.assign(n.itens[0].icms,{orig:'5',vBC:0,pICMS:0,vICMS:0,vBCST:0,vICMSST:0,vICMSSTRet:0});
+ n.tot.vICMS=0;n.tot.vNF=585;n.tot.vProd=585;
+ return n;
+}
+test('NCM 8511.40.00/CEST 01.054.00 reconhece ST do motor de partida na NF 42474',()=>{
+ const n=motorPartidaST(),reg=a.classificarRegimeOperacional(n.itens[0],n),h=render(n);
+ assert(ids(n).includes('autopecas'));assert.equal(reg.id,'autopecas_st');
+ assert.equal(reg.tipo,'confirmado');assert(reg.semNovaAntecipacao);
+ assert(h.includes('✓ AUTOPEÇAS — ST ANTERIOR DECLARADA'));
+ assert(!has(n,'ST interna de RR a conferir'));
+ assert(!h.includes('NÃO VERIFICADO NO SIAT'));assert(!h.includes('3 · Recolhimento anterior'));
+});
+for(const [nome,alterar] of [
+ ['CEST ausente',n=>n.itens[0].cest=''],
+ ['CEST divergente',n=>n.itens[0].cest='0109900'],
+ ['NCM divergente',n=>n.itens[0].ncm='85124000'],
+ ['descrição genérica',n=>n.itens[0].desc='Equipamento genérico'],
+ ['CFOP venda comum',n=>n.itens[0].cfop='5102'],
+ ['CST sem ST anterior',n=>n.itens[0].icms.cst='00'],
+ ['saída interestadual',n=>{n.dest.uf='AM';n.ide.idDest='2';n.itens[0].cfop='6404'}]
+])test('Motor de partida não recebe ST confirmada com '+nome,()=>{
+ const n=motorPartidaST();alterar(n);
+ assert.notEqual(a.classificarRegimeOperacional(n.itens[0],n).tipo,'confirmado');
+});
+test('Triagem ST não solicita comprovante de arrecadação',()=>{
+ for(const n of [motorPartidaST(),carneRevendaRR()]){
+  const h=render(n);assert(!h.includes('NÃO VERIFICADO NO SIAT'));assert(!h.includes('3 · Recolhimento anterior'));
+  assert(!alerts(n).some(x=>/comprovante de (?:arrecadação|pagamento)|olhe a guia/i.test(x.texto)));
+ }
 });
 // v4.11.4 — copiar XML bruto após consulta automática, upload e abertura do histórico.
 test('XML bruto: botão existe na NF real sem inserir XML no HTML',()=>{
@@ -216,14 +251,14 @@ test('XML bruto: se clipboard bloquear, exibe conteúdo integral para seleção 
  assert.equal(elems.find(x=>x.tag==='textarea').value,raw);
 });
 // v4.11.5 — distinguir regime, declaração e recolhimento sem consulta obrigatória.
-test('Antecipação total exibe três estados independentes na revenda de carne',()=>{
+test('Antecipação total exibe enquadramento e declaração sem alerta de pagamento de ST',()=>{
  const n=carneRevendaRR(),h=render(n);
  assert(h.includes('✓ ANTECIPAÇÃO TOTAL — ICMS COM ENCERRAMENTO'));
  assert(h.includes('1 · Enquadramento legal'));
  assert(h.includes('2 · Tributação anterior declarada'));
- assert(h.includes('3 · Recolhimento anterior'));
+ assert(!h.includes('3 · Recolhimento anterior'));
  assert(h.includes('✓ Tributação anterior declarada na NF-e'));
- assert(h.includes('NÃO VERIFICADO NO SIAT'));
+ assert(!h.includes('NÃO VERIFICADO NO SIAT'));
  assert(!h.includes('CONFERÊNCIA MANUAL REGISTRADA'));
  assert(!h.includes('Registrar conferência manual'));
 });
@@ -232,12 +267,12 @@ test('Regime de carne não valida CFOP/CST alterados nem pagamento',()=>{
  const h=render(n);
  assert(h.includes('✓ ANTECIPAÇÃO TOTAL — ICMS COM ENCERRAMENTO'));
  assert(h.includes('Declaração compatível em 1 de 2 itens'));
- assert(h.includes('NÃO VERIFICADO NO SIAT'));
+ assert(!h.includes('NÃO VERIFICADO NO SIAT'));
 });
 test('Sem regime confirmado não apresenta antecipação total para outros produtos',()=>{
  const n=interna('22030000','Cerveja','60','5405'),h=render(n);
  assert(!h.includes('✓ ANTECIPAÇÃO TOTAL — ICMS COM ENCERRAMENTO'));
- assert(h.includes('Regime pendente para parte ou todos os itens'));
+ assert(h.includes('Condições do regime a conferir'));
 });
 // v4.11.6 — a consulta externa não pode ficar visualmente travada após erro.
 test('Consulta em timeout mostra botão de nova tentativa sem exigir reler DANFE',()=>{
