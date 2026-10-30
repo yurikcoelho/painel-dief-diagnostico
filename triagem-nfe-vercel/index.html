@@ -601,7 +601,8 @@ function avaliarBebidaST(i,nf){
     barril:/barril/.test(d),
     pet:/\bpet\b|plastico.*garrafa|garrafa.*plastica/.test(d),
     outras:/outras embalagens/.test(d),
-    copo:/copo plastico/.test(d)
+    copo:/copo plastico/.test(d),
+    jarra:/jarra/.test(d)
   };
   const embalagemPresente=Object.values(embalagem).some(Boolean);
   let tipo="",ncmOk=false,descOk=false,embOk=true,embEspecifica=false,obs="";
