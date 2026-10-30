@@ -227,7 +227,7 @@ details summary{cursor:pointer;font-family:var(--display);font-weight:600;font-s
     <div id="histDetalhe"></div>
   </section>
 
-  <p class="footer">Ferramenta de apoio à triagem operacional · v4.11.8. Prioriza irregularidades materiais, destino da carga e exposição tributária. As regras seguem o RICMS/RR (Decreto nº 4.335-E/2001, consolidação de referência até jan/2026), o CTE (Lei nº 59/93) e a prática do posto; listas de NCM são indicativas e precisam de calibragem. Não substitui a análise do auditor. A busca automática envia somente a chave de acesso ao endpoint serverless desta ferramenta, que consulta o serviço privado consultadanfe.com; o XML aberto manualmente é lido só neste aparelho.</p>
+  <p class="footer">Ferramenta de apoio à triagem operacional · v4.11.9. Prioriza irregularidades materiais, destino da carga e exposição tributária. As regras seguem o RICMS/RR (Decreto nº 4.335-E/2001, consolidação de referência até jan/2026), o CTE (Lei nº 59/93) e a prática do posto; listas de NCM são indicativas e precisam de calibragem. Não substitui a análise do auditor. A busca automática envia somente a chave de acesso ao endpoint serverless desta ferramenta, que consulta o serviço privado consultadanfe.com; o XML aberto manualmente é lido só neste aparelho.</p>
 </main>
 
 <div class="scanner hidden" id="scanner" role="dialog" aria-label="Leitura do código">
@@ -531,8 +531,15 @@ function qualificarRegra(r,i){
       condicao="Posição 2309 somente para ração pet/animais domésticos na hipótese do art. 839-H; não inclui automaticamente ração de produção pecuária.";break;
     case "sorvetes":
       evidencia=/sorvete|picole/.test(d);
-      if(!n.startsWith("2105")){evidencia=/sorvete/.test(d)&&/maquina/.test(d);if(/chocolate|achocolat|xarope|energetic|isotonic|pao|bolo/.test(d)&&!/sorvete/.test(d))return null;}
-      condicao="Sorvete/picolé ou preparado destinado à fabricação de sorvete em máquina; as posições 1806/1901/2106 não bastam sem essa finalidade.";break;
+      if(n.startsWith("2105")){
+        condicao="NCM 2105.00 e CEST 23.001.00 são compatíveis com sorvetes; conferir o produto físico, a qualidade de contribuinte do destinatário e a destinação. O art. 839-R prevê responsabilidade do fabricante nas operações subsequentes, não em toda saída.";
+        if(onlyDig(i.cest)==="2300100"&&!evidencia)
+          return {...r,status:"NCM/CEST indicam sorvete; descrição genérica; operação e produto a confirmar",condicao};
+      }else{
+        evidencia=/sorvete/.test(d)&&/maquina/.test(d);
+        if(/chocolate|achocolat|xarope|energetic|isotonic|pao|bolo/.test(d)&&!/sorvete/.test(d))return null;
+        condicao="As posições 1806/1901/2106 só entram quando o preparado for destinado à fabricação de sorvete em máquina.";
+      }break;
     case "celulares":if(/satelite|automotiv/.test(d))return null;evidencia=/celular|smartphone|smart card|sim card|cartao inteligente|chip/.test(d);condicao="Confirme telefone celular/cartão inteligente da descrição legal e correlação do NCM atual com o histórico; excluídos telefone por satélite e uso automotivo. Regra interna prevista no § 5º.";break;
   }
   return {...r,status:evidencia?"descrição declarada compatível; condições pendentes":"descrição/finalidade insuficiente; enquadramento pendente",condicao};
@@ -560,6 +567,22 @@ function regimesCandidatos(i,nf){
    Confirmação objetiva reservada às carnes bovinas NCM 0201/0202 em circulação destinada a RR,
    com a regra de abate interno (art. 612) ou ingresso interestadual (arts. 613/618).
    Demais segmentos permanecem condicionais até haver cadastro normativo mais granular. */
+// Hipótese normativa de ST do sorvete, separada da situação tributária da NF-e.
+function avaliarSorvetesST(i,nf){
+  const n=onlyDig(i.ncm),cest=onlyDig(i.cest),desc=descricaoFiscal(i),cfop=onlyDig(i.cfop);
+  if(!n.startsWith("210500")||n.length!==8)return null;
+  if(cest!=="2300100"&&!/sorvete|picole/.test(desc))return null;
+  if(!nf.dest||nf.emit.uf!=="RR"||nf.dest.uf!=="RR"||nf.ide.tpNF!=="1"||!cfop.startsWith("5"))return null;
+  const fabricante=["5101","5401"].includes(cfop);
+  const semST=!["201","202","203","500"].includes(i.icms.csosn)&&!["10","30","60","70"].includes(i.icms.cst)&&!(i.icms.vICMSST>0);
+  return {
+    fabricante,semST,revendaDeclarada:nf.ide.indFinal==="0",
+    descricaoGenerica:!/sorvete|picole/.test(desc),
+    embalagemLitros:n==="21050010"&&/\b(?:balde|pote|embalagem)\b.{0,25}\b\d+(?:[,.]\d+)?\s*(?:l|lt|litros?)\b/.test(desc),
+    unidadeDiferente:!!i.unTrib&&String(i.unTrib).toUpperCase()!==String(i.un||"").toUpperCase(),
+    base:"RICMS/RR, art. 839-R; Convênio ICMS 142/2018, Anexo XXII, item 1.0"
+  };
+}
 function classificarRegimeOperacional(i,nf){
   const n=onlyDig(i.ncm),orig=nf.emit.uf||UF[nf.ide.cUF]||"",dest=nf.dest&&nf.dest.uf||"";
   const cfop=onlyDig(i.cfop),internaRR=orig==="RR"&&dest==="RR"&&cfop.startsWith("5")&&nf.ide.tpNF==="1";
@@ -583,6 +606,14 @@ function classificarRegimeOperacional(i,nf){
       detalhe:"NCM 8511.40.00, CEST 01.054.00 e descrição de motor de partida compatíveis com a lista de ST de autopeças. Operação interna em RR.",
       declaracaoCompativel,semNovaAntecipacao:declaracaoCompativel,
       nota:declaracaoCompativel?"CFOP 5.405 e CST 60/CSOSN 500 coerentes com ST anterior declarada; não se exige comprovante de arrecadação na triagem.":"Regime de autopeças identificado, mas CFOP/CST não indicam ST anterior de forma coerente; confira os campos fiscais."};
+  }
+  const sorvete=avaliarSorvetesST(i,nf);
+  if(sorvete){
+    const aviso=sorvete.revendaDeclarada?"indFinal=0 indica saída não destinada a consumidor final; verificar se haverá revenda.":"Consumidor final declarado ou destinação não comercial; não presumir etapas subsequentes.";
+    return {tipo:"pendente",id:"sorvetes_st",nome:"Sorvetes — ST legal identificada; tributação declarada a conferir",
+      base:sorvete.base,detalhe:"NCM 2105.00 e CEST 23.001.00 indicam o segmento de sorvetes, mas não provam o conteúdo do recipiente. "+aviso,
+      nota:"A aplicação da ST depende da condição de contribuinte, finalidade e responsabilidade da operação; CFOP/CSOSN e retenção precisam ser analisados.",
+      semNovaAntecipacao:false};
   }
   const regras=regimesCandidatos(i,nf).filter(r=>r.regime!=="mono");
   if(regras.length)return {tipo:"pendente",nome:"ST/antecipação possível",base:regras.map(r=>r.art).join("; "),detalhe:"Candidato(s): "+regras.map(r=>r.nome).join(", ")+". Exceções, descrição e finalidade ainda não confirmadas.",semNovaAntecipacao:false};
@@ -800,7 +831,7 @@ function parseNFe(xml,fileName){
     itens:qa(inf,"det").map(d=>{
       const p=q(d,"prod"),imp=q(d,"imposto"),icmsWrap=q(imp,"ICMS"),ibscbs=q(imp,"IBSCBS"),gIBSCBS=q(ibscbs,"gIBSCBS");const g=kids(icmsWrap)[0];
       const gi=g?{grupo:g.localName,orig:t(g,"orig"),cst:t(g,"CST"),csosn:t(g,"CSOSN"),vBC:num(t(g,"vBC")),pICMS:num(t(g,"pICMS")),vICMS:num(t(g,"vICMS")),pRedBC:num(t(g,"pRedBC")),vICMSST:num(t(g,"vICMSST")),vBCST:num(t(g,"vBCST")),vICMSSTRet:num(t(g,"vICMSSTRet")),vICMSDeson:num(t(g,"vICMSDeson"))}:{};
-      return{n:d.getAttribute("nItem")||t(d,"nItem"),cod:t(p,"cProd"),desc:t(p,"xProd"),ncm:t(p,"NCM"),cest:t(p,"CEST"),cBenef:t(p,"cBenef"),cfop:t(p,"CFOP"),un:t(p,"uCom"),q:num(t(p,"qCom")),vUn:num(t(p,"vUnCom")),vProd:num(t(p,"vProd")),vFrete:num(t(p,"vFrete")),vSeg:num(t(p,"vSeg")),vDesc:num(t(p,"vDesc")),vOutro:num(t(p,"vOutro")),infAdProd:t(d,"infAdProd"),vIPI:num(t(q(imp,"IPI"),"vIPI")),icms:gi,ufdest:!!q(imp,"ICMSUFDest"),
+      return{n:d.getAttribute("nItem")||t(d,"nItem"),cod:t(p,"cProd"),desc:t(p,"xProd"),ncm:t(p,"NCM"),cest:t(p,"CEST"),cBenef:t(p,"cBenef"),cfop:t(p,"CFOP"),un:t(p,"uCom"),q:num(t(p,"qCom")),unTrib:t(p,"uTrib"),qTrib:num(t(p,"qTrib")),vUn:num(t(p,"vUnCom")),vProd:num(t(p,"vProd")),vFrete:num(t(p,"vFrete")),vSeg:num(t(p,"vSeg")),vDesc:num(t(p,"vDesc")),vOutro:num(t(p,"vOutro")),infAdProd:t(d,"infAdProd"),vIPI:num(t(q(imp,"IPI"),"vIPI")),icms:gi,ufdest:!!q(imp,"ICMSUFDest"),
         ibscbs:ibscbs?{cst:t(ibscbs,"CST"),classe:t(ibscbs,"cClassTrib"),vBC:num(t(gIBSCBS,"vBC")),pIBSUF:num(t(gIBSCBS,"pIBSUF")),pIBSMun:num(t(gIBSCBS,"pIBSMun")),pCBS:num(t(gIBSCBS,"pCBS")),vIBS:num(t(gIBSCBS,"vIBS")),vIBSUF:num(t(gIBSCBS,"vIBSUF")),vIBSMun:num(t(gIBSCBS,"vIBSMun")),vCBS:num(t(gIBSCBS,"vCBS"))}:null}
     })};
   return nf;
@@ -1056,6 +1087,34 @@ function analyze(nf,ctx){
     if(["401","403"].includes(cf3i)&&d&&d.indIE==="1"&&i.icms.vBCST===0&&i.icms.vICMSST===0) addItem("stsemvalor","confere","CFOP de substituto sem base/ICMS-ST","Para destinatário contribuinte, a NF do substituto deve indicar a base de cálculo da ST e o imposto retido. Ambos estão zerados.","RICMS/RR, art. 747",i.n);
     if(declaraMono(i)&&!monoCandidato(i))addItem("mono-incomp:"+ncm,"confere","CST monofásico sem combustível compatível","CST "+esc(c)+" declarado para "+esc(i.desc)+". O código de combustível não valida o produto nem afasta ST/antecipação de RR. Confira NCM, natureza da carga e art. 839-U; lubrificantes não se tornam monofásicos pelo CST.","RICMS/RR, art. 839-U",i.n);
     if(st&&!candidatos.length)addItem("stind:"+ncm.slice(0,4),"confere","ST declarada sem enquadramento validado","A NF-e declara ST, mas a tabela/descrição não identificou fundamento específico suficiente. Confira NCM, CEST, uso, atividade e regra legal aplicável; não presumir irregularidade de pagamento.","RICMS/RR, arts. 727 a 730 e regimes específicos",i.n);
+    const sorvete=avaliarSorvetesST(i,nf);
+    if(sorvete){
+      if(sorvete.fabricante&&sorvete.semST&&sorvete.revendaDeclarada){
+        addItem("sorvete:retencao","confere","ST de sorvetes — fabricante sem retenção declarada",
+          "NCM "+ncm+" / CEST "+(i.cest||"não informado")+"; CFOP "+f+"; "+(s?"CSOSN "+s:"CST "+c)+
+          " sem ICMS-ST na NF-e. A saída interna é declarada como produção própria e indFinal=0. Confirme fisicamente que é sorvete; pergunte se haverá revenda e se o destinatário é contribuinte. "+
+          "Se devida ST ao fabricante, conferir CFOP de substituto (ex.: 5.401) e CSOSN de ST (ex.: 202, quando aplicável), base e imposto. "+
+          "Não presumir irregularidade tributária, documento inidôneo ou cobrança automática somente pela classificação NCM/CEST.",
+          sorvete.base,i.n);
+      }else if(nf.ide.indFinal==="1"){
+        addItem("sorvete:final","info","Sorvetes — consumidor final declarado",
+          "NCM/CEST indicam o segmento de sorvetes; indFinal=1. Não exigir ST por suposta revenda sem verificar finalidade e condição de contribuinte.",
+          sorvete.base,i.n);
+      }else{
+        addItem("sorvete:etapa","info","Sorvetes — etapa da ST a conferir",
+          "NCM/CEST associados ao regime; confirmar conteúdo, destinatário, finalidade e tratamento declarado, sem exigir pagamento por mera classificação.",
+          sorvete.base,i.n);
+      }
+      if(sorvete.descricaoGenerica)addItem("sorvete:descricao","registrar","Sorvetes — descrição genérica",
+        "A descrição '"+esc(i.desc)+"' não comprova que o recipiente contenha sorvete; confronte o produto com a carga.",
+        "MOC NF-e (xProd); RICMS/RR, art. 839-R",i.n);
+      if(sorvete.embalagemLitros)addItem("sorvete:ncm-massa","registrar","Sorvetes — peso da embalagem e NCM",
+        "NCM 2105.00.10 corresponde a embalagens imediatas de até 2 kg. O volume expresso em litros não informa a massa; conferir o peso líquido antes de avaliar 2105.00.90, sem converter litros em kg automaticamente.",
+        "NCM 2105.00.10 / 2105.00.90",i.n);
+      if(sorvete.unidadeDiferente)addItem("sorvete:unidade","registrar","Sorvetes — unidades comercial e tributável diferentes",
+        "uCom="+esc(i.un)+"; uTrib="+esc(i.unTrib)+"; qCom="+i.q+"; qTrib="+i.qTrib+". Conferir a conversão e o peso real; unidades distintas não constituem infração por si só.",
+        "MOC NF-e, grupo de produtos",i.n);
+    }
     candidatos.forEach(r=>{
       if(r.regime==="mono"){
         const data=nf.ide.dhEmi.slice(0,10),inicio=/Gasolina|Etanol/.test(r.nome)?"2023-06-01":"2023-05-01";
@@ -1064,6 +1123,7 @@ function analyze(nf,ctx){
       const internaRR=emitUF==="RR"&&destUF==="RR"&&f[0]==="5";
       if(!entradaRR&&!internaRR)return;
       if(r.id==="frango"&&!entradaRR)return;
+      if(r.id==="sorvetes"&&sorvete)return; // alerta específico cobre o item
       if(r.id==="carnes_gado"&&classificarRegimeOperacional(i,nf).id==="carne_bovina"&&internaRR){
         addItem("regime:carne_bovina","info","✓ Carne bovina: ST/antecipação com encerramento",
           "Art. 612 alcança as saídas subsequentes com carne após tributação no abate; para carne entrada de outra UF, arts. 613 e 618, II. Nesta revenda interna, CFOP/CST são compatíveis com o regime; não cobrar nova antecipação por simples volume sem obrigação tributária adicional demonstrada.",
