@@ -165,7 +165,7 @@ details summary{cursor:pointer;font-family:var(--display);font-weight:600;font-s
 .st-simple-line{padding:6px 0;border-top:1px solid rgba(0,0,0,.10);font-size:.94rem}
 .item-status{font-weight:700;font-size:.92rem;margin:5px 0}
 .item-status.normal,.item-status.st{color:var(--sign)}
-.item-status.verificar{color:#a66b00}
+.item-status.verificar,.item-status.formal{color:#a66b00}
 .item-more{margin:8px 0 0!important;padding:7px 10px!important;border:1px solid var(--line)!important}
 .item-more summary{font-size:.92rem!important;color:var(--muted)}
 .legal-candidate.st-confirmed{border-left-color:#198d49;background:#e9f6ed;color:#15492b}
@@ -233,7 +233,7 @@ details summary{cursor:pointer;font-family:var(--display);font-weight:600;font-s
     <div id="histDetalhe"></div>
   </section>
 
-  <p class="footer">Ferramenta de apoio à triagem operacional · v4.13.0. Prioriza irregularidades materiais, destino da carga e exposição tributária. As regras seguem o RICMS/RR (Decreto nº 4.335-E/2001, consolidação de referência até jan/2026), o CTE (Lei nº 59/93) e a prática do posto; listas de NCM são indicativas e precisam de calibragem. Não substitui a análise do auditor. A busca automática envia somente a chave de acesso ao endpoint serverless desta ferramenta, que consulta o serviço privado consultadanfe.com; o XML aberto manualmente é lido só neste aparelho.</p>
+  <p class="footer">Ferramenta de apoio à triagem operacional · v4.13.1. Prioriza irregularidades materiais, destino da carga e exposição tributária. As regras seguem o RICMS/RR (Decreto nº 4.335-E/2001, consolidação de referência até jan/2026), o CTE (Lei nº 59/93) e a prática do posto; listas de NCM são indicativas e precisam de calibragem. Não substitui a análise do auditor. A busca automática envia somente a chave de acesso ao endpoint serverless desta ferramenta, que consulta o serviço privado consultadanfe.com; o XML aberto manualmente é lido só neste aparelho.</p>
 </main>
 
 <div class="scanner hidden" id="scanner" role="dialog" aria-label="Leitura do código">
@@ -602,7 +602,7 @@ function avaliarBebidaST(i,nf){
   const cerveja=/cerveja/.test(d),semAlcool=/sem alcool|zero alcool/.test(d);
   const energetico=/energetic/.test(d),isotonico=/isotonic|hidroeletrolit/.test(d);
   const embalagem={
-    vidroDesc:/vidro/.test(d)&&/descartavel|nao retornavel/.test(d),
+    vidroDesc:(/vidro/.test(d)&&/descartavel|nao retornavel/.test(d))||(/\bln\b|long\s*neck|longneck/.test(d)&&!/retornavel/.test(d)),
     vidroRet:/vidro/.test(d)&&/retornavel/.test(d)&&!/nao retornavel/.test(d),
     aluminio:/garrafa.*aluminio|aluminio.*garrafa/.test(d),
     lata:/\blata\b|\blt\b/.test(d),
@@ -770,17 +770,29 @@ function triagemOperacionalItem(i,nf){
   if(!origem||!destino)return cond("VERIFICAR","UF do emitente ou do destinatário ausente.");
   if(internaRR){
     if(bebida){
-      if(bebida.situacao==="divergente"||bebida.situacao==="pendente")return cond("VERIFICAR · BEBIDA",bebida.motivo);
+      if(bebida.situacao==="divergente")return cond("VERIFICAR · BEBIDA",bebida.motivo);
+      if(bebida.situacao==="pendente"){
+        // A lata com CEST "demais refrigerantes" é uma divergência formal.
+        if(onlyDig(i.cest)==="0301100"&&/\\blata\\b|\\blt\\b/.test(descricaoFiscal(i)))
+          return {tipo:"formal",titulo:"CEST A AJUSTAR · REFRIGERANTE EM LATA",
+            motivo:"CEST 03.011.00 informado; para refrigerante em lata corresponde 03.010.02 (Conv. ICMS 142/2018, Anexo IV). Sem nova cobrança automática."};
+        // CEST de cerveja + CST60/CFOP5405 e sem informação contraditória:
+        // abreviação de embalagem ausente NÃO deve travar a triagem de trânsito.
+        const beer=onlyDig(i.ncm)==="22030000"&&/^03021(?:00|01|02|03|04|05|06)$/.test(onlyDig(i.cest));
+        const d=descricaoFiscal(i),tipoExplicito=/\\bvidro\\b|\\bretornavel\\b|\\bdescartavel\\b|\\blata\\b|\\blt\\b|\\bln\\b|long\\s*neck|\\bpet\\b|\\bbarril\\b/.test(d);
+        if(!(beer&&anterior&&cfop==="5405"&&!tipoExplicito))
+          return cond("VERIFICAR · BEBIDA",bebida.motivo);
+      }
       if(bebida.situacao==="produto_compativel"&&!bebida.compatibilidade)
         return cond("VERIFICAR · ST", "Bebida enquadrada, mas CFOP/CST não indicam retenção anterior ou nesta operação.");
     }
     if(sorvete&&sorvete.fabricante&&sorvete.semST&&sorvete.revendaDeclarada)
       return cond("VERIFICAR · SORVETE","Fabricante declara venda para revenda sem retenção de ST.");
-    if(anterior&&cfop!=="5405"&&!cfop.endsWith("405"))
-      return cond("VERIFICAR · CFOP/CST","ST anterior declarada com CFOP incompatível.");
+    if(anterior&&["5101","5102","6101","6102"].includes(cfop))
+      return cond("VERIFICAR · CFOP/CST","Venda comum com CST de ST anterior; conferir CFOP.");
     if((cfop.endsWith("405")||cfop.endsWith("404"))&&!anterior)
       return cond("VERIFICAR · CFOP/CST","CFOP de revenda com ST anterior, mas CST/CSOSN não correspondente.");
-    if(anterior)return {tipo:"st",titulo:"ST ANTERIOR DECLARADA",motivo:"CFOP/CST indicam substituição anterior; não lançar nova antecipação somente por esta saída interna."};
+    if(anterior)return {tipo:"st",titulo:"ST ANTERIOR DECLARADA",motivo:"CST/CSOSN indicam tributação anterior; CFOP de revenda ou bonificação interna. Não lançar nova antecipação apenas por esta saída."};
     if(retendo&&i.icms.vICMSST>0)return {tipo:"st",titulo:"ST RETIDA NESTA NF-e",motivo:"Retenção informada no XML; conferir incoerências materiais, se houver."};
     if(retendo)return cond("VERIFICAR · ST","CST/CSOSN de substituição sem retenção anterior ou valor de ST identificado.");
     if(c==="00"||["101","102","103","400"].includes(cs))
@@ -798,16 +810,17 @@ function triagemOperacionalItem(i,nf){
 function resumoRegimeHtml(nf){
   if(!nf.itens.length)return "";
   const linhas=nf.itens.map(i=>({n:i.n,...triagemOperacionalItem(i,nf)}));
-  const pend=linhas.filter(x=>x.tipo==="verificar"),st=linhas.filter(x=>x.tipo==="st"),normal=linhas.filter(x=>x.tipo==="normal");
+  const pend=linhas.filter(x=>x.tipo==="verificar"),formais=linhas.filter(x=>x.tipo==="formal"),st=linhas.filter(x=>x.tipo==="st"),normal=linhas.filter(x=>x.tipo==="normal");
   const resumir=a=>a.length?a.slice(0,12).map(x=>x.n).join(", ")+(a.length>12?" e mais "+(a.length-12):""):"—";
   const origem=nf.emit.uf||UF[nf.ide.cUF]||"",destino=nf.dest&&nf.dest.uf||"";
   const interna=origem==="RR"&&destino==="RR"&&nf.itens.every(i=>onlyDig(i.cfop).startsWith("5"));
   return `<section class="st-overview ${pend.length?"check":"ok"}" aria-label="Triagem operacional de ICMS e ST">
     <div class="st-title">${pend.length?"⚠ VERIFICAR "+pend.length+" ITEM(NS)":"✓ SEM COBRANÇA AUTOMÁTICA DE ST IDENTIFICADA"}</div>
-    <p>${interna?"Operação declarada interna em RR.":"Operação a conferir conforme origem e destino."} ${pend.length?"Pendências tributárias pontuais abaixo.":"Conferência documental, sem certificação de recolhimento."}</p>
+    <p>${interna?"Operação declarada interna em RR.":"Operação a conferir conforme origem e destino."} ${pend.length?"Pendências tributárias relevantes abaixo.":"Sem pendência material de ST nos itens analisados."}</p>
     <div class="st-simple-line"><b>ST informada:</b> ${st.length} item(ns) ${st.length?"("+esc(resumir(st))+")":""}</div>
     <div class="st-simple-line"><b>Tributação própria/outra declarada:</b> ${normal.length} item(ns)</div>
     ${pend.length?`<div class="st-simple-line st-pending"><b>Verificar:</b> ${pend.map(x=>"Item "+esc(x.n)+" — "+esc(x.motivo)).join("; ")}</div>`:""}
+    ${formais.length?`<div class="st-simple-line"><b>Ajuste documental (não é cobrança):</b> ${formais.map(x=>"Item "+esc(x.n)+" — "+esc(x.motivo)).join("; ")}</div>`:""}
     <small>Prioridade no posto: situação da NF-e, carga, destinatário e imposto efetivamente exigível. CEST sozinho não cria ST.</small>
   </section>`;
 }
@@ -1261,7 +1274,16 @@ function analyze(nf,ctx){
       if(bebida.situacao==="divergente"){
         addItem("bebidas:divergente","confere","Bebidas — CEST/NCM/descrição incompatíveis",bebida.motivo+" Conferir NCM, CEST, embalagem e produto físico; sem presunção de cobrança.",bebida.base,i.n);
       }else if(bebida.situacao==="pendente"){
-        addItem("bebidas:pendente","confere","Bebidas — enquadramento ou embalagem a conferir",bebida.motivo+" Confirme a embalagem e a natureza da mercadoria. Não validar ST anterior apenas pelo código.",bebida.base,i.n);
+        const d=descricaoFiscal(i),cestDig=onlyDig(i.cest);
+        const semEmbalagem= !/\\bvidro\\b|\\bretornavel\\b|\\bdescartavel\\b|\\blata\\b|\\blt\\b|\\bln\\b|long\\s*neck|\\bpet\\b|\\bbarril\\b/.test(d);
+        const cervejaSemEmbalagem= /^03021(?:00|01|02|03|04|05|06)$/.test(cestDig)&&
+          onlyDig(i.ncm)==="22030000"&&semEmbalagem&&(cAnterior||sAnterior)&&f==="5405";
+        const refriLataCestDemais=cestDig==="0301100"&&/\\blata\\b|\\blt\\b/.test(d);
+        if(refriLataCestDemais)
+          addItem("bebidas:cest-refrigerante","registrar","Refrigerante em lata — CEST a ajustar",
+            "Item em lata com CEST 03.011.00; correspondente no Convênio 142/2018, Anexo IV: 03.010.02. Divergência documental, sem cobrança automática de ST.",bebida.base,i.n);
+        else if(!cervejaSemEmbalagem)
+          addItem("bebidas:pendente","confere","Bebidas — enquadramento ou embalagem a conferir",bebida.motivo+" Confira apenas se houver divergência material entre documento e carga.",bebida.base,i.n);
       }else if(bebida.compatibilidade){
         addItem("bebidas:valida","info","✓ Bebidas: ST declarada compatível",
           bebida.tipo+". "+(bebida.anterior?"ST anterior declarada (CFOP 5.405 e CST 60/CSOSN 500).":"Retenção nesta operação declarada (CFOP de substituto e base/valor de ST preenchidos).")+
@@ -1283,6 +1305,7 @@ function analyze(nf,ctx){
       if(!entradaRR&&!internaRR)return;
       if(r.id==="frango"&&!entradaRR)return;
       if(["bebidas","alcoolicas"].includes(r.id)&&bebida)return; // emitir apenas resultado específico por item
+      if(r.id==="bebidas"&&internaRR&&(cAnterior||sAnterior)&&f.startsWith("5"))return; // ST anterior declarada em bebida sem CEST: sem falso alerta de cobrança
       if(r.id==="sorvetes"&&sorvete)return; // alerta específico cobre o item
       if(r.id==="carnes_gado"&&classificarRegimeOperacional(i,nf).id==="carne_bovina"&&internaRR){
         addItem("regime:carne_bovina","info","✓ Carne bovina: ST/antecipação com encerramento",
@@ -1378,7 +1401,7 @@ function renderNF(nf,res,contextoOverride){
     <div class="item-status ${op.tipo}">${statusTxt}${esc(op.titulo)}</div>
     <div>${i.q.toLocaleString("pt-BR",{maximumFractionDigits:4})} ${esc(i.un)} × R$ ${Number(i.vUn).toLocaleString("pt-BR",{minimumFractionDigits:2,maximumFractionDigits:4})} = <b>${brl(liquido)}</b>${i.vDesc?" (desconto "+brl(i.vDesc)+")":""}</div>
     <div class="base">NCM ${esc(i.ncm)}${i.cest?" · CEST "+esc(i.cest):""} · CFOP ${esc(i.cfop)} · ${esc(i.icms.cst?"CST "+i.icms.cst:"CSOSN "+(i.icms.csosn||"—"))}</div>
-    ${op.tipo==="verificar"?`<div class="item-flag"><b>Conferir:</b> ${esc(op.motivo)}</div>`:""}
+    ${op.tipo==="verificar"||op.tipo==="formal"?`<div class="item-flag"><b>${op.tipo==="formal"?"Ajuste documental":"Conferir"}:</b> ${esc(op.motivo)}</div>`:""}
     ${(i.icms.vICMSSTRet||i.icms.vICMSST)?`<div class="base">ICMS-ST ${i.icms.vICMSSTRet?"anterior declarado: "+brl(i.icms.vICMSSTRet):"nesta operação: "+brl(i.icms.vICMSST)}</div>`:""}
     ${flagHtml}
     <details class="item-more"><summary>Dados fiscais e fundamentos (opcional)</summary>
