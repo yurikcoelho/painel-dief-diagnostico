@@ -623,13 +623,18 @@ function avaliarBebidaST(i,nf){
   }else if(["0300300","0300301","0300500","0300501","0300502","0300503","0300504","0300505","0300600","0302400","0302500"].includes(cest)){
     tipo="Água mineral/potável";ncmOk=["0302400","0302500"].includes(cest)?n==="22011000":n.startsWith("2201");
     descOk=agua&&!refrigerante;
-    embEspecifica=cest!=="0300600";
-    if(cest.startsWith("03003"))embOk=embalagem.vidroDesc;
-    else if(cest==="0300500"||cest==="0300501")embOk=embalagem.copo;
-    else if(["0300502","0300503","0300504","0300505"].includes(cest))embOk=!embalagem.copo&&/descartavel/.test(d);
+    embEspecifica=true;
+    const saisAdicionados=/adicionad.{0,12}sais|com sais/.test(d);
+    const exigeSais=["0300301","0300501","0300503","0300505"].includes(cest);
+    const salCompativel=exigeSais?saisAdicionados:!saisAdicionados;
+    if(cest.startsWith("03003"))embOk=embalagem.vidroDesc&&salCompativel;
+    else if(cest==="0300500"||cest==="0300501")embOk=embalagem.copo&&/descartavel/.test(d)&&salCompativel;
+    else if(cest==="0300502"||cest==="0300503")embOk=/jarra/.test(d)&&/descartavel/.test(d)&&salCompativel;
+    else if(cest==="0300504"||cest==="0300505")embOk=/descartavel/.test(d)&&!embalagem.copo&&!/jarra/.test(d)&&salCompativel;
     else if(cest==="0302400")embOk=/retornavel/.test(d)&&/\b1[0-9]\s*l(?:itro)?s?\b/.test(d)&&!/20\s*l/.test(d);
     else if(cest==="0302500")embOk=/retornavel/.test(d)&&/(?:\b[2-9][0-9]\s*l(?:itro)?s?\b|\b20\s*l\b)/.test(d);
-    else if(cest==="0300600")embOk=!(/retornavel/.test(d)&&/(?:\b1[0-9]\s*l|\b[2-9][0-9]\s*l)/.test(d))&&!embalagem.vidroDesc&&!embalagem.copo;
+    else if(cest==="0300600")embOk=(embalagem.pet||/garrafa plastica|embalagem plastica/.test(d))&&
+      !(/retornavel/.test(d)&&/(?:\b1[0-9]\s*l|\b[2-9][0-9]\s*l)/.test(d))&&!embalagem.vidroDesc&&!embalagem.copo&&!saisAdicionados;
     obs="Água: atenção ao tipo de recipiente e à disciplina específica nas operações interestaduais; o enquadramento interno não confirma ST em outra UF.";
   }else if(["0300700","0300800"].includes(cest)){
     tipo="Água aromatizada";ncmOk=cest==="0300700"?n==="22021000":n==="22029900";
@@ -642,7 +647,7 @@ function avaliarBebidaST(i,nf){
     if(cest==="0301000")embOk=embalagem.vidroDesc;
     if(cest==="0301001")embOk=embalagem.pet;
     if(cest==="0301002")embOk=embalagem.lata;
-    if(cest==="0301100")embOk=!embalagem.vidroDesc&&!embalagem.pet&&!embalagem.lata;
+    if(cest==="0301100"){embEspecifica=true;embOk=(embalagem.vidroRet||/outra(?:s)? embalagem/.test(d))&&!embalagem.vidroDesc&&!embalagem.pet&&!embalagem.lata;}
   }else if(["0301200","0301201"].includes(cest)){
     tipo="Concentrado para refrigerante";ncmOk=n==="21069010";
     descOk=cest==="0301201"?/capsula/.test(d)&&refrigerante:/xarope|extrato|premix|postmix/.test(d)&&/refrigerante|premix|postmix/.test(d);
@@ -762,7 +767,7 @@ function resumoRegimeHtml(nf){
     soBebidas?"NCM, CEST, descrição, embalagem e CFOP/CST ou CSOSN documentalmente coerentes com ST na operação interna. Não comprova pagamento.":
     legal?"Enquadramentos fiscais documentais identificados. Examine as condições específicas das mercadorias.":
     "As condições do regime ainda precisam ser verificadas para um ou mais itens.";
-  const declaredText=declaracao?"✓ Tributação anterior declarada na NF-e":
+  const declaredText=declaracao?(soBebidas&&todasRetencoesAtuais?"✓ Retenção de ST nesta operação declarada na NF-e":"✓ Tributação anterior declarada na NF-e"):
     declarados?"⚠ Declaração compatível em "+declarados+" de "+all+" itens":
     "⚠ Declaração de ST anterior não compatível em todos os itens";
   const baseLegal=legal?[...new Set(cls.map(x=>x.reg.base))].join("; "):"Catálogo operacional parcial do RICMS/RR.";
