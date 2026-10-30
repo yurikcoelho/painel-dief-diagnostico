@@ -1003,7 +1003,7 @@ function analyze(nf,ctx){
       " Histórico local deste aparelho: "+local.quantidade+" outra(s) NF-e de chave distinta para o mesmo CPF, totalizando "+brl(local.valor)+". São consultas salvas, não um levantamento integral de aquisições nem prova de habitualidade.":
       " Sem outras NF-e deste CPF no histórico local; isso não exclui aquisições anteriores.";
     const tributacao=encerramentoDeclarado?
-      " O XML indica ST/antecipação com encerramento para todos os itens, com CFOP/CST coerentes: NÃO exigir nova antecipação apenas pela compra em CPF; não solicitar comprovante de arrecadação de ST no trânsito.":
+      " O XML indica ST/antecipação com encerramento para todos os itens, com CFOP/CST coerentes: NÃO exigir nova antecipação apenas pela compra em CPF; apurar eventuais indícios cadastrais de forma independente.":
       " Se houver finalidade comercial caracterizada, avaliar por produto a hipótese de antecipação dos arts. 72, IV, e 73 do RICMS/RR, considerando ST, benefícios e exceções; não aplicar MVA de 30% nem cobrança automaticamente.";
     add(encerramentoDeclarado||(!volumePossivel&&!repeticaoRelevante)?"registrar":"confere",
       "CPF: possível aquisição comercial ou empresarial",
