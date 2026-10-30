@@ -233,7 +233,7 @@ details summary{cursor:pointer;font-family:var(--display);font-weight:600;font-s
     <div id="histDetalhe"></div>
   </section>
 
-  <p class="footer">Ferramenta de apoio à triagem operacional · v4.13.2. Prioriza irregularidades materiais, destino da carga e exposição tributária. As regras seguem o RICMS/RR (Decreto nº 4.335-E/2001, consolidação de referência até jan/2026), o CTE (Lei nº 59/93) e a prática do posto; listas de NCM são indicativas e precisam de calibragem. Não substitui a análise do auditor. A busca automática envia somente a chave de acesso ao endpoint serverless desta ferramenta, que consulta o serviço privado consultadanfe.com; o XML aberto manualmente é lido só neste aparelho.</p>
+  <p class="footer">Ferramenta de apoio à triagem operacional · v4.13.3. Prioriza irregularidades materiais, destino da carga e exposição tributária. As regras seguem o RICMS/RR (Decreto nº 4.335-E/2001, consolidação de referência até jan/2026), o CTE (Lei nº 59/93) e a prática do posto; listas de NCM são indicativas e precisam de calibragem. Não substitui a análise do auditor. A busca automática envia somente a chave de acesso ao endpoint serverless desta ferramenta, que consulta o serviço privado consultadanfe.com; o XML aberto manualmente é lido só neste aparelho.</p>
 </main>
 
 <div class="scanner hidden" id="scanner" role="dialog" aria-label="Leitura do código">
@@ -500,7 +500,15 @@ function qualificarRegra(r,i){
       if(n==="90189099"){evidencia=/intrauter|\bdiu\b/.test(d);if(/cirurgic|endoscop/.test(d)&&!evidencia)return null;}
       if(!/^392|^401490|^701020|^90189099/.test(n))evidencia=/medicament|soro|vacina|algodao|atadura|absorvente|fralda|preservativo|seringa|agulha|dent|vitamina|contraceptivo|contraste/.test(d);
       condicao="Compare produto e NCM completo com o quadro atual do art. 798: mamadeiras/chupetas/DIU não abrangem qualquer artefato plástico. Observe exclusão de medicamentos/soros de uso veterinário. O art. 798 atribui responsabilidade ao importador/adquirente/destinatário na entrada; confira condições e responsabilidade.";
-      if(/^300[45]/.test(n)){evidencia=false;condicao="NCM de medicamentos/material médico com correspondência ambígua no quadro convertido em Markdown. Valide a redação/tabela oficial vigente antes de definir ST; não usar a redação anterior automaticamente.";}break;
+      if(/^300[34]/.test(n)){
+        const cest=onlyDig(i.cest);
+        // Convênio 142/2018, Anexo XIV: medicamentos 3003/3004 nos CESTs
+        // 13.001.00 a 13.004.02. CEST identifica a classificação DECLARADA.
+        evidencia=/^1300[1-4]0[0-2]$/.test(cest)&&(!!i.anvisa||/medicament|utrogestan|capsul|comprimid|tablete|\bcp\b/.test(d));
+        condicao=evidencia?
+          "Medicamento de uso humano com NCM 3003/3004 e CEST do segmento 13 documentalmente coerentes. CST/CFOP indicam a etapa declarada, não comprovam pagamento ou lista fiscal do produto.":
+          "Para medicamentos 3003/3004, confira o CEST 13.001 a 13.004 (referência, genérico, similar ou outros; lista positiva, negativa ou neutra) e a identificação do medicamento. NCM isolado não confirma ST.";
+      }break;
     case "combustiveis":
       if(monoNome(i))return null;
       evidencia=/combustiv|lubrific|graxa|fluido de freio|anticongel|aditivo|hidratad|querosene/.test(d);
@@ -698,6 +706,23 @@ function avaliarBebidaST(i,nf){
   return {tipo,situacao:"produto_compativel",base,interno:interna,anterior,retida,compatibilidade,
     motivo:obs||"Descrição, NCM e CEST correspondem ao segmento. A retenção efetiva não é verificada por esta triagem."};
 }
+/* Compatibilidade documental de medicamentos: não confundir ST anterior na
+   revenda interna com uma nova antecipação no posto. NÃO valida pagamento
+   ou identidade farmacológica do produto. */
+function avaliarMedicamentoST(i,nf){
+  const n=onlyDig(i.ncm),cest=onlyDig(i.cest),d=descricaoFiscal(i);
+  if(!/^300[34]\d{4}$/.test(n)||!/^1300[1-4]0[0-2]$/.test(cest))return null;
+  const medicamento=!!i.anvisa||/medicament|utrogestan|capsul|comprimid|tablete|\bcp\b/.test(d);
+  if(!medicamento||/veterinar|uso animal/.test(d))return null;
+  const ufOrig=nf.emit.uf||UF[nf.ide.cUF]||"",ufDest=nf.dest&&nf.dest.uf||"";
+  const internaRR=ufOrig==="RR"&&ufDest==="RR"&&nf.ide.tpNF==="1"&&nf.ide.idDest==="1";
+  const anterior=i.icms.cst==="60"||i.icms.csosn==="500";
+  const cfop=onlyDig(i.cfop);
+  return {internaRR,anterior,cfop,compativel:internaRR&&anterior&&cfop==="5405",
+    base:"RICMS/RR, art. 798; Convênio ICMS 142/2018, Anexo XIV",
+    nome:"Medicamentos — ST anterior declarada",
+    detalhe:"NCM 3003/3004, CEST de medicamentos (segmento 13), CFOP 5.405 e CST 60/CSOSN 500 coerentes com revenda interna por contribuinte substituído."};
+}
 function classificarRegimeOperacional(i,nf){
   const n=onlyDig(i.ncm),orig=nf.emit.uf||UF[nf.ide.cUF]||"",dest=nf.dest&&nf.dest.uf||"";
   const cfop=onlyDig(i.cfop),internaRR=orig==="RR"&&dest==="RR"&&cfop.startsWith("5")&&nf.ide.tpNF==="1";
@@ -712,6 +737,10 @@ function classificarRegimeOperacional(i,nf){
       nota:internaRR?(declaracaoCompativel?"CFOP 5.405 e CST 60/CSOSN 500 coerentes com tributação anterior declarada.":"O documento não apresenta a combinação usual de revenda já tributada (CFOP 5.405 e CST 60/CSOSN 500); confira a etapa anterior."):
         "Na entrada interestadual, conferir responsabilidade tributária e condições legais do regime; a triagem não exige comprovante de ST."};
   }
+  const med=avaliarMedicamentoST(i,nf);
+  if(med&&med.compativel)return {tipo:"confirmado",id:"farmaceuticos_st",nome:med.nome,
+    base:med.base,detalhe:med.detalhe,nota:"ST anterior apenas declarada na NF-e; recolhimento não verificado. Sem nova antecipação automática nesta saída interna.",
+    declaracaoCompativel:true,semNovaAntecipacao:true};
   // Confirma a coerência documental da ST de motores de partida, sem validação financeira.
   const motorPartida=n==="85114000"&&onlyDig(i.cest)==="0105400"&&/motor\s+(?:de\s+)?(?:part(?:ida)?|arranq(?:ue)?)\b/.test(descricaoFiscal(i));
   if(internaRR&&motorPartida){
@@ -987,7 +1016,7 @@ function parseNFe(xml,fileName){
     itens:qa(inf,"det").map(d=>{
       const p=q(d,"prod"),imp=q(d,"imposto"),icmsWrap=q(imp,"ICMS"),ibscbs=q(imp,"IBSCBS"),gIBSCBS=q(ibscbs,"gIBSCBS");const g=kids(icmsWrap)[0];
       const gi=g?{grupo:g.localName,orig:t(g,"orig"),cst:t(g,"CST"),csosn:t(g,"CSOSN"),vBC:num(t(g,"vBC")),pICMS:num(t(g,"pICMS")),vICMS:num(t(g,"vICMS")),pRedBC:num(t(g,"pRedBC")),vICMSST:num(t(g,"vICMSST")),vBCST:num(t(g,"vBCST")),vICMSSTRet:num(t(g,"vICMSSTRet")),vICMSDeson:num(t(g,"vICMSDeson"))}:{};
-      return{n:d.getAttribute("nItem")||t(d,"nItem"),cod:t(p,"cProd"),desc:t(p,"xProd"),ncm:t(p,"NCM"),cest:t(p,"CEST"),cBenef:t(p,"cBenef"),cfop:t(p,"CFOP"),un:t(p,"uCom"),q:num(t(p,"qCom")),unTrib:t(p,"uTrib"),qTrib:num(t(p,"qTrib")),vUn:num(t(p,"vUnCom")),vProd:num(t(p,"vProd")),vFrete:num(t(p,"vFrete")),vSeg:num(t(p,"vSeg")),vDesc:num(t(p,"vDesc")),vOutro:num(t(p,"vOutro")),infAdProd:t(d,"infAdProd"),vIPI:num(t(q(imp,"IPI"),"vIPI")),icms:gi,ufdest:!!q(imp,"ICMSUFDest"),
+      return{n:d.getAttribute("nItem")||t(d,"nItem"),cod:t(p,"cProd"),desc:t(p,"xProd"),anvisa:t(q(p,"med"),"cProdANVISA"),ncm:t(p,"NCM"),cest:t(p,"CEST"),cBenef:t(p,"cBenef"),cfop:t(p,"CFOP"),un:t(p,"uCom"),q:num(t(p,"qCom")),unTrib:t(p,"uTrib"),qTrib:num(t(p,"qTrib")),vUn:num(t(p,"vUnCom")),vProd:num(t(p,"vProd")),vFrete:num(t(p,"vFrete")),vSeg:num(t(p,"vSeg")),vDesc:num(t(p,"vDesc")),vOutro:num(t(p,"vOutro")),infAdProd:t(d,"infAdProd"),vIPI:num(t(q(imp,"IPI"),"vIPI")),icms:gi,ufdest:!!q(imp,"ICMSUFDest"),
         ibscbs:ibscbs?{cst:t(ibscbs,"CST"),classe:t(ibscbs,"cClassTrib"),vBC:num(t(gIBSCBS,"vBC")),pIBSUF:num(t(gIBSCBS,"pIBSUF")),pIBSMun:num(t(gIBSCBS,"pIBSMun")),pCBS:num(t(gIBSCBS,"pCBS")),vIBS:num(t(gIBSCBS,"vIBS")),vIBSUF:num(t(gIBSCBS,"vIBSUF")),vIBSMun:num(t(gIBSCBS,"vIBSMun")),vCBS:num(t(gIBSCBS,"vCBS"))}:null}
     })};
   return nf;
@@ -1315,6 +1344,14 @@ function analyze(nf,ctx){
           "RICMS/RR, arts. 612, 613 e 618; Consulta SEFAZ/RR nº 011/2017",i.n);
         return;
       }
+      if(r.id==="farma"){
+        const med=avaliarMedicamentoST(i,nf);
+        if(med&&med.compativel){
+          // Informar como compatível; a presença de CEST/CST não prova arrecadação.
+          // Não gerar alerta amarelo de hipótese farmacêutica nesta revenda interna.
+          return;
+        }
+      }
       if(r.id==="autopecas"){
         const enquadramento=classificarRegimeOperacional(i,nf);
         if(enquadramento.id==="autopecas_st"&&enquadramento.tipo==="confirmado"){
@@ -1395,7 +1432,7 @@ function renderNF(nf,res,contextoOverride){
     const compatibilidade=tratamentoCompativel(i,nf,ia);
     const crit=ia.filter(a=>(a.lvl==="para"||a.lvl==="confere")&&!/ST declarada sem enquadramento validado|Benefício\/diferimento legal a conferir|ST interna de RR a conferir/i.test(a.tit||""));
     const flagHtml=crit.map(a=>`<div class="item-flag ${a.lvl}"><b>⚠ ${esc(a.tit)}</b><span>${a.txt}</span>${a.base?`<div class="base">Base: ${esc(a.base)}</div>`:""}</div>`).join("");
-    const regimeTag=regimeOperacional.tipo==="confirmado"?`<div class="legal-candidate st-confirmed"><b>${regimeOperacional.id==="autopecas_st"?"✓ AUTOPEÇAS — ST ANTERIOR DECLARADA · ENQUADRAMENTO LEGAL":regimeOperacional.id==="bebidas_st"?"✓ BEBIDAS — ST DECLARADA COMPATÍVEL · ENQUADRAMENTO LEGAL":"✓ ANTECIPAÇÃO TOTAL — ICMS COM ENCERRAMENTO · ENQUADRAMENTO LEGAL"}</b><div>${esc(regimeOperacional.detalhe)}</div><div>${esc(regimeOperacional.nota)}</div><div>${esc(regimeOperacional.base)}</div></div>`:compatibilidade?`<div class="legal-candidate compatible"><b>✓ Tratamento declarado compatível com a regra geral</b><div>${esc(compatibilidade.nome)}, NCM ${esc(i.ncm)}: operação interna em RR, regime normal, CST 00 e alíquota de ${pct(compatibilidade.aliquota)}. Base e ICMS declarados conferem. ${esc(compatibilidade.art)}.</div><div>Compatibilidade do ICMS próprio nos dados analisados; benefício ou regime especial específico do contribuinte e recolhimento efetivo exigem conferência.</div></div>`:candidatos.length?candidatos.map(r=>`<div class="legal-candidate"><b>Regra legal candidata: ${esc(r.nome)}</b><div>${esc(r.art)} · ${esc(r.status)}. ${esc(r.condicao)}</div></div>`).join(""):beneficios.length?`<div class="legal-candidate"><b>Tratamento da operação a conferir</b><div>A tabela identificou hipótese legal abaixo; confira sua aplicação antes de confirmar o CST declarado.</div></div>`:`<div class="legal-candidate"><b>Enquadramento não validado</b><div>Sem regra específica suficiente na tabela. Confira NCM, descrição, atividade e benefícios; CST 00 não comprova tributação integral.</div></div>`;
+    const regimeTag=regimeOperacional.tipo==="confirmado"?`<div class="legal-candidate st-confirmed"><b>${regimeOperacional.id==="autopecas_st"?"✓ AUTOPEÇAS — ST ANTERIOR DECLARADA · ENQUADRAMENTO LEGAL":regimeOperacional.id==="bebidas_st"?"✓ BEBIDAS — ST DECLARADA COMPATÍVEL · ENQUADRAMENTO LEGAL":regimeOperacional.id==="farmaceuticos_st"?"✓ MEDICAMENTOS — ST ANTERIOR DECLARADA · COERÊNCIA DOCUMENTAL":"✓ ANTECIPAÇÃO TOTAL — ICMS COM ENCERRAMENTO · ENQUADRAMENTO LEGAL"}</b><div>${esc(regimeOperacional.detalhe)}</div><div>${esc(regimeOperacional.nota)}</div><div>${esc(regimeOperacional.base)}</div></div>`:compatibilidade?`<div class="legal-candidate compatible"><b>✓ Tratamento declarado compatível com a regra geral</b><div>${esc(compatibilidade.nome)}, NCM ${esc(i.ncm)}: operação interna em RR, regime normal, CST 00 e alíquota de ${pct(compatibilidade.aliquota)}. Base e ICMS declarados conferem. ${esc(compatibilidade.art)}.</div><div>Compatibilidade do ICMS próprio nos dados analisados; benefício ou regime especial específico do contribuinte e recolhimento efetivo exigem conferência.</div></div>`:candidatos.length?candidatos.map(r=>`<div class="legal-candidate"><b>Regra legal candidata: ${esc(r.nome)}</b><div>${esc(r.art)} · ${esc(r.status)}. ${esc(r.condicao)}</div></div>`).join(""):beneficios.length?`<div class="legal-candidate"><b>Tratamento da operação a conferir</b><div>A tabela identificou hipótese legal abaixo; confira sua aplicação antes de confirmar o CST declarado.</div></div>`:`<div class="legal-candidate"><b>Enquadramento não validado</b><div>Sem regra específica suficiente na tabela. Confira NCM, descrição, atividade e benefícios; CST 00 não comprova tributação integral.</div></div>`;
     const beneficioHtml=beneficios.map(b=>`<div class="legal-candidate"><b>Hipótese de ${esc(b.tipo.toLowerCase())}: ${esc(b.nome)}</b><div>${esc(b.art)}. ${esc(b.condicao)}</div><div><b>Vigência:</b> ${esc(b.vigencia)}</div></div>`).join("");
     const liquido=Math.max(0,(i.vProd||0)-(i.vDesc||0));
     const statusTxt=op.tipo==="verificar"?"⚠ ":"✓ ";
