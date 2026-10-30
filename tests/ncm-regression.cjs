@@ -4,7 +4,7 @@ const html=fs.readFileSync(path.join(__dirname,'../triagem-nfe-vercel/index.html
 new vm.Script(html.slice(html.indexOf('<script>')+8,html.indexOf('</script>',html.indexOf('<script>'))));
 new vm.Script(fs.readFileSync(path.join(__dirname,'../triagem-nfe-vercel/photos.js'),'utf8'));
 const box={document:{querySelector:()=>null},localStorage:{getItem:()=>null},Date,Intl,setTimeout};vm.createContext(box);
-vm.runInContext(html.slice(html.indexOf('<script>')+8,html.indexOf('/* ---------- fluxo ---------- */'))+'\nthis.api={regimesCandidatos,beneficiosCandidatos,aliquotaReferencia,tributacaoDeclarada,isSTcode,isMono,analyze,renderNF,interRegiao,baseOperacao,avaliar5904,referencias5904,classificarRegimeOperacional,maiorQuantidadePorUnidade,resumoRegimeHtml,ocorrenciasLocaisCPF};',box);
+vm.runInContext(html.slice(html.indexOf('<script>')+8,html.indexOf('/* ---------- fluxo ---------- */'))+'\nthis.api={regimesCandidatos,beneficiosCandidatos,aliquotaReferencia,tributacaoDeclarada,isSTcode,isMono,analyze,renderNF,interRegiao,baseOperacao,avaliar5904,referencias5904,classificarRegimeOperacional,maiorQuantidadePorUnidade,resumoRegimeHtml,ocorrenciasLocaisCPF,avaliarSorvetesST};',box);
 const a=box.api,ctx={posto:'Pacaraima',abordagem:null};let passed=0;
 function fixture(ncm,desc,cst='00',cfop='6102'){
  const now=new Date();const i={n:'1',cod:'teste',desc,ncm,cest:'',cBenef:'',cfop,un:'UN',q:1,vUn:1000,vProd:1000,vFrete:0,vSeg:0,vDesc:0,vOutro:0,vIPI:0,infAdProd:'',icms:{orig:'0',cst,csosn:'',vBC:1000,pICMS:7,vICMS:70,vBCST:0,vICMSST:0,vICMSSTRet:0,pRedBC:0},ufdest:false};
@@ -342,6 +342,79 @@ test('Histórico CPF é armazenado somente localmente e não recupera consultas 
  assert(html.includes('destCpf:nf.dest&&nf.dest.cpf'));
  assert(html.includes('localStorage.setItem("triagem.historico"'));
  assert(html.includes('a partir da v4.11.8'));
+});
+// v4.11.9 — Sorvetes Caribe, NF-e nº 43.306: ST possível, não validada.
+function sorvetesCaribe(){
+ const n=fixture('21050010','BALDE DE 12 L','', '5101');
+ n.emit.uf='RR';n.emit.mun='Boa Vista';n.emit.crt='1';n.ide.idDest='1';n.ide.cUF='14';
+ n.ide.indFinal='0';n.ide.nNF='43306';
+ n.dest.cpf=true;n.dest.doc='11906106207';n.dest.indIE='2';n.dest.ie='';
+ Object.assign(n.itens[0],{n:'1',q:3,vProd:330,vUn:110,cest:'2300100',un:'UN',unTrib:'UN',qTrib:3});
+ n.itens[0].icms={...n.itens[0].icms,cst:'',csosn:'102',vBC:0,pICMS:0,vICMS:0,vBCST:0,vICMSST:0};
+ const second={...n.itens[0],n:'2',cod:'5',q:1,vProd:105,vUn:105,un:'UN',unTrib:'KG',qTrib:1,icms:{...n.itens[0].icms}};
+ const third={...n.itens[0],n:'3',cod:'32',q:1,vProd:100,vUn:100,un:'KG',unTrib:'KG',qTrib:1,icms:{...n.itens[0].icms}};
+ n.itens.push(second,third);n.tot.vNF=535;n.tot.vProd=535;n.tot.vICMS=0;
+ n.pag=[{tPag:'90',vPag:0}];
+ return n;
+}
+test('Sorvetes Caribe: NCM/CEST reconhecem hipótese mesmo com BALDE DE 12 L',()=>{
+ const n=sorvetesCaribe(),reg=a.classificarRegimeOperacional(n.itens[0],n),rule=a.regimesCandidatos(n.itens[0],n).find(x=>x.id==='sorvetes');
+ assert(rule);assert(rule.status.includes('descrição genérica'));
+ assert.equal(reg.id,'sorvetes_st');assert.equal(reg.tipo,'pendente');
+ assert.equal(reg.semNovaAntecipacao,false);
+});
+test('Sorvetes Caribe: 3 itens sinalizados com CFOP5101/CSOSN102 sem retenção',()=>{
+ const n=sorvetesCaribe(),r=a.analyze(n,ctx),x=r.alerts.find(x=>x.titulo.includes('fabricante sem retenção declarada'));
+ assert(x);assert.equal(x.lvl,'confere');assert.equal(r.lvl,'confere');
+ assert(x.texto.includes('CFOP 5101'));assert(x.texto.includes('CSOSN 102'));
+ assert(x.texto.includes('indFinal=0'));assert(x.texto.includes('5.401'));
+ assert(x.texto.includes('Itens: 1, 2, 3')||x.texto.includes('Todos os itens'));
+ const output=a.renderNF(n,r,ctx);assert(output.includes('Sorvetes — ST legal identificada'));
+ assert(!output.includes('✓ ANTECIPAÇÃO TOTAL — ICMS COM ENCERRAMENTO'));
+});
+test('Sorvetes Caribe: sem declaração de sorvete na descrição, exigir conferência física',()=>{
+ const n=sorvetesCaribe(),x=alerts(n).find(x=>x.titulo.includes('descrição genérica'));
+ assert(x);assert(x.texto.includes('não comprova'));
+});
+test('Sorvetes Caribe: NCM 2105.00.10 depende da massa, não 12 litros',()=>{
+ const n=sorvetesCaribe(),x=alerts(n).find(x=>x.titulo.includes('peso da embalagem'));
+ assert(x);assert(x.texto.includes('2 kg'));assert(x.texto.includes('2105.00.90'));
+ assert(x.texto.includes('não informa a massa'));
+});
+test('Sorvetes Caribe: uCom UN e uTrib KG entram como conversão a conferir',()=>{
+ const n=sorvetesCaribe(),x=alerts(n).find(x=>x.titulo.includes('unidades comercial e tributável'));
+ assert(x);assert(x.texto.includes('uCom=UN'));assert(x.texto.includes('uTrib=KG'));
+ assert(x.texto.includes('Itens: 2'));
+});
+test('Sorvetes consumidor final: não presume retenção do fabricante',()=>{
+ const n=sorvetesCaribe();n.ide.indFinal='1';
+ assert(!alerts(n).some(x=>x.titulo.includes('fabricante sem retenção')));
+ assert(has(n,'consumidor final declarado'));
+});
+test('Sorvetes com CFOP 5401 e CSOSN 202 não recebem alerta de ausência de retenção',()=>{
+ const n=sorvetesCaribe();n.itens[0].cfop='5401';n.itens[0].icms.csosn='202';n.itens[0].icms.vBCST=1000;n.itens[0].icms.vICMSST=50;
+ n.itens=n.itens.slice(0,1);
+ assert(!alerts(n).some(x=>x.titulo.includes('fabricante sem retenção')));
+ assert.equal(a.classificarRegimeOperacional(n.itens[0],n).tipo,'pendente');
+});
+test('Sorvetes com CEST errado e descrição genérica não recebem alerta especial',()=>{
+ const n=sorvetesCaribe();n.itens.forEach(i=>i.cest='2309900');
+ assert(!alerts(n).some(x=>x.titulo.includes('fabricante sem retenção')));
+ assert(!a.avaliarSorvetesST(n.itens[0],n));
+});
+test('Outros NCM de preparados não recebem alerta específico de sorvetes 2105',()=>{
+ const n=sorvetesCaribe();n.itens.forEach(i=>{i.ncm='21069090';i.desc='PREPARADO PARA SORVETE EM MAQUINA';});
+ assert(!alerts(n).some(x=>x.titulo.includes('fabricante sem retenção')));
+});
+test('Nota de sorvetes fora de RR não recebe enquadramento interno específico',()=>{
+ const n=sorvetesCaribe();n.emit.uf='AM';n.ide.idDest='2';n.itens.forEach(i=>i.cfop='6101');
+ assert(!alerts(n).some(x=>x.titulo.includes('fabricante sem retenção')));
+ assert(!a.avaliarSorvetesST(n.itens[0],n));
+});
+test('Regressão: alerta de ST não exige guia e não lança cobrança automática',()=>{
+ const n=sorvetesCaribe(),x=alerts(n).find(x=>x.titulo.includes('fabricante sem retenção'));
+ assert(x);assert(!/apresentar (?:guia|comprovante)|exigir (?:guia|comprovante)/i.test(x.texto));
+ assert(x.texto.includes('Não presumir irregularidade tributária'));
 });
 // v4.11.6 — a consulta externa não pode ficar visualmente travada após erro.
 test('Consulta em timeout mostra botão de nova tentativa sem exigir reler DANFE',()=>{
