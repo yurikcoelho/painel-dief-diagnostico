@@ -4,7 +4,7 @@ const html=fs.readFileSync(path.join(__dirname,'../triagem-nfe-vercel/index.html
 new vm.Script(html.slice(html.indexOf('<script>')+8,html.indexOf('</script>',html.indexOf('<script>'))));
 new vm.Script(fs.readFileSync(path.join(__dirname,'../triagem-nfe-vercel/photos.js'),'utf8'));
 const box={document:{querySelector:()=>null},localStorage:{getItem:()=>null},Date,Intl,setTimeout};vm.createContext(box);
-vm.runInContext(html.slice(html.indexOf('<script>')+8,html.indexOf('/* ---------- fluxo ---------- */'))+'\nthis.api={regimesCandidatos,beneficiosCandidatos,aliquotaReferencia,tributacaoDeclarada,isSTcode,isMono,analyze,renderNF,interRegiao,baseOperacao,avaliar5904,referencias5904,classificarRegimeOperacional,maiorQuantidadePorUnidade,resumoRegimeHtml};',box);
+vm.runInContext(html.slice(html.indexOf('<script>')+8,html.indexOf('/* ---------- fluxo ---------- */'))+'\nthis.api={regimesCandidatos,beneficiosCandidatos,aliquotaReferencia,tributacaoDeclarada,isSTcode,isMono,analyze,renderNF,interRegiao,baseOperacao,avaliar5904,referencias5904,classificarRegimeOperacional,maiorQuantidadePorUnidade,resumoRegimeHtml,ocorrenciasLocaisCPF};',box);
 const a=box.api,ctx={posto:'Pacaraima',abordagem:null};let passed=0;
 function fixture(ncm,desc,cst='00',cfop='6102'){
  const now=new Date();const i={n:'1',cod:'teste',desc,ncm,cest:'',cBenef:'',cfop,un:'UN',q:1,vUn:1000,vProd:1000,vFrete:0,vSeg:0,vDesc:0,vOutro:0,vIPI:0,infAdProd:'',icms:{orig:'0',cst,csosn:'',vBC:1000,pICMS:7,vICMS:70,vBCST:0,vICMSST:0,vICMSSTRet:0,pRedBC:0},ufdest:false};
@@ -139,7 +139,7 @@ for(const [name,emi,ver,ok] of [
 function carneRevendaRR(){
  const n=fixture('02013000','MAMINHA DA ALCATRA KG','60','5405');
  n.emit.uf='RR';n.emit.mun='Boa Vista';n.ide.idDest='1';n.ide.cUF='14';n.ide.indFinal='1';
- n.dest.cpf=true;n.dest.ie='';n.dest.indIE='9';
+ n.dest.cpf=true;n.dest.doc='12345678909';n.dest.ie='';n.dest.indIE='9';
  Object.assign(n.itens[0],{un:'KG',q:21.36,vProd:1174.59,vUn:54.990169,cest:'1708400'});
  Object.assign(n.itens[0].icms,{vBC:0,pICMS:0,vICMS:0});
  const pic={...n.itens[0],n:'2',desc:'PICANHA MATURADA KG',ncm:'02023000',q:112.68,vProd:10647.13,vUn:94.489972,icms:{...n.itens[0].icms}};
@@ -158,17 +158,17 @@ test('ST carne: maminha/picanha em revenda interna RR com encerramento',()=>{
 test('Quantidades preservam KG e soma do peso, sem 0 artificial',()=>{
  const n=carneRevendaRR(),q=a.maiorQuantidadePorUnidade(n.itens);
  assert(q.includes('112,68 KG (item 2)'));assert(q.includes('134,04 KG'));
- const achado=alerts(n).find(x=>x.titulo.includes('Comprador sem inscrição'));
+ const achado=alerts(n).find(x=>x.titulo.includes('CPF: possível aquisição comercial'));
  assert(achado);assert.equal(achado.lvl,'registrar');
  assert(achado.texto.includes('112,68 KG'));assert(achado.texto.includes('134,04 KG'));
- assert(achado.texto.includes('NÃO gera nova antecipação'));
+ assert(achado.texto.includes('NÃO exigir nova antecipação'));
  assert(!achado.texto.includes('um item: 0'));
 });
 test('Mistura de KG e UN lista cada unidade sem comparação falsa',()=>{
  const n=carneRevendaRR(),extra={...n.itens[0],n:'3',ncm:'96081000',desc:'Caneta',un:'UN',q:40,cfop:'5102',vProd:200,icms:{...n.itens[0].icms,cst:'00'}};
  n.itens.push(extra);const q=a.maiorQuantidadePorUnidade(n.itens);
  assert(q.includes('112,68 KG'));assert(q.includes('40 UN'));assert.equal(a.classificarRegimeOperacional(extra,n).tipo,'nao_identificado');
- assert.equal(alerts(n).find(x=>x.titulo.includes('Comprador sem inscrição')).lvl,'confere');
+ assert.equal(alerts(n).find(x=>x.titulo.includes('CPF: possível aquisição comercial')).lvl,'confere');
 });
 test('Entrada interestadual de carne aplica regime mas não presume guia paga',()=>{
  const n=fixture('02013000','Carne bovina resfriada','60','6404');
@@ -273,6 +273,75 @@ test('Sem regime confirmado não apresenta antecipação total para outros produ
  const n=interna('22030000','Cerveja','60','5405'),h=render(n);
  assert(!h.includes('✓ ANTECIPAÇÃO TOTAL — ICMS COM ENCERRAMENTO'));
  assert(h.includes('Condições do regime a conferir'));
+});
+// v4.11.8 — CPF e finalidade empresarial: sem presumir revenda, irregularidade ou pagamento.
+function compraCPF(q=12,valor=4800,cfop='5102'){
+ const n=interna('96081000','Peças de reposição','00',cfop,20);
+ n.dest.doc='12345678909';n.dest.cpf=true;n.dest.ie='';n.dest.indIE='9';
+ n.itens[0].q=q;n.itens[0].vProd=valor;n.itens[0].vUn=valor/q;
+ n.tot.vProd=valor;n.tot.vNF=valor;return n;
+}
+const alertaCPF=n=>alerts(n).find(x=>x.titulo==='CPF: possível aquisição comercial ou empresarial');
+test('CPF: alto volume exige conferência de finalidade e eventualmente DIFIS',()=>{
+ const flag=alertaCPF(compraCPF());assert(flag);assert.equal(flag.lvl,'confere');
+ assert(flag.texto.includes('revenda, uso/consumo de empresa'));
+ assert(flag.texto.includes('verdadeira adquirente'));
+ assert(flag.texto.includes('DIFIS'));assert(flag.texto.includes('não comprovam revenda'));
+});
+test('CPF: valor elevado isoladamente apenas registra',()=>{
+ const flag=alertaCPF(compraCPF(1,9500));assert(flag);assert.equal(flag.lvl,'registrar');
+});
+test('CPF: compra particular pequena não recebe alerta',()=>assert(!alertaCPF(compraCPF(1,250))));
+test('CNPJ indIEDest9 não vira CPF em compra de alto valor',()=>{
+ const n=compraCPF(70,50000);n.dest.doc='12345678000195';n.dest.cpf=false;n.dest.indIE='9';
+ assert(!alertaCPF(n));
+});
+test('Destinatário estrangeiro ou sem documento não é CPF',()=>{
+ const n=compraCPF(12,8000);n.dest.cpf=false;n.dest.estrangeiro=true;n.dest.doc='EX123';
+ assert(!alertaCPF(n));n.dest=null;assert(!alertaCPF(n));
+});
+test('Remessa não deve gerar alerta de aquisição comercial',()=>{
+ const n=compraCPF(50,15000,'5915');assert(!alertaCPF(n));
+});
+test('CPF com ST de autopeças é registrável sem antecipação automática',()=>{
+ const n=motorPartidaST();n.dest.cpf=true;n.dest.doc='12345678909';n.itens[0].q=12;
+ const flag=alertaCPF(n);assert(flag);assert.equal(flag.lvl,'registrar');
+ assert(flag.texto.includes('NÃO exigir nova antecipação'));
+ assert(!flag.texto.includes('comprovante de arrecadação'));
+});
+test('Histórico no aparelho conta somente notas distintas do mesmo CPF',()=>{
+ const orig=box.localStorage.getItem,cpf='12345678909',n=compraCPF(1,300);
+ const hist=[
+  {chave:'2'.repeat(44),destCpf:cpf,valor:2300},
+  {chave:'2'.repeat(44),destCpf:cpf,valor:2300},
+  {chave:'3'.repeat(44),destCpf:cpf,valor:1900},
+  {chave:n.chave,destCpf:cpf,valor:4500},
+  {chave:'4'.repeat(44),destCpf:'00000000000',valor:5000},
+  {chave:'5'.repeat(44),valor:9000}
+ ];
+ box.localStorage.getItem=k=>k==='triagem.historico'?JSON.stringify(hist):orig(k);
+ try{
+  const local=a.ocorrenciasLocaisCPF(n);
+  assert.equal(local.quantidade,2);assert.equal(local.valor,4200);
+  const flag=alertaCPF(n);assert(flag);assert.equal(flag.lvl,'confere');
+  assert(flag.texto.includes('2 outra(s) NF-e'));
+  assert(flag.texto.includes('consultas salvas'));
+ }finally{box.localStorage.getItem=orig;}
+});
+test('Histórico não confunde várias consultas à mesma chave com habitualidade',()=>{
+ const orig=box.localStorage.getItem,cpf='12345678909',n=compraCPF(1,100);
+ box.localStorage.getItem=k=>k==='triagem.historico'?JSON.stringify([
+  {chave:'6'.repeat(44),destCpf:cpf,valor:2300},
+  {chave:'6'.repeat(44),destCpf:cpf,valor:2300},
+  {chave:n.chave,destCpf:cpf,valor:5000}
+ ]):orig(k);
+ try{assert.equal(a.ocorrenciasLocaisCPF(n).quantidade,1);assert(!alertaCPF(n));}
+ finally{box.localStorage.getItem=orig;}
+});
+test('Histórico CPF é armazenado somente localmente e não recupera consultas antigas',()=>{
+ assert(html.includes('destCpf:nf.dest&&nf.dest.cpf'));
+ assert(html.includes('localStorage.setItem("triagem.historico"'));
+ assert(html.includes('a partir da v4.11.8'));
 });
 // v4.11.6 — a consulta externa não pode ficar visualmente travada após erro.
 test('Consulta em timeout mostra botão de nova tentativa sem exigir reler DANFE',()=>{

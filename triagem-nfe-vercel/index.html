@@ -216,7 +216,7 @@ details summary{cursor:pointer;font-family:var(--display);font-weight:600;font-s
     </div>
     <div id="histResumo" class="hint"></div>
     <div id="histLista" class="hist-list"></div>
-    <p class="hint">Toque em qualquer card para abrir todos os dados da NF-e e o XML completo. O histórico fica salvo somente neste navegador/aparelho. Em “Notas com fotos”, você acessa os registros fotográficos mesmo sem recuperar o XML.</p>
+    <p class="hint">Toque em qualquer card para abrir todos os dados da NF-e e o XML completo. O histórico fica salvo somente neste navegador/aparelho. Para sinalizar aquisições reiteradas em CPF, a partir da v4.11.8 o aplicativo compara apenas NF-e já consultadas e salvas neste aparelho. Registros anteriores sem CPF não entram no cruzamento; reconsultar a mesma chave não conta como nova compra. Em “Notas com fotos”, você acessa os registros fotográficos mesmo sem recuperar o XML.</p>
   </section>
 
   <section id="screenHistDetalhe" class="hidden">
@@ -227,7 +227,7 @@ details summary{cursor:pointer;font-family:var(--display);font-weight:600;font-s
     <div id="histDetalhe"></div>
   </section>
 
-  <p class="footer">Ferramenta de apoio à triagem operacional · v4.11.7. Prioriza irregularidades materiais, destino da carga e exposição tributária. As regras seguem o RICMS/RR (Decreto nº 4.335-E/2001, consolidação de referência até jan/2026), o CTE (Lei nº 59/93) e a prática do posto; listas de NCM são indicativas e precisam de calibragem. Não substitui a análise do auditor. A busca automática envia somente a chave de acesso ao endpoint serverless desta ferramenta, que consulta o serviço privado consultadanfe.com; o XML aberto manualmente é lido só neste aparelho.</p>
+  <p class="footer">Ferramenta de apoio à triagem operacional · v4.11.8. Prioriza irregularidades materiais, destino da carga e exposição tributária. As regras seguem o RICMS/RR (Decreto nº 4.335-E/2001, consolidação de referência até jan/2026), o CTE (Lei nº 59/93) e a prática do posto; listas de NCM são indicativas e precisam de calibragem. Não substitui a análise do auditor. A busca automática envia somente a chave de acesso ao endpoint serverless desta ferramenta, que consulta o serviço privado consultadanfe.com; o XML aberto manualmente é lido só neste aparelho.</p>
 </main>
 
 <div class="scanner hidden" id="scanner" role="dialog" aria-label="Leitura do código">
@@ -282,6 +282,22 @@ function horaBoaVista(ts){
 function lerHistorico(){
   try{const a=JSON.parse(localStorage.getItem("triagem.historico")||"[]");return Array.isArray(a)?a:[]}catch(e){return []}
 }
+// Compara somente outras NF-e consultadas neste navegador, sem acesso ao banco fiscal.
+// Leituras repetidas da mesma chave não contam como compras distintas.
+function ocorrenciasLocaisCPF(nf){
+  const cpf=nf.dest&&nf.dest.cpf?onlyDig(nf.dest.doc):"";
+  if(cpf.length!==11)return {quantidade:0,valor:0};
+  const atual=onlyDig(nf.chave),chaves=new Set();let valor=0;
+  for(const r of lerHistorico()){
+    if(r.destCpf!==cpf)continue;
+    const chave=onlyDig(r.chave);
+    if(chave.length!==44||chave===atual||chaves.has(chave))continue;
+    chaves.add(chave);
+    const v=Number(r.valor);
+    if(Number.isFinite(v)&&v>0)valor+=v;
+  }
+  return {quantidade:chaves.size,valor};
+}
 function registrarConsulta(nf,res){
   try{
     const ts=(nf.leituraEm&&nf.leituraEm.getTime?nf.leituraEm.getTime():Date.now());
@@ -291,6 +307,7 @@ function registrarConsulta(nf,res){
       ts,data:dataBoaVista(ts),chave:nf.chave,nNF:nf.ide.nNF,serie:nf.ide.serie,
       emit:nf.emit.nome||"",emitDoc:nf.emit.doc||"",
       dest:nf.dest&&nf.dest.nome||"",destMun:nf.dest&&nf.dest.mun||"",destUF:nf.dest&&nf.dest.uf||"",
+      destCpf:nf.dest&&nf.dest.cpf&&onlyDig(nf.dest.doc).length===11?onlyDig(nf.dest.doc):"",
       valor:nf.tot.vNF||nf.tot.vProd||0,cfops,status:res&&res.lvl||"libera",
       placa:nf.transp&&nf.transp.placa||"",natOp:nf.ide.natOp||"",
       posto:$("#posto")?$("#posto").value.trim():"Pacaraima",
@@ -970,19 +987,33 @@ function analyze(nf,ctx){
   if(d&&d.indIE==="1"&&nf.ide.indFinal==="1"&&isVenda) add("registrar","Venda a contribuinte marcada como consumidor final","Confirme se a compra é para uso e consumo ou para revenda.","MOC NF-e (indFinal)");
   if(simplesPuro&&!/simples\s+nacional/i.test(nf.infCpl+" "+nf.infAdFisco)) add("registrar","Sem a expressão obrigatória do Simples Nacional","Faltou “Documento emitido por ME ou EPP optante pelo Simples Nacional”.","Res. CGSN 140/2018, art. 59, § 4º, II");
   if(simples) add("info","Emitente declara "+(CRT[nf.emit.crt]||"Simples"),"O código vem do próprio emitente. Confirme a opção no Portal do Simples Nacional.","Res. CGSN 140/2018");
-  const pf=!d||d.cpf||d.estrangeiro||(d.indIE==="9"&&!d.ie);
-  const destRR=(destUF||emitUF)==="RR"||(!d&&emitUF==="RR");
+  // Alerta exclusivo para CPF real; CNPJ não contribuinte não equivale a pessoa física.
+  const cpfDest=d&&d.cpf&&onlyDig(d.doc).length===11;
   const und=["UN","UND","UNID","PC","PCT","CX","FD","VDO","KIT","PAR","DZ","LT","GF","GRF"];
   const volumePossivel=nf.itens.some(i=>und.includes((i.un||"").toUpperCase().replace(/[^A-Z]/g,""))&&i.q>=10||
     (i.un||"").toUpperCase()==="KG"&&i.q>=30);
   const volumeTexto=maiorQuantidadePorUnidade(nf.itens);
+  const local=cpfDest?ocorrenciasLocaisCPF(nf):{quantidade:0,valor:0};
+  const repeticaoRelevante=local.quantidade>=2&&local.valor+vNF>=3000;
+  const valorExpressivo=vNF>=3000;
   const encerramentoDeclarado=nf.itens.length>0&&nf.itens.every(i=>classificarRegimeOperacional(i,nf).semNovaAntecipacao);
-  if(pf&&isVenda&&destRR&&(volumePossivel||vNF>=3000)){
-    add(encerramentoDeclarado?"registrar":"confere","Comprador sem inscrição com volume de revenda?",
-      "Maiores quantidades por unidade: "+volumeTexto+"; valor da nota: "+brl(vNF)+". Confirme a finalidade comercial e a habitualidade."+
-      (encerramentoDeclarado?" Mercadorias com regime de encerramento identificado e CST/CFOP coerentes: a suspeita cadastral NÃO gera nova antecipação dos arts. 72/73 se o imposto anterior estiver regularmente recolhido. Trate eventual falta de inscrição separadamente.":
-      " A antecipação dos arts. 72/73 depende do regime de cada produto, despesas e créditos admitidos. A margem de 30% não é automática: confira os §§ 1º e 2º do art. 73; emitente do Simples não gera o crédito previsto no § 5º."),
-      "RICMS/RR, arts. 72, IV, 73 e, para carne, 612/613");}
+  if(cpfDest&&isVenda&&destUF==="RR"&&(volumePossivel||valorExpressivo||repeticaoRelevante)){
+    const sinais=[volumePossivel?"quantidade expressiva":null,valorExpressivo?"valor da NF-e":null,repeticaoRelevante?"ocorrências anteriores neste aparelho":null].filter(Boolean).join("; ");
+    const historico=local.quantidade?
+      " Histórico local deste aparelho: "+local.quantidade+" outra(s) NF-e de chave distinta para o mesmo CPF, totalizando "+brl(local.valor)+". São consultas salvas, não um levantamento integral de aquisições nem prova de habitualidade.":
+      " Sem outras NF-e deste CPF no histórico local; isso não exclui aquisições anteriores.";
+    const tributacao=encerramentoDeclarado?
+      " O XML indica ST/antecipação com encerramento para todos os itens, com CFOP/CST coerentes: NÃO exigir nova antecipação apenas pela compra em CPF; apurar eventuais indícios cadastrais de forma independente.":
+      " Se houver finalidade comercial caracterizada, avaliar por produto a hipótese de antecipação dos arts. 72, IV, e 73 do RICMS/RR, considerando ST, benefícios e exceções; não aplicar MVA de 30% nem cobrança automaticamente.";
+    add(encerramentoDeclarado||(!volumePossivel&&!repeticaoRelevante)?"registrar":"confere",
+      "CPF: possível aquisição comercial ou empresarial",
+      "NF-e em CPF com sinais para triagem ("+sinais+"). Maior quantidade por unidade: "+volumeTexto+"; valor desta NF-e: "+brl(vNF)+"."+
+      historico+
+      " Pergunte quem realmente comprou/pagou, onde será entregue e se o destino é revenda, uso/consumo de empresa (inclusive manutenção de veículos) ou uso particular. Se uma empresa for a verdadeira adquirente, esclareça por que a NF-e foi emitida em CPF; a utilização da mercadoria pela empresa, isoladamente, não prova adquirente incorreto."+
+      " Registre chave, itens/quantidades, endereço de entrega e declarações obtidas. Havendo indícios consistentes ou compras reiteradas, consolide os registros e avalie comunicar à DIFIS para investigação/diligências sobre adquirente real, atividade comercial, documentos fiscais e eventuais irregularidades."+
+      " Quantidade e valor não comprovam revenda, fraude ou inidoneidade."+tributacao,
+      "RICMS/RR, arts. 18, 72, IV, 73 e 147, III, conforme fatos apurados; LC 87/1996, art. 4º");
+  }
   // interestadual para RR
   const entradaRR=destUF==="RR"&&emitUF&&emitUF!=="RR";
   if(entradaRR&&nf.ide.indFinal==="1"&&d&&d.indIE==="9"){
