@@ -162,6 +162,12 @@ details summary{cursor:pointer;font-family:var(--display);font-weight:600;font-s
 .st-status-line .st-detail{font-size:.88rem;margin-top:2px}
 .st-status-line .st-valid{color:#197d48}
 .st-status-line .st-pending{color:#996300}
+.st-simple-line{padding:6px 0;border-top:1px solid rgba(0,0,0,.10);font-size:.94rem}
+.item-status{font-weight:700;font-size:.92rem;margin:5px 0}
+.item-status.normal,.item-status.st{color:var(--sign)}
+.item-status.verificar{color:#a66b00}
+.item-more{margin:8px 0 0!important;padding:7px 10px!important;border:1px solid var(--line)!important}
+.item-more summary{font-size:.92rem!important;color:var(--muted)}
 .legal-candidate.st-confirmed{border-left-color:#198d49;background:#e9f6ed;color:#15492b}
 .legal-candidate.st-confirmed b{color:#14552b}
 </style>
@@ -227,7 +233,7 @@ details summary{cursor:pointer;font-family:var(--display);font-weight:600;font-s
     <div id="histDetalhe"></div>
   </section>
 
-  <p class="footer">Ferramenta de apoio à triagem operacional · v4.12.0. Prioriza irregularidades materiais, destino da carga e exposição tributária. As regras seguem o RICMS/RR (Decreto nº 4.335-E/2001, consolidação de referência até jan/2026), o CTE (Lei nº 59/93) e a prática do posto; listas de NCM são indicativas e precisam de calibragem. Não substitui a análise do auditor. A busca automática envia somente a chave de acesso ao endpoint serverless desta ferramenta, que consulta o serviço privado consultadanfe.com; o XML aberto manualmente é lido só neste aparelho.</p>
+  <p class="footer">Ferramenta de apoio à triagem operacional · v4.13.0. Prioriza irregularidades materiais, destino da carga e exposição tributária. As regras seguem o RICMS/RR (Decreto nº 4.335-E/2001, consolidação de referência até jan/2026), o CTE (Lei nº 59/93) e a prática do posto; listas de NCM são indicativas e precisam de calibragem. Não substitui a análise do auditor. A busca automática envia somente a chave de acesso ao endpoint serverless desta ferramenta, que consulta o serviço privado consultadanfe.com; o XML aberto manualmente é lido só neste aparelho.</p>
 </main>
 
 <div class="scanner hidden" id="scanner" role="dialog" aria-label="Leitura do código">
@@ -748,46 +754,59 @@ function maiorQuantidadePorUnidade(itens){
   const peso=itens.filter(i=>(i.un||"").toUpperCase()==="KG").reduce((total,i)=>total+(Number(i.q)||0),0);
   return (maior||"quantidades não informadas")+(peso>0?" · peso comercial total: "+peso.toLocaleString("pt-BR",{maximumFractionDigits:4})+" KG":"");
 }
+/* Triagem de trânsito: a declaração tributária é informação documental.
+   CEST/NCM não geram cobrança automática. Entrada interestadual exige exame próprio. */
+function triagemOperacionalItem(i,nf){
+  const c=i.icms.cst||"",cs=i.icms.csosn||"",cfop=onlyDig(i.cfop);
+  const origem=nf.emit.uf||UF[nf.ide.cUF]||"",destino=nf.dest&&nf.dest.uf||"";
+  const internaRR=origem==="RR"&&destino==="RR"&&cfop.startsWith("5")&&nf.ide.tpNF==="1";
+  const entradaRR=origem&&origem!=="RR"&&destino==="RR"&&nf.ide.tpNF==="1"&&cfop.startsWith("6");
+  const anterior=c==="60"||cs==="500";
+  const retendo=["10","30","70"].includes(c)||["201","202","203"].includes(cs)||i.icms.vICMSST>0;
+  const sorvete=avaliarSorvetesST(i,nf),bebida=avaliarBebidaST(i,nf);
+  const cond=(titulo,motivo)=>({tipo:"verificar",titulo,motivo});
+  if(!origem||!destino)return cond("VERIFICAR","UF do emitente ou do destinatário ausente.");
+  if(internaRR){
+    if(bebida){
+      if(bebida.situacao==="divergente"||bebida.situacao==="pendente")return cond("VERIFICAR · BEBIDA",bebida.motivo);
+      if(bebida.situacao==="produto_compativel"&&!bebida.compatibilidade)
+        return cond("VERIFICAR · ST", "Bebida enquadrada, mas CFOP/CST não indicam retenção anterior ou nesta operação.");
+    }
+    if(sorvete&&sorvete.fabricante&&sorvete.semST&&sorvete.revendaDeclarada)
+      return cond("VERIFICAR · SORVETE","Fabricante declara venda para revenda sem retenção de ST.");
+    if(anterior&&cfop!=="5405"&&!cfop.endsWith("405"))
+      return cond("VERIFICAR · CFOP/CST","ST anterior declarada com CFOP incompatível.");
+    if((cfop.endsWith("405")||cfop.endsWith("404"))&&!anterior)
+      return cond("VERIFICAR · CFOP/CST","CFOP de revenda com ST anterior, mas CST/CSOSN não correspondente.");
+    if(anterior)return {tipo:"st",titulo:"ST ANTERIOR DECLARADA",motivo:"CFOP/CST indicam substituição anterior; não lançar nova antecipação somente por esta saída interna."};
+    if(retendo&&i.icms.vICMSST>0)return {tipo:"st",titulo:"ST RETIDA NESTA NF-e",motivo:"Retenção informada no XML; conferir incoerências materiais, se houver."};
+    if(retendo)return cond("VERIFICAR · ST","CST/CSOSN de substituição sem retenção anterior ou valor de ST identificado.");
+    if(c==="00"||["101","102","103","400"].includes(cs))
+      return {tipo:"normal",titulo:"TRIBUTAÇÃO NORMAL DECLARADA",motivo:"Saída interna com ICMS próprio ou regime do Simples declarado. Sem antecipação interestadual nesta operação."};
+    return {tipo:"normal",titulo:"TRIBUTAÇÃO INFORMADA",motivo:"Conferir somente irregularidade concreta identificada na NF-e ou na carga."};
+  }
+  if(entradaRR){
+    const regras=regimesCandidatos(i,nf).filter(r=>r.regime!=="mono"&&r.status&&/descrição declarada compatível/.test(r.status));
+    if(regras.length)return cond("VERIFICAR · ENTRADA INTERESTADUAL",regras.map(r=>r.nome).join("; ")+". Conferir incidência e responsabilidade de RR antes de calcular.");
+    return {tipo:"normal",titulo:"ENTRADA INTERESTADUAL",motivo:"Conferir eventual antecipação parcial do art. 75 conforme cadastro do destinatário; sem cobrança automática por NCM."};
+  }
+  if(anterior&&cfop.endsWith("405"))return {tipo:"st",titulo:"ST ANTERIOR DECLARADA",motivo:"Conferência documental; condições do destino permanecem próprias."};
+  return {tipo:"normal",titulo:"TRIBUTAÇÃO DECLARADA",motivo:"Sem enquadramento automático de ST por CEST."};
+}
 function resumoRegimeHtml(nf){
   if(!nf.itens.length)return "";
-  const cls=nf.itens.map(i=>({item:i.n,reg:classificarRegimeOperacional(i,nf)}));
-  const all=cls.length,confirmados=cls.filter(x=>x.reg.tipo==="confirmado").length;
-  const legal=confirmados===all,declarados=cls.filter(x=>x.reg.declaracaoCompativel).length;
-  const declaracao=legal&&declarados===all;
-  const soCarne=legal&&cls.every(x=>x.reg.id==="carne_bovina");
-  const soAutopecas=legal&&cls.every(x=>x.reg.id==="autopecas_st");
-  const soBebidas=legal&&cls.every(x=>x.reg.id==="bebidas_st");
-  const todasRetencoesAtuais=soBebidas&&cls.every(x=>x.reg.retencaoAtual);
-  const titulo=soCarne?"✓ ANTECIPAÇÃO TOTAL — ICMS COM ENCERRAMENTO":
-    soAutopecas?"✓ AUTOPEÇAS — ST ANTERIOR DECLARADA":
-    soBebidas?(todasRetencoesAtuais?"✓ BEBIDAS — RETENÇÃO DE ST DECLARADA":"✓ BEBIDAS — ST ANTERIOR DECLARADA"):
-    legal?"✓ REGIMES DE ST/ANTECIPAÇÃO IDENTIFICADOS":
-    confirmados?"REGIME IDENTIFICADO EM "+confirmados+" DE "+all+" ITENS":"ENQUADRAMENTO DE ST/ANTECIPAÇÃO — TRIAGEM";
-  const texto=soCarne?"Revenda interna de carne bovina: regime de encerramento identificado nos documentos.":
-    soAutopecas?"Motor(es) de partida compatíveis com o regime de ST de autopeças; CFOP/CST indicam tributação anterior. Não gerar nova antecipação apenas pela circulação interna.":
-    soBebidas?"NCM, CEST, descrição, embalagem e CFOP/CST ou CSOSN documentalmente coerentes com ST na operação interna. Não comprova pagamento.":
-    legal?"Enquadramentos fiscais documentais identificados. Examine as condições específicas das mercadorias.":
-    "As condições do regime ainda precisam ser verificadas para um ou mais itens.";
-  const declaredText=declaracao?(soBebidas&&todasRetencoesAtuais?"✓ Retenção de ST nesta operação declarada na NF-e":"✓ Tributação anterior declarada na NF-e"):
-    declarados?"⚠ Declaração compatível em "+declarados+" de "+all+" itens":
-    "⚠ Declaração de ST anterior não compatível em todos os itens";
-  const baseLegal=legal?[...new Set(cls.map(x=>x.reg.base))].join("; "):"Catálogo operacional parcial do RICMS/RR.";
-  return `<section class="st-overview ${legal?"ok":"check"}" aria-label="Situação de substituição tributária">
-    <div class="st-title">${titulo}</div><p>${texto}</p>
-    <div class="st-three-status">
-      <div class="st-status-line">
-        <div class="st-label">1 · Enquadramento legal</div>
-        <div class="st-value ${legal?"st-valid":"st-pending"}">${legal?"✓ REGIME IDENTIFICADO PELOS DADOS FISCAIS":"⚠ Condições do regime a conferir"}</div>
-        <div class="st-detail">${esc(baseLegal)}</div>
-      </div>
-      <div class="st-status-line">
-        <div class="st-label">2 · ${soBebidas&&todasRetencoesAtuais?"Retenção nesta operação declarada":"Tributação anterior declarada"}</div>
-        <div class="st-value ${declaracao?"st-valid":"st-pending"}">${declaredText}</div>
-        <div class="st-detail">${soBebidas&&todasRetencoesAtuais?"CFOP de substituto, código tributário e valores declarados no XML.":"CFOP 5.405 e CST 60/CSOSN 500 são declarações da NF-e."} A triagem não acessa a arrecadação nem solicita guias de ST.</div>
-      </div>
-    </div>
-    ${cls.map(x=>`<div class="st-line"><b>${x.reg.tipo==="confirmado"?"✓":x.reg.tipo==="pendente"?"⚠":"—"} Item ${esc(x.item)}: ${esc(x.reg.nome)}</b><div>${esc(x.reg.nota||x.reg.detalhe)}</div></div>`).join("")}
-    <p class="st-source">Triagem documental de NCM, CEST, CFOP, CST e descrição, sem certificação de pagamento. ${esc(baseLegal)}</p>
+  const linhas=nf.itens.map(i=>({n:i.n,...triagemOperacionalItem(i,nf)}));
+  const pend=linhas.filter(x=>x.tipo==="verificar"),st=linhas.filter(x=>x.tipo==="st"),normal=linhas.filter(x=>x.tipo==="normal");
+  const resumir=a=>a.length?a.slice(0,12).map(x=>x.n).join(", ")+(a.length>12?" e mais "+(a.length-12):""):"—";
+  const origem=nf.emit.uf||UF[nf.ide.cUF]||"",destino=nf.dest&&nf.dest.uf||"";
+  const interna=origem==="RR"&&destino==="RR"&&nf.itens.every(i=>onlyDig(i.cfop).startsWith("5"));
+  return `<section class="st-overview ${pend.length?"check":"ok"}" aria-label="Triagem operacional de ICMS e ST">
+    <div class="st-title">${pend.length?"⚠ VERIFICAR "+pend.length+" ITEM(NS)":"✓ SEM COBRANÇA AUTOMÁTICA DE ST IDENTIFICADA"}</div>
+    <p>${interna?"Operação declarada interna em RR.":"Operação a conferir conforme origem e destino."} ${pend.length?"Pendências tributárias pontuais abaixo.":"Conferência documental, sem certificação de recolhimento."}</p>
+    <div class="st-simple-line"><b>ST informada:</b> ${st.length} item(ns) ${st.length?"("+esc(resumir(st))+")":""}</div>
+    <div class="st-simple-line"><b>Tributação própria/outra declarada:</b> ${normal.length} item(ns)</div>
+    ${pend.length?`<div class="st-simple-line st-pending"><b>Verificar:</b> ${pend.map(x=>"Item "+esc(x.n)+" — "+esc(x.motivo)).join("; ")}</div>`:""}
+    <small>Prioridade no posto: situação da NF-e, carga, destinatário e imposto efetivamente exigível. CEST sozinho não cria ST.</small>
   </section>`;
 }
 function beneficioDeclarado(i){return !!i.cBenef||["20","30","40","41","50","51","70"].includes(i.icms.cst)||["103","203","300","400"].includes(i.icms.csosn)||i.icms.pRedBC>0||i.icms.vICMSDeson>0}
@@ -1206,7 +1225,7 @@ function analyze(nf,ctx){
     if((cRetem||sRetem)&&["101","102"].includes(cf3i)) addItem("stret-normal","confere","CST/CSOSN com retenção de ST e CFOP de venda comum","O item indica retenção de ST, mas usa CFOP "+f+". Confira se o remetente deveria usar CFOP próprio de substituto (ex.: 5.401/5.403).","RICMS/RR, arts. 746 e 747; tabela CFOP",i.n);
     if(["401","403"].includes(cf3i)&&d&&d.indIE==="1"&&i.icms.vBCST===0&&i.icms.vICMSST===0) addItem("stsemvalor","confere","CFOP de substituto sem base/ICMS-ST","Para destinatário contribuinte, a NF do substituto deve indicar a base de cálculo da ST e o imposto retido. Ambos estão zerados.","RICMS/RR, art. 747",i.n);
     if(declaraMono(i)&&!monoCandidato(i))addItem("mono-incomp:"+ncm,"confere","CST monofásico sem combustível compatível","CST "+esc(c)+" declarado para "+esc(i.desc)+". O código de combustível não valida o produto nem afasta ST/antecipação de RR. Confira NCM, natureza da carga e art. 839-U; lubrificantes não se tornam monofásicos pelo CST.","RICMS/RR, art. 839-U",i.n);
-    if(st&&!candidatos.length)addItem("stind:"+ncm.slice(0,4),"confere","ST declarada sem enquadramento validado","A NF-e declara ST, mas a tabela/descrição não identificou fundamento específico suficiente. Confira NCM, CEST, uso, atividade e regra legal aplicável; não presumir irregularidade de pagamento.","RICMS/RR, arts. 727 a 730 e regimes específicos",i.n);
+    if(st&&!candidatos.length&&!((c==="60"||s==="500")&&["5405","6405"].includes(f)))addItem("stind:"+ncm.slice(0,4),"confere","ST declarada sem enquadramento validado","A NF-e declara ST, mas a tabela/descrição não identificou fundamento específico suficiente. Confira NCM, CEST, uso, atividade e regra legal aplicável; não presumir irregularidade de pagamento.","RICMS/RR, arts. 727 a 730 e regimes específicos",i.n);
     const sorvete=avaliarSorvetesST(i,nf);
     if(sorvete){
       if(sorvete.fabricante&&sorvete.semST&&sorvete.revendaDeclarada){
@@ -1344,19 +1363,29 @@ function renderNF(nf,res,contextoOverride){
   const validadeDetalhe=validade?(validade.regra+" · desde "+validade.fonte+(validade.limite?" · limite "+fmtDate(validade.limite):"")):"Sem data suficiente";
   const itens=nf.itens.map(i=>{
     const candidatos=regimesCandidatos(i,nf),beneficios=beneficiosCandidatos(i,nf),aliquota=aliquotaReferencia(i),regimeOperacional=classificarRegimeOperacional(i,nf);
+    const op=triagemOperacionalItem(i,nf);
     const ia=(res.itemAlerts&&res.itemAlerts[String(i.n)])||[];
     const compatibilidade=tratamentoCompativel(i,nf,ia);
-    const crit=ia.filter(a=>a.lvl==="para"||a.lvl==="confere");
+    const crit=ia.filter(a=>(a.lvl==="para"||a.lvl==="confere")&&!/ST declarada sem enquadramento validado|Benefício\/diferimento legal a conferir|ST interna de RR a conferir/i.test(a.tit||""));
     const flagHtml=crit.map(a=>`<div class="item-flag ${a.lvl}"><b>⚠ ${esc(a.tit)}</b><span>${a.txt}</span>${a.base?`<div class="base">Base: ${esc(a.base)}</div>`:""}</div>`).join("");
     const regimeTag=regimeOperacional.tipo==="confirmado"?`<div class="legal-candidate st-confirmed"><b>${regimeOperacional.id==="autopecas_st"?"✓ AUTOPEÇAS — ST ANTERIOR DECLARADA · ENQUADRAMENTO LEGAL":regimeOperacional.id==="bebidas_st"?"✓ BEBIDAS — ST DECLARADA COMPATÍVEL · ENQUADRAMENTO LEGAL":"✓ ANTECIPAÇÃO TOTAL — ICMS COM ENCERRAMENTO · ENQUADRAMENTO LEGAL"}</b><div>${esc(regimeOperacional.detalhe)}</div><div>${esc(regimeOperacional.nota)}</div><div>${esc(regimeOperacional.base)}</div></div>`:compatibilidade?`<div class="legal-candidate compatible"><b>✓ Tratamento declarado compatível com a regra geral</b><div>${esc(compatibilidade.nome)}, NCM ${esc(i.ncm)}: operação interna em RR, regime normal, CST 00 e alíquota de ${pct(compatibilidade.aliquota)}. Base e ICMS declarados conferem. ${esc(compatibilidade.art)}.</div><div>Compatibilidade do ICMS próprio nos dados analisados; benefício ou regime especial específico do contribuinte e recolhimento efetivo exigem conferência.</div></div>`:candidatos.length?candidatos.map(r=>`<div class="legal-candidate"><b>Regra legal candidata: ${esc(r.nome)}</b><div>${esc(r.art)} · ${esc(r.status)}. ${esc(r.condicao)}</div></div>`).join(""):beneficios.length?`<div class="legal-candidate"><b>Tratamento da operação a conferir</b><div>A tabela identificou hipótese legal abaixo; confira sua aplicação antes de confirmar o CST declarado.</div></div>`:`<div class="legal-candidate"><b>Enquadramento não validado</b><div>Sem regra específica suficiente na tabela. Confira NCM, descrição, atividade e benefícios; CST 00 não comprova tributação integral.</div></div>`;
     const beneficioHtml=beneficios.map(b=>`<div class="legal-candidate"><b>Hipótese de ${esc(b.tipo.toLowerCase())}: ${esc(b.nome)}</b><div>${esc(b.art)}. ${esc(b.condicao)}</div><div><b>Vigência:</b> ${esc(b.vigencia)}</div></div>`).join("");
-    return `<div class="item${crit.length?" item-risk":""}"><div class="t">${esc(i.n)}. ${esc(i.desc)}</div>
+    const liquido=Math.max(0,(i.vProd||0)-(i.vDesc||0));
+    const statusTxt=op.tipo==="verificar"?"⚠ ":"✓ ";
+    return `<div class="item${crit.length||op.tipo==="verificar"?" item-risk":""}"><div class="t">${esc(i.n)}. ${esc(i.desc)}</div>
+    <div class="item-status ${op.tipo}">${statusTxt}${esc(op.titulo)}</div>
+    <div>${i.q.toLocaleString("pt-BR",{maximumFractionDigits:4})} ${esc(i.un)} × R$ ${Number(i.vUn).toLocaleString("pt-BR",{minimumFractionDigits:2,maximumFractionDigits:4})} = <b>${brl(liquido)}</b>${i.vDesc?" (desconto "+brl(i.vDesc)+")":""}</div>
+    <div class="base">NCM ${esc(i.ncm)}${i.cest?" · CEST "+esc(i.cest):""} · CFOP ${esc(i.cfop)} · ${esc(i.icms.cst?"CST "+i.icms.cst:"CSOSN "+(i.icms.csosn||"—"))}</div>
+    ${op.tipo==="verificar"?`<div class="item-flag"><b>Conferir:</b> ${esc(op.motivo)}</div>`:""}
+    ${(i.icms.vICMSSTRet||i.icms.vICMSST)?`<div class="base">ICMS-ST ${i.icms.vICMSSTRet?"anterior declarado: "+brl(i.icms.vICMSSTRet):"nesta operação: "+brl(i.icms.vICMSST)}</div>`:""}
+    ${flagHtml}
+    <details class="item-more"><summary>Dados fiscais e fundamentos (opcional)</summary>
     ${flagHtml}
     <div class="grid2"><span>NCM ${esc(i.ncm)}${i.cest?" · CEST "+esc(i.cest):""}${i.cBenef?" · cBenef "+esc(i.cBenef):""}</span><span>${i.q.toLocaleString("pt-BR")} ${esc(i.un)} × ${brl(i.vUn)} = <b>${brl(i.vProd)}</b></span>
     <span>CFOP ${esc(i.cfop)}: ${esc(cfopDesc(i.cfop))}</span><span><b>Declarado na NF-e: ${esc(codeDesc(i))}</b></span>
     <span>Origem ${esc(i.icms.orig)}: ${esc(ORIG[i.icms.orig]||"")}</span><span>BC ${brl(i.icms.vBC)} · ${pct(i.icms.pICMS)} · ICMS ${brl(i.icms.vICMS)}${i.icms.vICMSST?" · ST "+brl(i.icms.vICMSST):""}</span>
     ${i.ibscbs?`<span>IBS/CBS: CST ${esc(i.ibscbs.cst||"—")} · cClassTrib ${esc(i.ibscbs.classe||"—")}</span><span>BC ${brl(i.ibscbs.vBC)} · IBS ${brl(i.ibscbs.vIBS)} (UF ${pct(i.ibscbs.pIBSUF)}; município ${pct(i.ibscbs.pIBSMun)}) · CBS ${brl(i.ibscbs.vCBS)} (${pct(i.ibscbs.pCBS)})</span>`:""}</div>
-    <div class="base">${compatibilidade?"Tributação integral própria declarada compatível com a regra geral identificada":esc(tributacaoDeclarada(i))}. NCM, CEST e descrição também são declarados; confronte com a carga.</div><div class="base">${regimeOperacional.tipo==="confirmado"?"Tributação anterior declarada: conferência documental, sem acesso à arrecadação pelo aplicativo.":("Alíquota interna de referência: "+(aliquota.valor===null?"pendente":pct(aliquota.valor))+" · "+esc(aliquota.condicao)+". Benefícios e vigência exigem conferência.")}</div>${regimeTag}${beneficioHtml}</div>`}).join("");
+    <div class="base">${esc(tributacaoDeclarada(i))}. Informações declaradas pelo emitente.</div>${regimeTag}${beneficioHtml}</details></div>`}).join("");
   const pag=nf.pag.map(p=>`${TPAG[p.tPag]||p.tPag}${p.xPag?" ("+esc(p.xPag)+")":""}: ${brl(p.vPag)}`).join("; ");
   const dups=nf.dup.map(x=>`${esc(x.n)} – ${esc(x.venc.split("-").reverse().join("/"))} – ${brl(x.v)}`).join("<br>");
   return `<article class="nf">
@@ -1383,7 +1412,7 @@ function renderNF(nf,res,contextoOverride){
   </div>
   ${formais.length?`<details${formais.some(a=>a.titulo.includes("IBS/CBS"))?" open":""}><summary>Inconsistências formais (${formais.length})</summary>${formalHtml}</details>`:""}
   ${infos.length?`<details><summary>Informações auxiliares (${infos.length})</summary>${infoHtml}</details>`:""}
-  <details open><summary>Partes e rota</summary>
+  <details><summary>Partes e rota</summary>
     <dl class="kv"><dt>Emitente</dt><dd>${esc(nf.emit.nome)}${nf.emit.fant?" ("+esc(nf.emit.fant)+")":""}</dd><dt>CNPJ/CPF</dt><dd>${fmtDoc(nf.emit.doc)} · IE ${esc(nf.emit.ie||"—")}</dd><dt>Regime</dt><dd>CRT ${esc(nf.emit.crt)}: ${esc(CRT[nf.emit.crt]||"—")}</dd><dt>Origem</dt><dd>${esc(nf.emit.mun)}/${esc(nf.emit.uf)}</dd></dl>
     <dl class="kv" style="margin-top:12px">${d?`<dt>Destinatário</dt><dd>${esc(d.nome)}</dd><dt>${d.cpf?"CPF":d.estrangeiro?"ID estrangeiro":"CNPJ"}</dt><dd>${fmtDoc(d.doc)}${d.ie?" · IE "+esc(d.ie):""}</dd><dt>Indicador</dt><dd>${esc(d.indIE)}: ${esc(INDIE[d.indIE]||"—")}; ${nf.ide.indFinal==="1"?"consumidor final":"não é consumidor final"}</dd><dt>Endereço</dt><dd>${esc([d.lgr,d.nro,d.bairro].filter(Boolean).join(", "))} – ${esc(d.mun)}/${esc(d.uf)}</dd>`:`<dt>Destinatário</dt><dd>Não identificado</dd>`}
     ${nf.entrega?`<dt>Entrega (grupo XML)</dt><dd>${esc([nf.entrega.lgr,nf.entrega.nro].filter(Boolean).join(", "))} – ${esc(nf.entrega.mun)}/${esc(nf.entrega.uf)}</dd>`:""}
