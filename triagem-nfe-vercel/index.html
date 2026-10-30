@@ -543,7 +543,9 @@ function qualificarRegra(r,i){
           return {...r,status:"NCM/CEST indicam sorvete; descrição genérica; operação e produto a confirmar",condicao};
       }else{
         evidencia=/sorvete/.test(d)&&/maquina/.test(d);
-        if(/chocolate|achocolat|xarope|energetic|isotonic|pao|bolo/.test(d)&&!/sorvete/.test(d))return null;
+        // Código 1806/1901/2106 sozinho NÃO caracteriza sorvete: Kinder Joy,
+        // Ferrero, chocolates, biscoitos e preparados comuns são excluídos.
+        if(!evidencia)return null;
         condicao="As posições 1806/1901/2106 só entram quando o preparado for destinado à fabricação de sorvete em máquina.";
       }break;
     case "celulares":if(/satelite|automotiv/.test(d))return null;evidencia=/celular|smartphone|smart card|sim card|cartao inteligente|chip/.test(d);condicao="Confirme telefone celular/cartão inteligente da descrição legal e correlação do NCM atual com o histórico; excluídos telefone por satélite e uso automotivo. Regra interna prevista no § 5º.";break;
@@ -1380,7 +1382,6 @@ function renderNF(nf,res,contextoOverride){
     ${(i.icms.vICMSSTRet||i.icms.vICMSST)?`<div class="base">ICMS-ST ${i.icms.vICMSSTRet?"anterior declarado: "+brl(i.icms.vICMSSTRet):"nesta operação: "+brl(i.icms.vICMSST)}</div>`:""}
     ${flagHtml}
     <details class="item-more"><summary>Dados fiscais e fundamentos (opcional)</summary>
-    ${flagHtml}
     <div class="grid2"><span>NCM ${esc(i.ncm)}${i.cest?" · CEST "+esc(i.cest):""}${i.cBenef?" · cBenef "+esc(i.cBenef):""}</span><span>${i.q.toLocaleString("pt-BR")} ${esc(i.un)} × ${brl(i.vUn)} = <b>${brl(i.vProd)}</b></span>
     <span>CFOP ${esc(i.cfop)}: ${esc(cfopDesc(i.cfop))}</span><span><b>Declarado na NF-e: ${esc(codeDesc(i))}</b></span>
     <span>Origem ${esc(i.icms.orig)}: ${esc(ORIG[i.icms.orig]||"")}</span><span>BC ${brl(i.icms.vBC)} · ${pct(i.icms.pICMS)} · ICMS ${brl(i.icms.vICMS)}${i.icms.vICMSST?" · ST "+brl(i.icms.vICMSST):""}</span>
@@ -1406,10 +1407,13 @@ function renderNF(nf,res,contextoOverride){
     <div class="metric"><span>Emitida há</span><b>${esc(idadeEmissao)}</b><small>${emi&&!isNaN(emi)?fmtDate(emi):"Data de emissão não disponível"}</small></div>
     <div class="metric ${validade&&validade.expirado?"risk":""}"><span>Validade no trânsito</span><b>${esc(validadeTitulo)}</b><small>${esc(validadeDetalhe)}</small></div>
     <div class="metric"><span>Rota no XML</span><b class="${rota.ok?"route-ok":"route-check"}">${esc(rota.titulo)}</b><small>${esc(rota.detalhe)}</small></div>
+  </div>
+  <details><summary>Referências de multas — somente se a infração for confirmada</summary>
+  <div class="quick">
     <div class="metric ${!rota.ok?"risk":""}"><span>Se confirmar destinatário diverso</span><b>Multa no valor de 20% nominal ≈ ${brl(multaDestDiverso)}</b><small><strong>Código sugerido do Auto de Infração: 1328</strong><br>CTE/RR, art. 69, III, “i”. Art. 69-A limita ao imposto devido ou não recolhido.</small></div>
     <div class="metric risk"><span>Inidoneidade — regra geral</span><b>Multa no valor de 40% nominal ≈ ${brl(multaInidonea)}</b><small>CTE/RR, art. 69, III, “a” / RICMS, art. 907, III, “a”. Use para falta de documento ou inidoneidade por outra causa relevante, não apenas destinatário diverso. Art. 69-A limita ao imposto devido ou não recolhido.</small></div>
     <div class="metric"><span>Teto das penalidades</span><b>Imposto devido / não recolhido</b><small>Art. 69-A. ICMS destacado no XML: ${brl(icmsDestacado)} — este valor não é automaticamente o teto; é necessário apurar o imposto devido.</small></div>
-  </div>
+  </div></details>
   ${formais.length?`<details${formais.some(a=>a.titulo.includes("IBS/CBS"))?" open":""}><summary>Inconsistências formais (${formais.length})</summary>${formalHtml}</details>`:""}
   ${infos.length?`<details><summary>Informações auxiliares (${infos.length})</summary>${infoHtml}</details>`:""}
   <details><summary>Partes e rota</summary>
