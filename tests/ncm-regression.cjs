@@ -4,7 +4,7 @@ const html=fs.readFileSync(path.join(__dirname,'../triagem-nfe-vercel/index.html
 new vm.Script(html.slice(html.indexOf('<script>')+8,html.indexOf('</script>',html.indexOf('<script>'))));
 new vm.Script(fs.readFileSync(path.join(__dirname,'../triagem-nfe-vercel/photos.js'),'utf8'));
 const box={document:{querySelector:()=>null},localStorage:{getItem:()=>null},Date,Intl,setTimeout};vm.createContext(box);
-vm.runInContext(html.slice(html.indexOf('<script>')+8,html.indexOf('/* ---------- fluxo ---------- */'))+'\nthis.api={regimesCandidatos,beneficiosCandidatos,aliquotaReferencia,tributacaoDeclarada,isSTcode,isMono,analyze,renderNF,interRegiao,baseOperacao,avaliar5904,referencias5904,classificarRegimeOperacional,maiorQuantidadePorUnidade,resumoRegimeHtml,ocorrenciasLocaisCPF,avaliarSorvetesST};',box);
+vm.runInContext(html.slice(html.indexOf('<script>')+8,html.indexOf('/* ---------- fluxo ---------- */'))+'\nthis.api={regimesCandidatos,beneficiosCandidatos,aliquotaReferencia,tributacaoDeclarada,isSTcode,isMono,analyze,renderNF,interRegiao,baseOperacao,avaliar5904,referencias5904,classificarRegimeOperacional,maiorQuantidadePorUnidade,resumoRegimeHtml,ocorrenciasLocaisCPF,avaliarSorvetesST,avaliarBebidaST};',box);
 const a=box.api,ctx={posto:'Pacaraima',abordagem:null};let passed=0;
 function fixture(ncm,desc,cst='00',cfop='6102'){
  const now=new Date();const i={n:'1',cod:'teste',desc,ncm,cest:'',cBenef:'',cfop,un:'UN',q:1,vUn:1000,vProd:1000,vFrete:0,vSeg:0,vDesc:0,vOutro:0,vIPI:0,infAdProd:'',icms:{orig:'0',cst,csosn:'',vBC:1000,pICMS:7,vICMS:70,vBCST:0,vICMSST:0,vICMSSTRet:0,pRedBC:0},ufdest:false};
@@ -415,6 +415,143 @@ test('Regressão: alerta de ST não exige guia e não lança cobrança automáti
  const n=sorvetesCaribe(),x=alerts(n).find(x=>x.titulo.includes('fabricante sem retenção'));
  assert(x);assert(!/apresentar (?:guia|comprovante)|exigir (?:guia|comprovante)/i.test(x.texto));
  assert(x.texto.includes('Não presumir irregularidade tributária'));
+});
+// v4.12.0 — ST de bebidas: NCM + CEST + descrição + embalagem + CFOP/CST.
+function bebidaRR(ncm,desc,cest,cst='60',cfop='5405',csosn=''){
+ const n=fixture(ncm,desc,cst,cfop);
+ n.emit.uf='RR';n.emit.mun='Boa Vista';n.ide.idDest='1';n.ide.cUF='14';n.ide.indFinal='1';
+ n.dest.uf='RR';n.dest.mun='Pacaraima';n.itens[0].cest=cest;
+ n.itens[0].icms.csosn=csosn;
+ if(csosn)n.itens[0].icms.cst='';
+ return n;
+}
+function bebidaAlerta(n){return alerts(n).filter(x=>/Bebidas|bebida/i.test(x.titulo));}
+test('Cerveja em lata CEST 03.021.03 e CST60 / CFOP5405 valida ST anterior',()=>{
+ const n=bebidaRR('22030000','CERVEJA PILSEN LATA 350 ML','0302103'),r=a.classificarRegimeOperacional(n.itens[0],n),b=a.avaliarBebidaST(n.itens[0],n);
+ assert.equal(b.situacao,'produto_compativel');assert.equal(r.tipo,'confirmado');assert(r.semNovaAntecipacao);
+ assert(has(n,'✓ Bebidas: ST declarada compatível'));
+ const tela=render(n);assert(tela.includes('✓ BEBIDAS — ST ANTERIOR DECLARADA'));assert(!tela.includes('NÃO VERIFICADO NO SIAT'));
+});
+test('Cerveja em garrafa retornável CEST 03.021.00',()=>{
+ const n=bebidaRR('22030000','CERVEJA GARRAFA VIDRO RETORNAVEL 600 ML','0302100');
+ assert.equal(a.classificarRegimeOperacional(n.itens[0],n).tipo,'confirmado');
+});
+test('Cerveja sem álcool usa NCM 22029100 e CEST 03.022.03 na lata',()=>{
+ const n=bebidaRR('22029100','CERVEJA SEM ALCOOL LATA 350 ML','0302203');
+ assert.equal(a.classificarRegimeOperacional(n.itens[0],n).tipo,'confirmado');
+});
+test('Chope usa CEST 03.023.00, sem confundir com cerveja enlatada',()=>{
+ const n=bebidaRR('22030000','CHOPE ARTESANAL','0302300');
+ assert.equal(a.classificarRegimeOperacional(n.itens[0],n).tipo,'confirmado');
+});
+test('Refrigerante PET e lata validam somente seus próprios CEST',()=>{
+ for(const [cest,desc] of [['0301001','REFRIGERANTE COLA GARRAFA PET 2L'],['0301002','REFRIGERANTE LARANJA LATA 350 ML']]){
+  const n=bebidaRR('22021000',desc,cest);assert.equal(a.classificarRegimeOperacional(n.itens[0],n).tipo,'confirmado');
+ }
+});
+test('Energético em lata valida CEST 03.013.00',()=>{
+ const n=bebidaRR('22029900','BEBIDA ENERGETICA LATA 269 ML','0301300');
+ assert.equal(a.classificarRegimeOperacional(n.itens[0],n).tipo,'confirmado');
+});
+test('Isotônico valida CEST 03.015.00 com NCM compatível',()=>{
+ const n=bebidaRR('22029900','BEBIDA ISOTONICA','0301500');
+ assert.equal(a.classificarRegimeOperacional(n.itens[0],n).tipo,'confirmado');
+});
+test('Vinho da posição 2204 valida CEST 02.024.00 sem confundir segmento 03',()=>{
+ const n=bebidaRR('22042100','VINHO TINTO CABERNET','0202400');
+ assert.equal(a.classificarRegimeOperacional(n.itens[0],n).tipo,'confirmado');
+});
+test('Vodka / Whisky validam CEST alcoólico específico',()=>{
+ for(const [ncm,desc,cest] of [['22086000','VODKA TRADICIONAL','0201800'],['22083020','WHISKY 12 ANOS','0201600']]){
+  const n=bebidaRR(ncm,desc,cest);assert.equal(a.classificarRegimeOperacional(n.itens[0],n).tipo,'confirmado');
+ }
+});
+test('Substituto em venda interna com CFOP5401/CST10 e valores declara ST atual',()=>{
+ const n=bebidaRR('22030000','CERVEJA LATA 350ML','0302103','10','5401');
+ n.itens[0].icms.vBCST=1200;n.itens[0].icms.vICMSST=120;
+ const reg=a.classificarRegimeOperacional(n.itens[0],n);
+ assert.equal(reg.tipo,'confirmado');assert.equal(reg.retencaoAtual,true);
+ const tela=render(n);assert(tela.includes('✓ BEBIDAS — RETENÇÃO DE ST DECLARADA'));assert(tela.includes('Retenção nesta operação declarada'));
+});
+test('Simples substituído com CSOSN500 e CFOP5405 valida documentalmente',()=>{
+ const n=bebidaRR('22030000','CERVEJA LATA','0302103','','5405','500');n.emit.crt='1';
+ assert.equal(a.classificarRegimeOperacional(n.itens[0],n).tipo,'confirmado');
+});
+test('CEST cerveja de lata usado em produto com garrafa mantém pendência',()=>{
+ const n=bebidaRR('22030000','CERVEJA VIDRO RETORNAVEL 600ML','0302103');
+ assert.notEqual(a.classificarRegimeOperacional(n.itens[0],n).tipo,'confirmado');
+ assert(has(n,'Bebidas — enquadramento ou embalagem a conferir'));
+});
+test('Cerveja sem embalagem informada não valida CEST específico',()=>{
+ const n=bebidaRR('22030000','CERVEJA PILSEN','0302103');
+ assert.equal(a.avaliarBebidaST(n.itens[0],n).situacao,'pendente');
+});
+test('CEST de cerveja com NCM de energético produz divergência',()=>{
+ const n=bebidaRR('22029900','BEBIDA ENERGETICA LATA 269ML','0302103');
+ assert.equal(a.avaliarBebidaST(n.itens[0],n).situacao,'divergente');
+ assert(has(n,'Bebidas — CEST/NCM/descrição incompatíveis'));
+});
+test('CEST revogado de água não confirma ST',()=>{
+ const n=bebidaRR('22011000','AGUA MINERAL COPO 200 ML','0300100');
+ assert.equal(a.avaliarBebidaST(n.itens[0],n).situacao,'divergente');
+ assert.notEqual(a.classificarRegimeOperacional(n.itens[0],n).tipo,'confirmado');
+});
+test('Suco com NCM22029900 e CEST de refrigerante não passa',()=>{
+ const n=bebidaRR('22029900','SUCO DE UVA 1 LITRO','0301001');
+ assert.notEqual(a.classificarRegimeOperacional(n.itens[0],n).tipo,'confirmado');
+});
+test('Energético em PET não valida CEST de energético em lata',()=>{
+ const n=bebidaRR('22029900','BEBIDA ENERGETICA GARRAFA PET 2 L','0301300');
+ assert.notEqual(a.classificarRegimeOperacional(n.itens[0],n).tipo,'confirmado');
+});
+test('ST em outra UF não ganha confirmação automática por cadastro de bebidas em RR',()=>{
+ const n=bebidaRR('22030000','CERVEJA LATA 350 ML','0302103');n.emit.uf='AM';n.itens[0].cfop='6404';
+ assert.notEqual(a.classificarRegimeOperacional(n.itens[0],n).tipo,'confirmado');
+});
+test('Produto compatível com CFOP5102 CST00 mantém conferência, sem verde',()=>{
+ const n=bebidaRR('22030000','CERVEJA LATA 350ML','0302103','00','5102');
+ assert.equal(a.classificarRegimeOperacional(n.itens[0],n).tipo,'pendente');
+ assert(has(n,'Bebidas — tratamento de ST a conferir'));
+});
+test('Cerveja com CFOP5405 mas CST00 não confirma',()=>{
+ const n=bebidaRR('22030000','CERVEJA LATA','0302103','00','5405');
+ assert.notEqual(a.classificarRegimeOperacional(n.itens[0],n).tipo,'confirmado');
+});
+test('Retenção atual sem base ou valor não confirma ST',()=>{
+ const n=bebidaRR('22030000','CERVEJA LATA 350ML','0302103','10','5401');
+ n.itens[0].icms.vBCST=0;n.itens[0].icms.vICMSST=0;
+ assert.equal(a.classificarRegimeOperacional(n.itens[0],n).tipo,'pendente');
+});
+test('Não exige guia ou comprovante para bebida com ST documentalmente coerente',()=>{
+ const n=bebidaRR('22030000','CERVEJA LATA 350ML','0302103');
+ const x=alerts(n).find(x=>x.titulo.includes('✓ Bebidas: ST declarada compatível'));
+ assert(x);assert(!/apresentar comprovante|verificar recolhimento no siat|exigir guia/i.test(x.texto));
+});
+test('Água CEST 03.006.00 com garrafa PET compatível',()=>{
+ const n=bebidaRR('22011000','AGUA MINERAL GARRAFA PET 500ML','0300600');
+ assert.equal(a.classificarRegimeOperacional(n.itens[0],n).tipo,'confirmado');
+});
+test('Água 03.006.00 sem embalagem não confirma',()=>{
+ const n=bebidaRR('22011000','AGUA MINERAL NATURAL','0300600');
+ assert.equal(a.avaliarBebidaST(n.itens[0],n).situacao,'pendente');
+});
+test('Água de jarra CEST 03.005.02 não é copo descartável',()=>{
+ const n=bebidaRR('22011000','AGUA MINERAL COPO PLASTICO DESCARTAVEL','0300502');
+ assert.notEqual(a.classificarRegimeOperacional(n.itens[0],n).tipo,'confirmado');
+ n.itens[0].desc='AGUA MINERAL JARRA DESCARTAVEL';
+ assert.equal(a.classificarRegimeOperacional(n.itens[0],n).tipo,'confirmado');
+});
+test('Água com sais adicionados exige especificação CEST adequada',()=>{
+ const n=bebidaRR('22011000','AGUA MINERAL COM SAIS GARRAFA VIDRO DESCARTAVEL','0300300');
+ assert.notEqual(a.classificarRegimeOperacional(n.itens[0],n).tipo,'confirmado');
+ n.itens[0].cest='0300301';
+ assert.equal(a.classificarRegimeOperacional(n.itens[0],n).tipo,'confirmado');
+});
+test('CEST 03.011.00 demais refrigerantes não confirma embalagem ausente',()=>{
+ const n=bebidaRR('22021000','REFRIGERANTE COLA','0301100');
+ assert.notEqual(a.classificarRegimeOperacional(n.itens[0],n).tipo,'confirmado');
+ n.itens[0].desc='REFRIGERANTE COLA VIDRO RETORNAVEL 600ML';
+ assert.equal(a.classificarRegimeOperacional(n.itens[0],n).tipo,'confirmado');
 });
 // v4.11.6 — a consulta externa não pode ficar visualmente travada após erro.
 test('Consulta em timeout mostra botão de nova tentativa sem exigir reler DANFE',()=>{
