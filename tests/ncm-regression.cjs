@@ -527,6 +527,32 @@ test('Não exige guia ou comprovante para bebida com ST documentalmente coerente
  const x=alerts(n).find(x=>x.titulo.includes('✓ Bebidas: ST declarada compatível'));
  assert(x);assert(!/apresentar comprovante|verificar recolhimento no siat|exigir guia/i.test(x.texto));
 });
+test('Água CEST 03.006.00 com garrafa PET compatível',()=>{
+ const n=bebidaRR('22011000','AGUA MINERAL GARRAFA PET 500ML','0300600');
+ assert.equal(a.classificarRegimeOperacional(n.itens[0],n).tipo,'confirmado');
+});
+test('Água 03.006.00 sem embalagem não confirma',()=>{
+ const n=bebidaRR('22011000','AGUA MINERAL NATURAL','0300600');
+ assert.equal(a.avaliarBebidaST(n.itens[0],n).situacao,'pendente');
+});
+test('Água de jarra CEST 03.005.02 não é copo descartável',()=>{
+ const n=bebidaRR('22011000','AGUA MINERAL COPO PLASTICO DESCARTAVEL','0300502');
+ assert.notEqual(a.classificarRegimeOperacional(n.itens[0],n).tipo,'confirmado');
+ n.itens[0].desc='AGUA MINERAL JARRA DESCARTAVEL';
+ assert.equal(a.classificarRegimeOperacional(n.itens[0],n).tipo,'confirmado');
+});
+test('Água com sais adicionados exige especificação CEST adequada',()=>{
+ const n=bebidaRR('22011000','AGUA MINERAL COM SAIS GARRAFA VIDRO DESCARTAVEL','0300300');
+ assert.notEqual(a.classificarRegimeOperacional(n.itens[0],n).tipo,'confirmado');
+ n.itens[0].cest='0300301';
+ assert.equal(a.classificarRegimeOperacional(n.itens[0],n).tipo,'confirmado');
+});
+test('CEST 03.011.00 demais refrigerantes não confirma embalagem ausente',()=>{
+ const n=bebidaRR('22021000','REFRIGERANTE COLA','0301100');
+ assert.notEqual(a.classificarRegimeOperacional(n.itens[0],n).tipo,'confirmado');
+ n.itens[0].desc='REFRIGERANTE COLA VIDRO RETORNAVEL 600ML';
+ assert.equal(a.classificarRegimeOperacional(n.itens[0],n).tipo,'confirmado');
+});
 // v4.11.6 — a consulta externa não pode ficar visualmente travada após erro.
 test('Consulta em timeout mostra botão de nova tentativa sem exigir reler DANFE',()=>{
  assert(html.includes('bRetryXml'));
