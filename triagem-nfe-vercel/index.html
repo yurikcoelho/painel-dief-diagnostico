@@ -227,7 +227,7 @@ details summary{cursor:pointer;font-family:var(--display);font-weight:600;font-s
     <div id="histDetalhe"></div>
   </section>
 
-  <p class="footer">Ferramenta de apoio à triagem operacional · v4.11.9. Prioriza irregularidades materiais, destino da carga e exposição tributária. As regras seguem o RICMS/RR (Decreto nº 4.335-E/2001, consolidação de referência até jan/2026), o CTE (Lei nº 59/93) e a prática do posto; listas de NCM são indicativas e precisam de calibragem. Não substitui a análise do auditor. A busca automática envia somente a chave de acesso ao endpoint serverless desta ferramenta, que consulta o serviço privado consultadanfe.com; o XML aberto manualmente é lido só neste aparelho.</p>
+  <p class="footer">Ferramenta de apoio à triagem operacional · v4.12.0. Prioriza irregularidades materiais, destino da carga e exposição tributária. As regras seguem o RICMS/RR (Decreto nº 4.335-E/2001, consolidação de referência até jan/2026), o CTE (Lei nº 59/93) e a prática do posto; listas de NCM são indicativas e precisam de calibragem. Não substitui a análise do auditor. A busca automática envia somente a chave de acesso ao endpoint serverless desta ferramenta, que consulta o serviço privado consultadanfe.com; o XML aberto manualmente é lido só neste aparelho.</p>
 </main>
 
 <div class="scanner hidden" id="scanner" role="dialog" aria-label="Leitura do código">
@@ -583,6 +583,107 @@ function avaliarSorvetesST(i,nf){
     base:"RICMS/RR, art. 839-R; Convênio ICMS 142/2018, Anexo XXII, item 1.0"
   };
 }
+// Validação documental de bebidas. Correspondência de CEST, NCM, descrição
+// e embalagem, sem presunção de retenção financeira ou regime interestadual.
+function avaliarBebidaST(i,nf){
+  const n=onlyDig(i.ncm),cest=onlyDig(i.cest),d=descricaoFiscal(i),cfop=onlyDig(i.cfop);
+  if(!["02","03"].includes(cest.slice(0,2))||cest.length!==7)return null;
+  const revogados=new Set(["0300100","0300200","0300400","0301003","0301400","0301600"]);
+  const base=cest.startsWith("02")?"RICMS/RR, art. 831; Convênio ICMS 142/2018, Anexo III":"RICMS/RR, art. 767; Convênio ICMS 142/2018, Anexo IV";
+  const agua=/\bagua\b|\bmineral\b|\bpotavel\b/.test(d),refrigerante=/refrigerante|\brefri\b/.test(d);
+  const cerveja=/cerveja/.test(d),semAlcool=/sem alcool|zero alcool/.test(d);
+  const energetico=/energetic/.test(d),isotonico=/isotonic|hidroeletrolit/.test(d);
+  const embalagem={
+    vidroDesc:/vidro/.test(d)&&/descartavel|nao retornavel/.test(d),
+    vidroRet:/vidro/.test(d)&&/retornavel/.test(d)&&!/nao retornavel/.test(d),
+    aluminio:/garrafa.*aluminio|aluminio.*garrafa/.test(d),
+    lata:/\blata\b|\blt\b/.test(d),
+    barril:/barril/.test(d),
+    pet:/\bpet\b|plastico.*garrafa|garrafa.*plastica/.test(d),
+    outras:/outras embalagens/.test(d),
+    copo:/copo plastico/.test(d)
+  };
+  const embalagemPresente=Object.values(embalagem).some(Boolean);
+  let tipo="",ncmOk=false,descOk=false,embOk=true,embEspecifica=false,obs="";
+  if(revogados.has(cest)){
+    return {tipo:"Bebida com CEST revogado",situacao:"divergente",motivo:"CEST revogado em operações atuais; conferir item vigente e data da emissão.",base};
+  }
+  if(cest.startsWith("03021")||cest.startsWith("03022")){
+    const sem=cest.startsWith("03022");
+    const tipos=["00","01","02","03","04","05","06"];
+    const sufixo=cest.slice(5);
+    if(!tipos.includes(sufixo))return {tipo:"Cerveja",situacao:"divergente",motivo:"CEST de cerveja não localizado na tabela de embalagens vigente.",base};
+    tipo=sem?"Cerveja sem álcool":"Cerveja";
+    ncmOk=n===(sem?"22029100":"22030000");descOk=cerveja&&(sem?semAlcool:!semAlcool);
+    embEspecifica=true;
+    embOk=[embalagem.vidroRet,embalagem.vidroDesc,embalagem.aluminio,embalagem.lata,embalagem.barril,embalagem.pet,embalagem.outras][tipos.indexOf(sufixo)];
+    obs="Cerveja: CEST diferenciado pelo tipo de embalagem.";
+  }else if(cest==="0302300"){
+    tipo="Chope";ncmOk=n==="22030000";descOk=/chope|chopp/.test(d);
+  }else if(["0300300","0300301","0300500","0300501","0300502","0300503","0300504","0300505","0300600","0302400","0302500"].includes(cest)){
+    tipo="Água mineral/potável";ncmOk=["0302400","0302500"].includes(cest)?n==="22011000":n.startsWith("2201");
+    descOk=agua&&!refrigerante;
+    embEspecifica=cest!=="0300600";
+    if(cest.startsWith("03003"))embOk=embalagem.vidroDesc;
+    else if(cest==="0300500"||cest==="0300501")embOk=embalagem.copo;
+    else if(["0300502","0300503","0300504","0300505"].includes(cest))embOk=!embalagem.copo&&/descartavel/.test(d);
+    else if(cest==="0302400")embOk=/retornavel/.test(d)&&/\b1[0-9]\s*l(?:itro)?s?\b/.test(d)&&!/20\s*l/.test(d);
+    else if(cest==="0302500")embOk=/retornavel/.test(d)&&/(?:\b[2-9][0-9]\s*l(?:itro)?s?\b|\b20\s*l\b)/.test(d);
+    else if(cest==="0300600")embOk=!(/retornavel/.test(d)&&/(?:\b1[0-9]\s*l|\b[2-9][0-9]\s*l)/.test(d))&&!embalagem.vidroDesc&&!embalagem.copo;
+    obs="Água: atenção ao tipo de recipiente e à disciplina específica nas operações interestaduais; o enquadramento interno não confirma ST em outra UF.";
+  }else if(["0300700","0300800"].includes(cest)){
+    tipo="Água aromatizada";ncmOk=cest==="0300700"?n==="22021000":n==="22029900";
+    descOk=agua&&!refrigerante&&!/suco|nectar|bebida lactea/.test(d);
+  }else if(["0301000","0301001","0301002","0301100","0301101"].includes(cest)){
+    tipo=cest==="0301101"?"Espumante sem álcool":"Refrigerante";
+    ncmOk=cest==="0301101"?n.startsWith("2202"):["22021000","22029900"].includes(n);
+    descOk=cest==="0301101"?/espumante/.test(d)&&semAlcool:refrigerante&&!/suco|nectar|bebida lactea/.test(d);
+    embEspecifica=["0301000","0301001","0301002"].includes(cest);
+    if(cest==="0301000")embOk=embalagem.vidroDesc;
+    if(cest==="0301001")embOk=embalagem.pet;
+    if(cest==="0301002")embOk=embalagem.lata;
+    if(cest==="0301100")embOk=!embalagem.vidroDesc&&!embalagem.pet&&!embalagem.lata;
+  }else if(["0301200","0301201"].includes(cest)){
+    tipo="Concentrado para refrigerante";ncmOk=n==="21069010";
+    descOk=cest==="0301201"?/capsula/.test(d)&&refrigerante:/xarope|extrato|premix|postmix/.test(d)&&/refrigerante|premix|postmix/.test(d);
+  }else if(["0301300","0301301","0301302","0301500"].includes(cest)){
+    tipo=cest==="0301500"?"Isotônico/hidroeletrolítico":"Energético";
+    ncmOk=n.startsWith("210690")||n==="22029900";
+    descOk=cest==="0301500"?isotonico:energetico;
+    embEspecifica=cest!=="0301500";
+    if(cest==="0301300")embOk=embalagem.lata;
+    if(cest==="0301301")embOk=embalagem.pet;
+    if(cest==="0301302")embOk=/vidro/.test(d);
+  }else if(cest.startsWith("02")){
+    // Relações mais comuns e inequívocas do Anexo III. Outros CEST permanecem
+    // pendentes, não confirmados com base apenas no segmento 02.
+    const alcool={
+      "0202400":{tipo:"Vinho",ncm:["2204"],desc:/vinho|mosto/},
+      "0201600":{tipo:"Uísque",ncm:["220830"],desc:/uisque|whisk/},
+      "0201800":{tipo:"Vodka",ncm:["220860"],desc:/vodka/},
+      "0200800":{tipo:"Gin",ncm:["220850"],desc:/\bgin\b|genebra/},
+      "0201200":{tipo:"Rum",ncm:["220840"],desc:/\brum\b/},
+      "0200400":{tipo:"Cachaça/aguardente",ncm:["220720","220840"],desc:/cachaca|aguardente/},
+      "0201000":{tipo:"Licor",ncm:["220870"],desc:/licor/},
+      "0200600":{tipo:"Conhaque",ncm:["220820"],desc:/conhaque|brandy/},
+      "0201700":{tipo:"Vermute",ncm:["2205"],desc:/vermute/},
+      "0202200":{tipo:"Sidra",ncm:["22060010"],desc:/sidra/}
+    };
+    const a=alcool[cest];
+    if(!a)return {tipo:"Bebida alcoólica",situacao:"pendente",motivo:"CEST do segmento 02 exige conferir a descrição específica do Anexo III; código não incluído na validação positiva.",base};
+    tipo=a.tipo;ncmOk=a.ncm.some(p=>n.startsWith(p));descOk=a.desc.test(d);
+  }else{
+    return {tipo:"Bebida",situacao:"pendente",motivo:"CEST do segmento 03 não parametrizado para confirmação automática; confrontar tabela do Anexo IV.",base};
+  }
+  if(!ncmOk||!descOk)return {tipo,situacao:"divergente",motivo:"CEST "+cest+" incompatível com o NCM ou com a descrição do tipo de bebida informado; conferir classificação e mercadoria.",base};
+  if(!embOk||embEspecifica&&!embalagemPresente)return {tipo,situacao:"pendente",motivo:"CEST exige identificação da embalagem; a descrição não permite confirmar integralmente o recipiente, ou sugere embalagem diferente. "+obs,base};
+  const interna=nf.emit.uf==="RR"&&nf.dest&&nf.dest.uf==="RR"&&cfop.startsWith("5")&&nf.ide.tpNF==="1";
+  const anterior=(i.icms.cst==="60"||i.icms.csosn==="500")&&cfop==="5405";
+  const retida=(["10","30","70"].includes(i.icms.cst)||["201","202","203"].includes(i.icms.csosn))&&["5401","5403"].includes(cfop)&&i.icms.vBCST>0&&i.icms.vICMSST>0;
+  const compatibilidade=interna&&(anterior||retida);
+  return {tipo,situacao:"produto_compativel",base,interno:interna,anterior,retida,compatibilidade,
+    motivo:obs||"Descrição, NCM e CEST correspondem ao segmento. A retenção efetiva não é verificada por esta triagem."};
+}
 function classificarRegimeOperacional(i,nf){
   const n=onlyDig(i.ncm),orig=nf.emit.uf||UF[nf.ide.cUF]||"",dest=nf.dest&&nf.dest.uf||"";
   const cfop=onlyDig(i.cfop),internaRR=orig==="RR"&&dest==="RR"&&cfop.startsWith("5")&&nf.ide.tpNF==="1";
@@ -615,6 +716,15 @@ function classificarRegimeOperacional(i,nf){
       nota:"A aplicação da ST depende da condição de contribuinte, finalidade e responsabilidade da operação; CFOP/CSOSN e retenção precisam ser analisados.",
       semNovaAntecipacao:false};
   }
+  const bebida=avaliarBebidaST(i,nf);
+  if(bebida){
+    const ok=bebida.situacao==="produto_compativel"&&bebida.compatibilidade;
+    return {tipo:ok?"confirmado":"pendente",id:"bebidas_st",nome:"Bebidas — "+bebida.tipo+" (ST)",
+      base:bebida.base,detalhe:bebida.motivo,semNovaAntecipacao:!!ok,
+      declaracaoCompativel:!!ok,retencaoAtual:!!bebida.retida,
+      nota:ok?(bebida.anterior?"CFOP 5.405 e CST 60/CSOSN 500 coerentes com ST anterior declarada.":"CFOP de substituto, código tributário e valores de ST informados são documentalmente coerentes; não certifica arrecadação."):
+        "Regime/tributação a conferir. Não cobrar antecipação apenas pelo NCM nem exigir comprovante de ST no trânsito."};
+  }
   const regras=regimesCandidatos(i,nf).filter(r=>r.regime!=="mono");
   if(regras.length)return {tipo:"pendente",nome:"ST/antecipação possível",base:regras.map(r=>r.art).join("; "),detalhe:"Candidato(s): "+regras.map(r=>r.nome).join(", ")+". Exceções, descrição e finalidade ainda não confirmadas.",semNovaAntecipacao:false};
   if(isSTcode(i))return {tipo:"pendente",nome:"ST declarada, regra de RR não confirmada",base:"CST/CSOSN/CFOP do emitente",detalhe:"A declaração fiscal não basta para identificar o regime de RR; confronte NCM, CEST, descrição e condições legais.",semNovaAntecipacao:false};
@@ -640,12 +750,16 @@ function resumoRegimeHtml(nf){
   const declaracao=legal&&declarados===all;
   const soCarne=legal&&cls.every(x=>x.reg.id==="carne_bovina");
   const soAutopecas=legal&&cls.every(x=>x.reg.id==="autopecas_st");
+  const soBebidas=legal&&cls.every(x=>x.reg.id==="bebidas_st");
+  const todasRetencoesAtuais=soBebidas&&cls.every(x=>x.reg.retencaoAtual);
   const titulo=soCarne?"✓ ANTECIPAÇÃO TOTAL — ICMS COM ENCERRAMENTO":
     soAutopecas?"✓ AUTOPEÇAS — ST ANTERIOR DECLARADA":
+    soBebidas?(todasRetencoesAtuais?"✓ BEBIDAS — RETENÇÃO DE ST DECLARADA":"✓ BEBIDAS — ST ANTERIOR DECLARADA"):
     legal?"✓ REGIMES DE ST/ANTECIPAÇÃO IDENTIFICADOS":
     confirmados?"REGIME IDENTIFICADO EM "+confirmados+" DE "+all+" ITENS":"ENQUADRAMENTO DE ST/ANTECIPAÇÃO — TRIAGEM";
   const texto=soCarne?"Revenda interna de carne bovina: regime de encerramento identificado nos documentos.":
     soAutopecas?"Motor(es) de partida compatíveis com o regime de ST de autopeças; CFOP/CST indicam tributação anterior. Não gerar nova antecipação apenas pela circulação interna.":
+    soBebidas?"NCM, CEST, descrição, embalagem e CFOP/CST ou CSOSN documentalmente coerentes com ST na operação interna. Não comprova pagamento.":
     legal?"Enquadramentos fiscais documentais identificados. Examine as condições específicas das mercadorias.":
     "As condições do regime ainda precisam ser verificadas para um ou mais itens.";
   const declaredText=declaracao?"✓ Tributação anterior declarada na NF-e":
@@ -661,9 +775,9 @@ function resumoRegimeHtml(nf){
         <div class="st-detail">${esc(baseLegal)}</div>
       </div>
       <div class="st-status-line">
-        <div class="st-label">2 · Tributação anterior declarada</div>
+        <div class="st-label">2 · ${soBebidas&&todasRetencoesAtuais?"Retenção nesta operação declarada":"Tributação anterior declarada"}</div>
         <div class="st-value ${declaracao?"st-valid":"st-pending"}">${declaredText}</div>
-        <div class="st-detail">CFOP 5.405 e CST 60/CSOSN 500 são declarações da NF-e. A triagem não acessa a arrecadação nem solicita guias de ST.</div>
+        <div class="st-detail">${soBebidas&&todasRetencoesAtuais?"CFOP de substituto, código tributário e valores declarados no XML.":"CFOP 5.405 e CST 60/CSOSN 500 são declarações da NF-e."} A triagem não acessa a arrecadação nem solicita guias de ST.</div>
       </div>
     </div>
     ${cls.map(x=>`<div class="st-line"><b>${x.reg.tipo==="confirmado"?"✓":x.reg.tipo==="pendente"?"⚠":"—"} Item ${esc(x.item)}: ${esc(x.reg.nome)}</b><div>${esc(x.reg.nota||x.reg.detalhe)}</div></div>`).join("")}
@@ -1115,6 +1229,24 @@ function analyze(nf,ctx){
         "uCom="+esc(i.un)+"; uTrib="+esc(i.unTrib)+"; qCom="+i.q+"; qTrib="+i.qTrib+". Conferir a conversão e o peso real; unidades distintas não constituem infração por si só.",
         "MOC NF-e, grupo de produtos",i.n);
     }
+    const bebida=avaliarBebidaST(i,nf);
+    if(bebida){
+      if(bebida.situacao==="divergente"){
+        addItem("bebidas:divergente","confere","Bebidas — CEST/NCM/descrição incompatíveis",bebida.motivo+" Conferir NCM, CEST, embalagem e produto físico; sem presunção de cobrança.",bebida.base,i.n);
+      }else if(bebida.situacao==="pendente"){
+        addItem("bebidas:pendente","confere","Bebidas — enquadramento ou embalagem a conferir",bebida.motivo+" Confirme a embalagem e a natureza da mercadoria. Não validar ST anterior apenas pelo código.",bebida.base,i.n);
+      }else if(bebida.compatibilidade){
+        addItem("bebidas:valida","info","✓ Bebidas: ST declarada compatível",
+          bebida.tipo+". "+(bebida.anterior?"ST anterior declarada (CFOP 5.405 e CST 60/CSOSN 500).":"Retenção nesta operação declarada (CFOP de substituto e base/valor de ST preenchidos).")+
+          " A validação é documental; não exige comprovante de arrecadação e não atesta pagamento.",bebida.base,i.n);
+      }else if(bebida.interno){
+        addItem("bebidas:operacao","confere","Bebidas — tratamento de ST a conferir",
+          bebida.tipo+". NCM, CEST e descrição compatíveis, mas CFOP "+f+" e "+(s?"CSOSN "+s:"CST "+c)+" não demonstram a combinação documental esperada de retenção anterior ou atual. Verificar etapa, responsabilidade e exceções. Sem cobrança automática.",bebida.base,i.n);
+      }else{
+        addItem("bebidas:interestadual","info","Bebidas — ST em operação interestadual a conferir",
+          bebida.tipo+". Verifique acordo interestadual, origem/destino e responsabilidade tributária. A tabela de CEST não prova incidência de ST para RR em qualquer operação.",bebida.base,i.n);
+      }
+    }
     candidatos.forEach(r=>{
       if(r.regime==="mono"){
         const data=nf.ide.dhEmi.slice(0,10),inicio=/Gasolina|Etanol/.test(r.nome)?"2023-06-01":"2023-05-01";
@@ -1123,6 +1255,7 @@ function analyze(nf,ctx){
       const internaRR=emitUF==="RR"&&destUF==="RR"&&f[0]==="5";
       if(!entradaRR&&!internaRR)return;
       if(r.id==="frango"&&!entradaRR)return;
+      if(["bebidas","alcoolicas"].includes(r.id)&&bebida)return; // emitir apenas resultado específico por item
       if(r.id==="sorvetes"&&sorvete)return; // alerta específico cobre o item
       if(r.id==="carnes_gado"&&classificarRegimeOperacional(i,nf).id==="carne_bovina"&&internaRR){
         addItem("regime:carne_bovina","info","✓ Carne bovina: ST/antecipação com encerramento",
@@ -1209,7 +1342,7 @@ function renderNF(nf,res,contextoOverride){
     const compatibilidade=tratamentoCompativel(i,nf,ia);
     const crit=ia.filter(a=>a.lvl==="para"||a.lvl==="confere");
     const flagHtml=crit.map(a=>`<div class="item-flag ${a.lvl}"><b>⚠ ${esc(a.tit)}</b><span>${a.txt}</span>${a.base?`<div class="base">Base: ${esc(a.base)}</div>`:""}</div>`).join("");
-    const regimeTag=regimeOperacional.tipo==="confirmado"?`<div class="legal-candidate st-confirmed"><b>${regimeOperacional.id==="autopecas_st"?"✓ AUTOPEÇAS — ST ANTERIOR DECLARADA · ENQUADRAMENTO LEGAL":"✓ ANTECIPAÇÃO TOTAL — ICMS COM ENCERRAMENTO · ENQUADRAMENTO LEGAL"}</b><div>${esc(regimeOperacional.detalhe)}</div><div>${esc(regimeOperacional.nota)}</div><div>${esc(regimeOperacional.base)}</div></div>`:compatibilidade?`<div class="legal-candidate compatible"><b>✓ Tratamento declarado compatível com a regra geral</b><div>${esc(compatibilidade.nome)}, NCM ${esc(i.ncm)}: operação interna em RR, regime normal, CST 00 e alíquota de ${pct(compatibilidade.aliquota)}. Base e ICMS declarados conferem. ${esc(compatibilidade.art)}.</div><div>Compatibilidade do ICMS próprio nos dados analisados; benefício ou regime especial específico do contribuinte e recolhimento efetivo exigem conferência.</div></div>`:candidatos.length?candidatos.map(r=>`<div class="legal-candidate"><b>Regra legal candidata: ${esc(r.nome)}</b><div>${esc(r.art)} · ${esc(r.status)}. ${esc(r.condicao)}</div></div>`).join(""):beneficios.length?`<div class="legal-candidate"><b>Tratamento da operação a conferir</b><div>A tabela identificou hipótese legal abaixo; confira sua aplicação antes de confirmar o CST declarado.</div></div>`:`<div class="legal-candidate"><b>Enquadramento não validado</b><div>Sem regra específica suficiente na tabela. Confira NCM, descrição, atividade e benefícios; CST 00 não comprova tributação integral.</div></div>`;
+    const regimeTag=regimeOperacional.tipo==="confirmado"?`<div class="legal-candidate st-confirmed"><b>${regimeOperacional.id==="autopecas_st"?"✓ AUTOPEÇAS — ST ANTERIOR DECLARADA · ENQUADRAMENTO LEGAL":regimeOperacional.id==="bebidas_st"?"✓ BEBIDAS — ST DECLARADA COMPATÍVEL · ENQUADRAMENTO LEGAL":"✓ ANTECIPAÇÃO TOTAL — ICMS COM ENCERRAMENTO · ENQUADRAMENTO LEGAL"}</b><div>${esc(regimeOperacional.detalhe)}</div><div>${esc(regimeOperacional.nota)}</div><div>${esc(regimeOperacional.base)}</div></div>`:compatibilidade?`<div class="legal-candidate compatible"><b>✓ Tratamento declarado compatível com a regra geral</b><div>${esc(compatibilidade.nome)}, NCM ${esc(i.ncm)}: operação interna em RR, regime normal, CST 00 e alíquota de ${pct(compatibilidade.aliquota)}. Base e ICMS declarados conferem. ${esc(compatibilidade.art)}.</div><div>Compatibilidade do ICMS próprio nos dados analisados; benefício ou regime especial específico do contribuinte e recolhimento efetivo exigem conferência.</div></div>`:candidatos.length?candidatos.map(r=>`<div class="legal-candidate"><b>Regra legal candidata: ${esc(r.nome)}</b><div>${esc(r.art)} · ${esc(r.status)}. ${esc(r.condicao)}</div></div>`).join(""):beneficios.length?`<div class="legal-candidate"><b>Tratamento da operação a conferir</b><div>A tabela identificou hipótese legal abaixo; confira sua aplicação antes de confirmar o CST declarado.</div></div>`:`<div class="legal-candidate"><b>Enquadramento não validado</b><div>Sem regra específica suficiente na tabela. Confira NCM, descrição, atividade e benefícios; CST 00 não comprova tributação integral.</div></div>`;
     const beneficioHtml=beneficios.map(b=>`<div class="legal-candidate"><b>Hipótese de ${esc(b.tipo.toLowerCase())}: ${esc(b.nome)}</b><div>${esc(b.art)}. ${esc(b.condicao)}</div><div><b>Vigência:</b> ${esc(b.vigencia)}</div></div>`).join("");
     return `<div class="item${crit.length?" item-risk":""}"><div class="t">${esc(i.n)}. ${esc(i.desc)}</div>
     ${flagHtml}
