@@ -233,7 +233,7 @@ details summary{cursor:pointer;font-family:var(--display);font-weight:600;font-s
     <div id="histDetalhe"></div>
   </section>
 
-  <p class="footer">Ferramenta de apoio à triagem operacional · v4.13.1. Prioriza irregularidades materiais, destino da carga e exposição tributária. As regras seguem o RICMS/RR (Decreto nº 4.335-E/2001, consolidação de referência até jan/2026), o CTE (Lei nº 59/93) e a prática do posto; listas de NCM são indicativas e precisam de calibragem. Não substitui a análise do auditor. A busca automática envia somente a chave de acesso ao endpoint serverless desta ferramenta, que consulta o serviço privado consultadanfe.com; o XML aberto manualmente é lido só neste aparelho.</p>
+  <p class="footer">Ferramenta de apoio à triagem operacional · v4.13.2. Prioriza irregularidades materiais, destino da carga e exposição tributária. As regras seguem o RICMS/RR (Decreto nº 4.335-E/2001, consolidação de referência até jan/2026), o CTE (Lei nº 59/93) e a prática do posto; listas de NCM são indicativas e precisam de calibragem. Não substitui a análise do auditor. A busca automática envia somente a chave de acesso ao endpoint serverless desta ferramenta, que consulta o serviço privado consultadanfe.com; o XML aberto manualmente é lido só neste aparelho.</p>
 </main>
 
 <div class="scanner hidden" id="scanner" role="dialog" aria-label="Leitura do código">
@@ -773,13 +773,13 @@ function triagemOperacionalItem(i,nf){
       if(bebida.situacao==="divergente")return cond("VERIFICAR · BEBIDA",bebida.motivo);
       if(bebida.situacao==="pendente"){
         // A lata com CEST "demais refrigerantes" é uma divergência formal.
-        if(onlyDig(i.cest)==="0301100"&&/\\blata\\b|\\blt\\b/.test(descricaoFiscal(i)))
+        if(onlyDig(i.cest)==="0301100"&&/\blata\b|\blt\b/.test(descricaoFiscal(i)))
           return {tipo:"formal",titulo:"CEST A AJUSTAR · REFRIGERANTE EM LATA",
             motivo:"CEST 03.011.00 informado; para refrigerante em lata corresponde 03.010.02 (Conv. ICMS 142/2018, Anexo IV). Sem nova cobrança automática."};
         // CEST de cerveja + CST60/CFOP5405 e sem informação contraditória:
         // abreviação de embalagem ausente NÃO deve travar a triagem de trânsito.
         const beer=onlyDig(i.ncm)==="22030000"&&/^03021(?:00|01|02|03|04|05|06)$/.test(onlyDig(i.cest));
-        const d=descricaoFiscal(i),tipoExplicito=/\\bvidro\\b|\\bretornavel\\b|\\bdescartavel\\b|\\blata\\b|\\blt\\b|\\bln\\b|long\\s*neck|\\bpet\\b|\\bbarril\\b/.test(d);
+        const d=descricaoFiscal(i),tipoExplicito=/\bvidro\b|\bretornavel\b|\bdescartavel\b|\blata\b|\blt\b|\bln\b|long\s*neck|\bpet\b|\bbarril\b/.test(d);
         if(!(beer&&anterior&&cfop==="5405"&&!tipoExplicito))
           return cond("VERIFICAR · BEBIDA",bebida.motivo);
       }
@@ -810,14 +810,16 @@ function triagemOperacionalItem(i,nf){
 function resumoRegimeHtml(nf){
   if(!nf.itens.length)return "";
   const linhas=nf.itens.map(i=>({n:i.n,...triagemOperacionalItem(i,nf)}));
-  const pend=linhas.filter(x=>x.tipo==="verificar"),formais=linhas.filter(x=>x.tipo==="formal"),st=linhas.filter(x=>x.tipo==="st"),normal=linhas.filter(x=>x.tipo==="normal");
+  const pend=linhas.filter(x=>x.tipo==="verificar"),formais=linhas.filter(x=>x.tipo==="formal"),
+    st=linhas.filter(x=>x.tipo==="st"),normal=linhas.filter(x=>x.tipo==="normal");
+  const stDeclarada=nf.itens.filter(i=>i.icms.cst==="60"||i.icms.csosn==="500").length;
   const resumir=a=>a.length?a.slice(0,12).map(x=>x.n).join(", ")+(a.length>12?" e mais "+(a.length-12):""):"—";
   const origem=nf.emit.uf||UF[nf.ide.cUF]||"",destino=nf.dest&&nf.dest.uf||"";
   const interna=origem==="RR"&&destino==="RR"&&nf.itens.every(i=>onlyDig(i.cfop).startsWith("5"));
   return `<section class="st-overview ${pend.length?"check":"ok"}" aria-label="Triagem operacional de ICMS e ST">
     <div class="st-title">${pend.length?"⚠ VERIFICAR "+pend.length+" ITEM(NS)":"✓ SEM COBRANÇA AUTOMÁTICA DE ST IDENTIFICADA"}</div>
     <p>${interna?"Operação declarada interna em RR.":"Operação a conferir conforme origem e destino."} ${pend.length?"Pendências tributárias relevantes abaixo.":"Sem pendência material de ST nos itens analisados."}</p>
-    <div class="st-simple-line"><b>ST informada:</b> ${st.length} item(ns) ${st.length?"("+esc(resumir(st))+")":""}</div>
+    <div class="st-simple-line"><b>ST anterior declarada:</b> ${stDeclarada} de ${nf.itens.length} item(ns)</div>
     <div class="st-simple-line"><b>Tributação própria/outra declarada:</b> ${normal.length} item(ns)</div>
     ${pend.length?`<div class="st-simple-line st-pending"><b>Verificar:</b> ${pend.map(x=>"Item "+esc(x.n)+" — "+esc(x.motivo)).join("; ")}</div>`:""}
     ${formais.length?`<div class="st-simple-line"><b>Ajuste documental (não é cobrança):</b> ${formais.map(x=>"Item "+esc(x.n)+" — "+esc(x.motivo)).join("; ")}</div>`:""}
@@ -1275,10 +1277,10 @@ function analyze(nf,ctx){
         addItem("bebidas:divergente","confere","Bebidas — CEST/NCM/descrição incompatíveis",bebida.motivo+" Conferir NCM, CEST, embalagem e produto físico; sem presunção de cobrança.",bebida.base,i.n);
       }else if(bebida.situacao==="pendente"){
         const d=descricaoFiscal(i),cestDig=onlyDig(i.cest);
-        const semEmbalagem= !/\\bvidro\\b|\\bretornavel\\b|\\bdescartavel\\b|\\blata\\b|\\blt\\b|\\bln\\b|long\\s*neck|\\bpet\\b|\\bbarril\\b/.test(d);
+        const semEmbalagem= !/\bvidro\b|\bretornavel\b|\bdescartavel\b|\blata\b|\blt\b|\bln\b|long\s*neck|\bpet\b|\bbarril\b/.test(d);
         const cervejaSemEmbalagem= /^03021(?:00|01|02|03|04|05|06)$/.test(cestDig)&&
           onlyDig(i.ncm)==="22030000"&&semEmbalagem&&(cAnterior||sAnterior)&&f==="5405";
-        const refriLataCestDemais=cestDig==="0301100"&&/\\blata\\b|\\blt\\b/.test(d);
+        const refriLataCestDemais=cestDig==="0301100"&&/\blata\b|\blt\b/.test(d);
         if(refriLataCestDemais)
           addItem("bebidas:cest-refrigerante","registrar","Refrigerante em lata — CEST a ajustar",
             "Item em lata com CEST 03.011.00; correspondente no Convênio 142/2018, Anexo IV: 03.010.02. Divergência documental, sem cobrança automática de ST.",bebida.base,i.n);
