@@ -109,6 +109,7 @@ input[type=datetime-local],input.chave,textarea.chave{width:100%;padding:12px;bo
 .metric span{display:block;color:var(--muted);font-size:.8rem;text-transform:uppercase;letter-spacing:.04em}
 .metric b{display:block;margin-top:3px;font-family:var(--display);font-size:1.05rem;overflow-wrap:anywhere}
 .metric.risk{border-left:5px solid var(--red)}
+.metric.pending{border-left:5px solid #b98513}
 .route-ok{color:var(--sign)} .route-check{color:#9B6B00}
 .section{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px;margin-top:12px}
 .section > h3{margin-bottom:6px}
@@ -233,7 +234,7 @@ details summary{cursor:pointer;font-family:var(--display);font-weight:600;font-s
     <div id="histDetalhe"></div>
   </section>
 
-  <p class="footer">Ferramenta de apoio à triagem operacional · v4.13.4. Prioriza irregularidades materiais, destino da carga e exposição tributária. As regras seguem o RICMS/RR (Decreto nº 4.335-E/2001, consolidação de referência até jan/2026), o CTE (Lei nº 59/93) e a prática do posto; listas de NCM são indicativas e precisam de calibragem. Não substitui a análise do auditor. A busca automática envia somente a chave de acesso ao endpoint serverless desta ferramenta, que consulta o serviço privado consultadanfe.com; o XML aberto manualmente é lido só neste aparelho.</p>
+  <p class="footer">Ferramenta de apoio à triagem operacional · v4.13.5. Prioriza irregularidades materiais, destino da carga e exposição tributária. As regras seguem o RICMS/RR (Decreto nº 4.335-E/2001, consolidação de referência até jan/2026), o CTE (Lei nº 59/93) e a prática do posto; listas de NCM são indicativas e precisam de calibragem. Não substitui a análise do auditor. A busca automática envia somente a chave de acesso ao endpoint serverless desta ferramenta, que consulta o serviço privado consultadanfe.com; o XML aberto manualmente é lido só neste aparelho.</p>
 </main>
 
 <div class="scanner hidden" id="scanner" role="dialog" aria-label="Leitura do código">
@@ -1053,12 +1054,18 @@ function duracaoHumana(ms){
   const s=p.join(" ")||"<1 min";
   return futuro?"em "+s:s;
 }
-function validadeTransito(nf,leitura){
+function validadeTransito(nf,referencia){
   const emitUF=nf.emit.uf||UF[nf.ide.cUF]||"",destUF=nf.dest&&nf.dest.uf||"";
   const emi=nf.ide.dhEmi?new Date(nf.ide.dhEmi):null;
   const sai=nf.ide.dhSaiEnt?new Date(nf.ide.dhSaiEnt):null;
-  const inicio=sai&&!isNaN(sai)?sai:(emi&&!isNaN(emi)?emi:null);
-  if(!inicio)return null;
+  const boa=d=>d instanceof Date&&!isNaN(d.getTime());
+  const ref=boa(referencia)?referencia:new Date();
+  const emissaoOk=boa(emi),saidaOk=boa(sai);
+  // A saída posterior à fiscalização NÃO é a saída efetiva da carga já circulando.
+  // Tolerância de 5 minutos para divergências de relógio.
+  const saidaFutura=saidaOk&&sai.getTime()>ref.getTime()+5*60000;
+  const inicio=saidaFutura?(emissaoOk?emi:null):(saidaOk?sai:(emissaoOk?emi:null));
+  if(!inicio&&!saidaFutura)return null;
   const internaRR=emitUF==="RR"&&destUF==="RR";
   const exportacao=nf.ide.idDest==="3"||destUF==="EX";
   const inter=!exportacao&&(nf.ide.idDest==="2"||(emitUF&&destUF&&emitUF!==destUF));
@@ -1069,18 +1076,17 @@ function validadeTransito(nf,leitura){
     regra=mesmoMun?"1 dia — remetente e destinatário no mesmo município":"3 dias — municípios distintos dentro de RR";
     const itensMadeira=nf.itens.length>0&&nf.itens.every(i=>onlyDig(i.ncm).startsWith("44")||/(madeira|tábua|tabua|prancha|ripa|caibro|viga|tora)/i.test(i.desc||""));
     if(itensMadeira){dias=5;regra="5 dias — transporte interno de madeira (§ 6º)"}
-  }else if(inter){
-    dias=5;regra="5 dias — operação/prestação interestadual";
-  }
-  if(!dias){
-    const regraSemPrazo=exportacao?"Exportação — o art. 289 não fixa prazo específico de validade para operação destinada diretamente ao exterior; não aplicar automaticamente os 5 dias do inciso III.":"Prazo não calculável automaticamente";
-    return {inicio,fonte:sai&&!isNaN(sai)?"data/hora de saída":"data de emissão (§ 5º)",dias:null,regra:regraSemPrazo,limite:null};
-  }
+  }else if(inter){dias=5;regra="5 dias — operação/prestação interestadual"}
+  const fonte=saidaFutura?"emissão como referência subsidiária (§ 5º; sujeita a comprovação)":
+    saidaOk?"data/hora de saída":"data de emissão (§ 5º)";
+  const regraSemPrazo=exportacao?"Exportação — o art. 289 não fixa prazo específico de validade para operação destinada diretamente ao exterior; não aplicar automaticamente os 5 dias do inciso III.":"Prazo não calculável automaticamente";
+  if(saidaFutura)return {inicio:null,fonte,dias,regra:dias?regra:regraSemPrazo,limite:null,
+    restante:null,expirado:false,saidaFutura:true,saidaDeclarada:sai,emissao:emissaoOk?emi:null,referencia:ref,
+    limiteSubsidiario:dias&&emissaoOk?new Date(emi.getTime()+dias*86400000):null};
+  if(!dias)return {inicio,fonte,dias:null,regra:regraSemPrazo,limite:null,saidaFutura:false};
   const limite=new Date(inicio.getTime()+dias*86400000);
-  const ref=leitura||new Date();
-  return {inicio,fonte:sai&&!isNaN(sai)?"data/hora de saída":"data de emissão (§ 5º)",dias,regra,limite,restante:limite-ref,expirado:ref>limite};
+  return {inicio,fonte,dias,regra,limite,restante:limite-ref,expirado:ref>limite,saidaFutura:false};
 }
-
 function rotaInfo(nf,ctx){
   const posto=norm(ctx&&ctx.posto||""); if(!posto)return{ok:true,titulo:"Rota não configurada",detalhe:""};
   if(nf.ide.tpNF==="1"&&(nf.ide.idDest==="3"||nf.itens.some(i=>onlyDig(i.cfop).startsWith("7"))))return{ok:true,titulo:"Saída para o exterior",detalhe:"O posto pode integrar a rota até a fronteira; confirme o trajeto e o local efetivo de saída do País"};
@@ -1134,7 +1140,8 @@ function analyze(nf,ctx){
   const dhEmi=nf.ide.dhEmi?new Date(nf.ide.dhEmi):null;
   const abord=ctx.abordagem;
   const leitura=nf.leituraEm||new Date();
-  const validade=validadeTransito(nf,leitura);
+  const referenciaValidade=abord instanceof Date&&!isNaN(abord.getTime())?abord:leitura;
+  const validade=validadeTransito(nf,referenciaValidade);
   const vNF=nf.tot.vNF||nf.tot.vProd;
   const isVenda=cf3.some(c=>/^1\d\d$/.test(c)||c==="405"||c==="403"||c==="401"||c==="404");
 
@@ -1150,8 +1157,16 @@ function analyze(nf,ctx){
   else if(!["100","150"].includes(nf.prot.cStat)) add("para","Uso não autorizado (cStat "+esc(nf.prot.cStat)+")",esc(nf.prot.xMotivo),"RICMS/RR, art. 147; CTE, art. 69, III, “a”");
   if(dhRec&&abord&&dhRec>abord){const h=(dhRec-abord)/36e5;add("para","Autorizada depois do início da abordagem","Autorização em "+fmtDate(dhRec)+", "+h.toLocaleString("pt-BR",{maximumFractionDigits:1})+" h após o início da abordagem ("+fmtDate(abord)+"). Nota emitida após a ação fiscal não afasta a infração. Multa no valor de 40% nominal da operação: "+brl(vNF*0.4)+". Pelo art. 69-A, a penalidade efetivamente aplicada não pode superar o valor do imposto devido ou não recolhido.","CTE, art. 168, § 3º; CTE/RR, art. 69, III, “a”, e art. 69-A; RICMS/RR, art. 184, I");}
   if(validade){
-    if(validade.inicio>leitura.getTime()+5*60000){
-      add("confere","Data/hora de saída posterior à leitura","O XML informa saída em "+fmtDate(validade.inicio)+", mas a leitura ocorreu em "+fmtDate(leitura)+". Confira o momento real da saída.","RICMS/RR, art. 289");
+    if(validade.saidaFutura){
+      const subsidiario=validade.limiteSubsidiario?
+        " Na falta de comprovação de outra data efetiva, a emissão ("+fmtDate(validade.emissao)+") é referência subsidiária possível (§ 5º), com prazo teórico até "+fmtDate(validade.limiteSubsidiario)+". Isso não comprova, por si só, infração de prazo vencido.":
+        " Prazo subsidiário não calculável com os dados disponíveis.";
+      add("confere","Saída futura incompatível com circulação constatada",
+        "O XML informa saída em "+fmtDate(validade.saidaDeclarada)+", posterior à fiscalização em "+fmtDate(validade.referencia)+". Essa data não corresponde à saída efetiva de carga já em trânsito."+subsidiario+
+        " Verifique CT-e, MDF-e, registros de carregamento e, quando aplicável, depósito do transportador e revalidação, antes de concluir irregularidade.",
+        "RICMS/RR, art. 289, caput e §§ 1º a 5º");
+    }else if(validade.inicio&&validade.inicio>referenciaValidade.getTime()+5*60000){
+      add("confere","Data inicial posterior à fiscalização","A data inicial indicada é posterior à fiscalização. Confira quando ocorreu a saída efetiva; não presumir validade.","RICMS/RR, art. 289");
     }else if(validade.expirado){
       add("para","Prazo de validade no trânsito ultrapassado","Código sugerido do Auto de Infração: 1319. Contagem a partir de "+fmtDate(validade.inicio)+" ("+validade.fonte+"). Regra aplicada: "+validade.regra+". O prazo venceu em "+fmtDate(validade.limite)+"; na leitura, estava vencido há "+duracaoHumana(-validade.restante)+". Confira eventual depósito por transportador (§§ 1º-2º) ou revalidação por força maior (§§ 3º-4º). Se confirmada a infração, a multa é de 100% do valor do imposto, observando-se o teto do art. 69-A; não enquadrar automaticamente como a multa geral de 40% por inidoneidade.","Código 1319; RICMS/RR, art. 289; CTE/RR, art. 69, III, “c”, e art. 69-A");
     }
@@ -1429,9 +1444,15 @@ function renderNF(nf,res,contextoOverride){
   const leitura=nf.leituraEm||new Date();
   const emi=nf.ide.dhEmi?new Date(nf.ide.dhEmi):null;
   const idadeEmissao=emi&&!isNaN(emi)?duracaoHumana(leitura-emi):"—";
-  const validade=validadeTransito(nf,leitura);
-  const validadeTitulo=!validade||!validade.dias?"Não calculado":validade.expirado?"VENCIDO há "+duracaoHumana(-validade.restante):"Válido · faltam "+duracaoHumana(validade.restante);
-  const validadeDetalhe=validade?(validade.regra+" · desde "+validade.fonte+(validade.limite?" · limite "+fmtDate(validade.limite):"")):"Sem data suficiente";
+  const referenciaValidade=contexto.abordagem instanceof Date&&!isNaN(contexto.abordagem.getTime())?contexto.abordagem:leitura;
+  const validade=validadeTransito(nf,referenciaValidade);
+  const validadeTitulo=!validade?"Não calculado":validade.saidaFutura?"CONFERIR — SAÍDA FUTURA":
+    !validade.dias?"Não calculado":validade.expirado?"VENCIDO há "+duracaoHumana(-validade.restante):"Dentro do prazo · faltam "+duracaoHumana(validade.restante);
+  const validadeDetalhe=!validade?"Sem data suficiente":validade.saidaFutura?
+    validade.regra+" · saída declarada "+fmtDate(validade.saidaDeclarada)+", posterior à fiscalização em "+fmtDate(validade.referencia)+
+    (validade.limiteSubsidiario?". Pela emissão ("+fmtDate(validade.emissao)+"), prazo subsidiário teórico até "+fmtDate(validade.limiteSubsidiario)+".":"; prazo subsidiário não calculado.")+
+    " Confirmar a saída efetiva antes de concluir vencimento.":
+    validade.regra+" · desde "+validade.fonte+(validade.limite?" · limite "+fmtDate(validade.limite):"");
   const itens=nf.itens.map(i=>{
     const candidatos=regimesCandidatos(i,nf),beneficios=beneficiosCandidatos(i,nf),aliquota=aliquotaReferencia(i),regimeOperacional=classificarRegimeOperacional(i,nf);
     const op=triagemOperacionalItem(i,nf);
@@ -1475,7 +1496,7 @@ function renderNF(nf,res,contextoOverride){
   <div class="quick">
     <div class="metric"><span>Valor da NF</span><b>${brl(nf.tot.vNF)}</b></div>
     <div class="metric"><span>Emitida há</span><b>${esc(idadeEmissao)}</b><small>${emi&&!isNaN(emi)?fmtDate(emi):"Data de emissão não disponível"}</small></div>
-    <div class="metric ${validade&&validade.expirado?"risk":""}"><span>Validade no trânsito</span><b>${esc(validadeTitulo)}</b><small>${esc(validadeDetalhe)}</small></div>
+    <div class="metric ${validade&&validade.saidaFutura?"pending":validade&&validade.expirado?"risk":""}"><span>Validade no trânsito</span><b>${esc(validadeTitulo)}</b><small>${esc(validadeDetalhe)}</small></div>
     <div class="metric"><span>Rota no XML</span><b class="${rota.ok?"route-ok":"route-check"}">${esc(rota.titulo)}</b><small>${esc(rota.detalhe)}</small></div>
   </div>
   <details><summary>Referências de multas — somente se a infração for confirmada</summary>
